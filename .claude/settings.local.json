@@ -1,0 +1,40 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run *)",
+      "Bash(curl -s http://localhost:5180/)",
+      "Read(//c/tmp/**)",
+      "Bash(curl -s \"https://raw.githubusercontent.com/CalcProgrammer1/OpenRGB/master/Controllers/EVisionKeyboardController/EVisionKeyboardController.h\")",
+      "Bash(curl -s \"https://raw.githubusercontent.com/CalcProgrammer1/OpenRGB/master/Controllers/EVisionKeyboardController/RGBController_EVisionKeyboard.cpp\")",
+      "Bash(curl -s -o /dev/null -w \"DEV HTTP %{http_code}\\\\n\" http://localhost:5180/)",
+      "Bash(node -e ' *)",
+      "Read(//c/Users/Jaeef/Downloads/**)",
+      "Bash(npx tsc *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(rm src/ui/TimePanel.tsx)",
+      "Bash(grep -rn \"TimePanel\\\\|useTimeOps\\\\|'time'\\\\|Time & Sleep\" src)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5181/)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5181/src/matrix.ts)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5181/src/hooks.ts)",
+      "Bash(curl -s http://localhost:5181/src/matrix.ts)",
+      "Read(//tmp/**)",
+      "Bash(grep -aoE \"Nullsoft.{0,40}\" /tmp/ak.exe)",
+      "Read(//c/Program Files/7-Zip/**)",
+      "Read(//c/Program Files/WinRAR//**)",
+      "Bash(python -)",
+      "Bash(cp nsis_out/blk_005.bin app.7z)",
+      "Bash(xxd app.7z)",
+      "Bash(python -c \"import py7zr; print\\('have py7zr'\\)\")",
+      "Bash(python -m pip install py7zr -q)",
+      "Bash(python -c \"import py7zr; print\\('ok'\\)\")",
+      "Bash(cd *)",
+      "Bash(PYTHONUTF8=1 python -)",
+      "Bash(sed 's/.*\\\\.//')",
+      "Bash(python -c \"import capstone; print\\('capstone ok',capstone.__version__\\)\")",
+      "Bash(python -m pip install capstone pefile -q)",
+      "Bash(python -c \"import pefile,capstone;print\\('ok'\\)\")",
+      "Bash(python -c \"import pefile,capstone;print\\('ok',capstone.__version__\\)\")",
+      "Bash(echo \"=== tsc exit: $? ===\")"
+    ]
+  }
+}
