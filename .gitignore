@@ -1,0 +1,21 @@
+# Executables & Installer files (keep repository size light)
+/AJAZZ AK820 ╙╨╧▀RGB Keyboard.exe
+*.exe
+
+# Local IDE and AI assistant directories
+/.claude/
+/.opencode/
+.vscode/
+.idea/
+
+# Node modules and build files (in subdirectories)
+**/node_modules/
+**/dist/
+**/dist-ssr/
+
+# TypeScript build info cache
+**/*.tsbuildinfo
+
+# Log files
+**/*.log
+.DS_Store
