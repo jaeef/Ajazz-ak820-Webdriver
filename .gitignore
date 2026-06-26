@@ -1,14 +1,17 @@
-node_modules
-dist
-dist-ssr
-*.local
-.vscode/*
-!.vscode/extensions.json
-.idea
+
+# Local IDE and AI assistant directories
+/.claude/
+.vscode/
+.idea/
+
+# Node modules and build files (in subdirectories)
+**/node_modules/
+**/dist/
+**/dist-ssr/
+
+# TypeScript build info cache
+**/*.tsbuildinfo
+
+# Log files
+**/*.log
 .DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-*.log
