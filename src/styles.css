@@ -594,3 +594,57 @@ input[type=range]::-moz-range-thumb {
     padding: 12px;
   }
 }
+
+/* ===== Per-Key RGB keyboard view ===== */
+
+.keyboard-view {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.kb-container {
+  position: relative;
+  width: 100%;
+  max-width: 400px;
+  aspect-ratio: 400 / 170;
+  background: var(--bg-3);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 12px 0;
+  overflow: hidden;
+}
+
+.kb-key {
+  position: absolute;
+  border-radius: 3px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.08s, border-color 0.1s;
+  user-select: none;
+}
+
+.kb-key:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+  z-index: 2;
+}
+
+.kb-key-selected {
+  z-index: 3;
+}
+
+.kb-key-label {
+  font-size: 8px;
+  color: rgba(255, 255, 255, 0.6);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  padding: 0 1px;
+}

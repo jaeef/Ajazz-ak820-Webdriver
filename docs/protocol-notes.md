@@ -51,6 +51,26 @@
 > 126-key data streams as cmd-6 chunks). For pixel-exact per-key, capture with
 > USBPcap.
 
+> ## ✅ UPDATE — full app extraction (2026-07)
+> The complete NSIS → 7z archive was extracted (1529 files). The app's
+> `Skin/XML/DeviceXml/keyboarddevice.xml` defines **126 DeviceKeyButton**
+> elements, each with `name="key_N"` and `userdata="light_N"` — confirming
+> the **key ID == LED index** (1:1 mapping) for all 126 entries. 82 keys
+> are visible on the 75% AK820 layout; 44 are hidden (numpad, M1-M5,
+> K14/K45/K56/K107, etc.). The mapping is now in `src/keymap.ts`.
+>
+> Additional findings from the extracted app:
+>
+> | Source file | Finding |
+> |---|---|
+> | `Skin/XML/CustomControlXML/LightControl.xml` | Speed slider `max="4"` (not 5); brightness `max="4"`; 13 preset colors; direction is a 2-option checkbox (left/right only in the official UI, but firmware supports 4) |
+> | `DefaultData/color_option_info.config` | The exact 13 preset colors in ARGB: #FF0000, #FF7200, #FFF005, #00D70F, #0099FF, #3153FF, #5E01D2, #EE00F1, #FF008A, #FFA800, #8DFF8D, #3DEFFF, #004891 |
+> | `Skin/XML/CustomControlXML/KeySetControl.xml` | Key remapping has 12 function types: 0=Default, 1=Mouse, 2=MouseSwing(hidden), 3=MouseWheel(hidden), 4=DPI, 5=FireKey, 6=StandardKeyboard, 7=Multimedia, 8=System, 9=Macro, 10=Mechanician, 11=Office(combo) |
+> | `Skin/XML/CustomControlXML/MacroControl.xml` | Macro management: record/stop, fixed-time or ignore-delay, insert mouse moves, per-macro name, list of keystroke+action+delay(ms) entries |
+> | `DefaultData/Keyboard.json` | `CustomLightMode.LightColorInfo` is an array of 126×{Alpha,Red,Green,Blue} per LED group — the per-key color data format |
+> | `DefaultData/AudioFile.json` | Audio mode has 4 style groups, each with RGB values (e.g. group 0 = R:5,G:5,B:0) and style names |
+> | `Skin/lan_en.xml` | All UI strings — confirms mode names match the labels already in `protocol.ts` |
+
 
 > ## ⚠ Two different AK820 hardware families
 >

@@ -29,6 +29,25 @@ export function SettingsPanel({ settings, onChange, onEditModes, onReset }: Prop
         </span>
       </div>
       <div className="row">
+        <label>Protocol family:</label>
+        <select
+          value={settings.protocolFamily}
+          onChange={e => onChange({ ...settings, protocolFamily: e.target.value as Settings['protocolFamily'] })}
+          style={{ flex: 1 }}
+        >
+          <option value="auto">Auto — by USB VID (recommended)</option>
+          <option value="sonix">Sonix / Microdia (VID 0x0C45) — AK820 Pro</option>
+          <option value="evision">EVision / Yichip (VID 0x320F)</option>
+        </select>
+      </div>
+      <div className="help" style={{ marginTop: -4 }}>
+        <b>Auto</b> picks the wire protocol from the connected keyboard's USB Vendor ID:
+        0x0C45 → Sonix (64-byte feature report, mode at byte 0), 0x320F → EVision (64-byte
+        output report, cmd 0x06). If your single color does nothing, your unit is likely
+        Sonix; if modes that worked before stop, switch back to <b>EVision</b>. The Wire
+        format box on the Lighting tab shows exactly which bytes each option sends.
+      </div>
+      <div className="row">
         <label>Report ID mode:</label>
         <select
           value={settings.reportIdMode}

@@ -10,7 +10,7 @@ import { SettingsPanel } from './ui/SettingsPanel'
 import { StatusBar } from './ui/StatusBar'
 import { ModeEditModal } from './ui/ModeEditModal'
 
-import { modeName, MODE_STATIC } from './protocol'
+import { modeName, MODE_STATIC, resolveProtocolFamily, hexToRgb } from './protocol'
 import {
   useDevice, useSettings, useProfiles, useLightingState, useStatus, useActiveTab,
 } from './hooks'
@@ -34,7 +34,7 @@ function App() {
   const [activeTab, setActiveTab] = useActiveTab('lighting')
   const [showModeModal, setShowModeModal] = useState(false)
 
-  const { lighting, setLighting, apply } = useLightingState(device.controller, settings)
+  const { lighting, setLighting, apply, sendPackets } = useLightingState(device.controller, settings, resolveProtocolFamily(settings.protocolFamily, device.info?.vendorId))
 
   // --- Connection ---
   const handleConnect = useCallback(async () => {
@@ -96,6 +96,29 @@ function App() {
       err('Apply failed: ' + (e as Error).message)
     }
   }, [apply, device.isConnected, lighting, settings.modes, ok, err])
+
+  // --- Solid color: pick a full-RGB color and light the whole keyboard in it.
+  // Forces Static mode (firmware 0x06), the one mode both EVision and Sonix
+  // honor the R/G/B bytes for. Picks update state immediately so the wire
+  // preview reflects Static + color; the apply passes an explicit override so
+  // there's no stale-state race between picking and clicking Apply.
+  const handleSolidColor = useCallback((hex: string) => {
+    const { r, g, b } = hexToRgb(hex)
+    setLighting({ ...lighting, mode: MODE_STATIC, rainbow: false, r, g, b })
+  }, [setLighting, lighting])
+
+  const handleApplySolid = useCallback(() => {
+    const next: LightingState = { ...lighting, mode: MODE_STATIC, rainbow: false }
+    setLighting(next)
+    apply(next).then(() => ok(`${device.isConnected ? 'Sent' : 'Recorded (idle)'} solid color: rgb(${next.r},${next.g},${next.b}), brightness ${next.brightness}`))
+                .catch(e => err('Apply failed: ' + (e as Error).message))
+  }, [setLighting, apply, lighting, device.isConnected, ok, err])
+
+  // --- Per-key RGB: send a custom color map built by the KeyboardView ---
+  const handleApplyPerKey = useCallback((packets: Uint8Array[]) => {
+    sendPackets(packets).then(() => ok(`${device.isConnected ? 'Sent' : 'Recorded (idle)'} per-key colors (${packets.length} packets)`))
+                        .catch(e => err('Per-key apply failed: ' + (e as Error).message))
+  }, [sendPackets, device.isConnected, ok, err])
 
   // --- Live color sink for the Effects tab (Audio React / Screen Color) ---
   // Pushes a Static-color frame using the current brightness. Effects call this
@@ -206,8 +229,12 @@ function App() {
               lighting={lighting}
               modes={settings.modes}
               onChange={setLighting}
+              onSolidColor={handleSolidColor}
               onApply={handleApply}
+              onApplySolid={handleApplySolid}
+              onApplyPerKey={handleApplyPerKey}
               isLive={device.isConnected}
+              family={resolveProtocolFamily(settings.protocolFamily, device.info?.vendorId)}
             />
           )}
 

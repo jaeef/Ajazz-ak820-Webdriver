@@ -4,7 +4,8 @@ A browser-based WebHID driver for the **Ajazz AK820** mechanical keyboard. Repla
 
 ## What it does (v0.2)
 
-- **Lighting control** — firmware effect modes from the **official driver's own table** (`default_light.json`): Wave, Cloud, Vortex, Mixed Color, Breathing, Static, Reactive, Stone, Traverse, Starlight, Firework, Roll, Wave Bar, Cartoon, Rain, Scan, Marquee, Speed + per-key Custom. RGB picker, preset palette, brightness (0-4), speed (0-5), direction.
+- **Lighting control** — firmware effect modes from the **official driver's own table** (`default_light.json`): Wave, Cloud, Vortex, Mixed Color, Breathing, Static, Reactive, Stone, Traverse, Starlight, Firework, Roll, Wave Bar, Cartoon, Rain, Scan, Marquee, Speed + per-key Custom. RGB picker, preset palette (13 official colors), brightness (0-4), speed (0-4), direction.
+- **Per-key RGB** — visual keyboard layout (82 keys, 75% AK820) with click-to-paint per-key colors. The key→LED index mapping (1:1, 0-125) was extracted from the official driver's `keyboarddevice.xml`. Sends full 126-LED color data via chunked CMD_WRITE_COLORS packets.
 - **Effects (host-computed)** — the official app's PC-driven modes reproduced in the browser:
   - **Audio React** (mode 29) — microphone/system audio → reactive color (Web Audio API)
   - **Screen Color** (mode 30) — average color of a shared screen/window → ambient “ambilight” (Screen Capture API)
@@ -16,9 +17,8 @@ A browser-based WebHID driver for the **Ajazz AK820** mechanical keyboard. Repla
 
 ## What it does NOT do yet (planned v0.3+)
 
-- **Key remapping** — needs a fresh USB capture against the official Windows driver
-- **Per-key RGB** — only whole-keyboard effect modes are documented; per-key needs new RE work
-- **Macro recording**
+- **Key remapping** — the official driver supports 12 function types (Default, Mouse, DPI, FireKey, StandardKeyboard, Multimedia, System, Macro, etc.); UI data extracted, USB protocol needs binary analysis
+- **Macro recording** — the official driver has a full macro editor (record, fixed-time, mouse actions, delays); UI data extracted, USB protocol needs binary analysis
 - **Static / GIF image upload to the TFT** — this lives in a separate open-source project ([Beattrey/ajazz-ak820-config](https://github.com/Beattrey/ajazz-ak820-config))
 
 > **Not applicable to this hardware:** time sync and a sleep timer are clock/TFT
@@ -86,6 +86,7 @@ ak820-web/
 │   ├── styles.css         ← All CSS
 │   ├── types.ts           ← All TypeScript interfaces
 │   ├── protocol.ts        ← Pure packet builders + RGB utilities
+│   ├── keymap.ts          ← Key layout + LED index mapping (from official driver)
 │   ├── device.ts          ← WebHID + Mock controllers
 │   ├── store.ts           ← localStorage persistence
 │   ├── hooks.ts           ← Custom React hooks
@@ -94,6 +95,7 @@ ak820-web/
 │       ├── Header.tsx
 │       ├── ConnectionPanel.tsx
 │       ├── LightingPanel.tsx
+│       ├── KeyboardView.tsx
 │       ├── ProfilesPanel.tsx
 │       ├── SettingsPanel.tsx
 │       ├── StatusBar.tsx

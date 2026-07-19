@@ -1,4 +1,4 @@
-import type { LightingState, Direction, ReportIdMode } from './types'
+import type { LightingState, Direction, ReportIdMode, ProtocolFamily, ProtocolFamilyResolved } from './types'
 
 // =====================================================================
 // EVision keyboard protocol ("eevision" family)
@@ -32,19 +32,17 @@ export const PACKET_LENGTH = 64
 // Commands (byte 3)
 const CMD_BEGIN = 0x01
 const CMD_END = 0x02
-const CMD_SET_PARAMETER = 0x06
-const CMD_WRITE_COLORS = 0x11
-
-// Parameter selectors (byte 5 of a SET_PARAMETER packet)
-const PARAM_MODE = 0x00
+const CMD_WRITE_CONFIG = 0x05 // chunked write to config/LED region
+const CMD_SET_PARAMETER = 0x06 // chunked write to parameter region
 
 // Report-id / command-class prefix the firmware expects in byte 0.
 const REPORT_PREFIX = 0x04
 
-// Brightness range for this firmware is 0..4 (0 = off). Speed is 0..5 where
-// 0x00 is fastest and 0x05 is slowest (inverted vs. intuition).
+// Brightness range for this firmware is 0..4 (0 = off). Speed is 0..4 per
+// the official driver's LightControl.xml slider (min="0" max="4"). 0 is
+// fastest and 4 is slowest (inverted vs. intuition).
 export const MAX_BRIGHTNESS = 4
-export const MAX_SPEED = 5
+export const MAX_SPEED = 4
 
 // Firmware mode IDs (mode byte). Indexed by value so the UI can show names.
 // Values are the AUTHORITATIVE table for this exact unit, lifted from the
@@ -142,15 +140,20 @@ export function modeName(value: number, modes: string[]): string {
   return modes[value] ?? `Mode ${value}`
 }
 
+// Preset color palette — the exact 13 colors from the official driver's
+// LightControl.xml (color_option_0 through color_option_12) and
+// DefaultData/color_option_info.config. These are ARGB values in the XML
+// (#AARRGGBB) converted to #RRGGBB.
 export const DEFAULT_PALETTE: string[] = [
-  '#ff0000', '#ff4000', '#ff8000', '#ffff00',
-  '#00ff00', '#00ffff', '#0080ff', '#0000ff',
-  '#8000ff', '#ff00ff', '#ff0080', '#ffffff',
+  '#ff0000', '#ff7200', '#fff005', '#00d70f',
+  '#0099ff', '#3153ff', '#5e01d2', '#ee00f1',
+  '#ff008a', '#ffa800', '#8dff8d', '#3defff',
+  '#004891',
 ]
 
-// App direction enum (0=Left, 1=Up, 2=Down, 3=Right) → EVision/OpenRGB enum
-// (Left=0, Right=1, Up=2, Down=3).
-const DIRECTION_MAP: number[] = [0, 2, 3, 1]
+// App direction enum (0=Left, 1=Up, 2=Down, 3=Right) — passed through
+// directly to the firmware. The official driver's struct at this+0x17E0
+// stores direction in byte 7 (SelectItem) and mirrors it to byte 0.
 
 function clamp(v: number, lo: number, hi: number): number {
   return Math.max(lo, Math.min(hi, v | 0))
@@ -178,47 +181,94 @@ function applyChecksum(pkt: Uint8Array): void {
 // report-id/command prefix. resolveSend() splits it for WebHID.
 // =====================================================================
 
-// Effect-mode packet (SET_PARAMETER, parameter MODE, 8 data bytes).
-export function buildLightingPacket(o: LightingState): Uint8Array {
+// Begin frame packet (CMD 0x01). All bytes 4-63 are zero; checksum at 1-2.
+// Confirmed from disassembly: byte 0=0x04, byte 3=0x01, bytes 4-7=0, checksum.
+export function buildBeginPacket(): Uint8Array {
   const pkt = new Uint8Array(PACKET_LENGTH)
   pkt[0x00] = REPORT_PREFIX
-  pkt[0x03] = CMD_SET_PARAMETER
-  pkt[0x04] = 0x08 // parameter size
-  pkt[0x05] = PARAM_MODE
-  pkt[0x08] = clamp(o.mode, 0, 0xff)
-  pkt[0x09] = clamp(o.brightness, 0, MAX_BRIGHTNESS)
-  pkt[0x0a] = clamp(o.speed, 0, MAX_SPEED)
-  pkt[0x0b] = DIRECTION_MAP[clamp(o.direction, 0, 3)] ?? 0
-  pkt[0x0c] = o.rainbow ? 1 : 0 // random-color flag
-  pkt[0x0d] = clamp(o.r, 0, 0xff)
-  pkt[0x0e] = clamp(o.g, 0, 0xff)
-  pkt[0x0f] = clamp(o.b, 0, 0xff)
+  pkt[0x03] = CMD_BEGIN
   applyChecksum(pkt)
   return pkt
 }
 
-// Begin / End frame packets (fixed contents, no checksum).
-export function buildBeginPacket(): Uint8Array {
-  const pkt = new Uint8Array(PACKET_LENGTH)
-  pkt[0x00] = REPORT_PREFIX
-  pkt[0x01] = CMD_BEGIN
-  pkt[0x03] = CMD_BEGIN
-  return pkt
-}
-
+// End frame packet (CMD 0x02). Same layout as BEGIN; the official driver
+// also does Sleep(10ms) before sending END — we add a delay in the caller.
 export function buildEndPacket(): Uint8Array {
   const pkt = new Uint8Array(PACKET_LENGTH)
   pkt[0x00] = REPORT_PREFIX
-  pkt[0x01] = CMD_END
   pkt[0x03] = CMD_END
+  applyChecksum(pkt)
   return pkt
 }
 
-// Write-colors packet (per-key custom data) — one chunk, max 0x36 bytes.
+// Build the 21-byte lighting state data block that the firmware expects
+// at config offset 0. Confirmed by disassembling the official driver's
+// struct-population code (this+0x21C8, copied from this+0x17E0).
+//
+// Byte layout (21 bytes):
+//   0: direction (0=Left, 1=Up, 2=Down, 3=Right — same as UI enum)
+//   1: mode (firmware mode ID from default_light.json)
+//   2: speed (0-4, 0=fastest)
+//   3: brightness INVERTED (4 - actual, so 4=off, 0=max)
+//   4: rainbow/multicolor flag (0 or 1)
+//   5: Red
+//   6: Green
+//   7: Blue
+//   8: selectItem / direction confirmation (mirror of byte 0)
+//   9-20: zeros (padding / reserved by firmware)
+function buildLightingData(o: LightingState): Uint8Array {
+  const data = new Uint8Array(0x15) // 21 bytes
+  data[0] = clamp(o.direction, 0, 3)
+  data[1] = clamp(o.mode, 0, 0xff)
+  data[2] = clamp(o.speed, 0, MAX_SPEED)
+  data[3] = MAX_BRIGHTNESS - clamp(o.brightness, 0, MAX_BRIGHTNESS) // INVERTED
+  data[4] = o.rainbow ? 1 : 0
+  data[5] = clamp(o.r, 0, 0xff)
+  data[6] = clamp(o.g, 0, 0xff)
+  data[7] = clamp(o.b, 0, 0xff)
+  data[8] = clamp(o.direction, 0, 3)
+  return data
+}
+
+// Chunked write-data packet (CMD 0x06). Writes `data.length` bytes at
+// `offset` in the device's config memory. One packet per chunk.
+function buildWriteDataPacket(data: Uint8Array, offset: number): Uint8Array {
+  const pkt = new Uint8Array(PACKET_LENGTH)
+  pkt[0x00] = REPORT_PREFIX
+  pkt[0x03] = CMD_SET_PARAMETER // 0x06 — write data command
+  pkt[0x04] = data.length & 0xff
+  pkt[0x05] = offset & 0xff
+  pkt[0x06] = (offset >> 8) & 0xff
+  pkt.set(data.subarray(0, Math.min(data.length, PACKET_LENGTH - 0x08)), 0x08)
+  applyChecksum(pkt)
+  return pkt
+}
+
+// Full lighting apply sequence: BEGIN + WRITE(21 bytes) + END.
+// This is what the official driver sends for every lighting change.
+export function buildLightingPacket(o: LightingState): Uint8Array {
+  // Single packet representation for the wire inspector — but the real
+  // transport sends 3 packets (see buildLightingPackets below).
+  const data = buildLightingData(o)
+  return buildWriteDataPacket(data, 0)
+}
+
+// The actual packet sequence sent to the keyboard for a lighting update.
+export function buildLightingPackets(o: LightingState): Uint8Array[] {
+  const data = buildLightingData(o)
+  return [
+    buildBeginPacket(),
+    buildWriteDataPacket(data, 0),
+    buildEndPacket(),
+  ]
+}
+
+// Write-colors packet (per-key custom data) — one chunk, max 0x38 bytes.
+// Uses CMD 0x05 (CMD_WRITE_CONFIG), same frame as the config writer.
 export function buildColorChunkPacket(data: Uint8Array, offset: number): Uint8Array {
   const pkt = new Uint8Array(PACKET_LENGTH)
   pkt[0x00] = REPORT_PREFIX
-  pkt[0x03] = CMD_WRITE_COLORS
+  pkt[0x03] = CMD_WRITE_CONFIG
   pkt[0x04] = data.length & 0xff
   pkt[0x05] = offset & 0xff
   pkt[0x06] = (offset >> 8) & 0xff
@@ -242,8 +292,9 @@ export function buildCustomColorPackets(buf: Uint8Array): Uint8Array[] {
 }
 
 // Select per-key Custom mode (carries brightness; color/random ignored here).
-export function buildCustomModePacket(o: LightingState): Uint8Array {
-  return buildLightingPacket({ ...o, mode: MODE_CUSTOM, rainbow: false })
+// Now returns the full BEGIN + WRITE + END sequence.
+export function buildCustomModePacket(o: LightingState): Uint8Array[] {
+  return buildLightingPackets({ ...o, mode: MODE_CUSTOM, rainbow: false })
 }
 
 // Accurate solid color: switch to per-key Custom mode, then write the exact
@@ -256,7 +307,87 @@ export function buildSolidColorPackets(o: LightingState): Uint8Array[] {
     buf[i * 3 + 1] = o.g & 0xff
     buf[i * 3 + 2] = o.b & 0xff
   }
-  return [buildCustomModePacket(o), ...buildCustomColorPackets(buf)]
+  // Send mode switch (BEGIN + config write + END), then color data (BEGIN + color chunks + END)
+  return [
+    ...buildCustomModePacket(o),
+    buildBeginPacket(),
+    ...buildCustomColorPackets(buf),
+    buildEndPacket(),
+  ]
+}
+
+// =====================================================================
+// PROTOCOL FAMILY RESOLUTION
+//
+// "AK820" is sold on two unrelated controllers. USB VID is the only reliable
+// disambiguator (see docs/protocol-notes.md):
+//   • 0x0C45 = Microdia / Sonix  -> 64-byte FEATURE report, mode at byte 0
+//   • 0x320F = Yichip / "EVision" -> 64-byte OUTPUT report, cmd 0x06 frame
+// protocol.ts originally drove every unit as EVision, so a Sonix keyboard
+// (VID 0x0C45) received EVision packets and silently ignored them — which is
+// why "single color does nothing" on those units.
+// =====================================================================
+export function resolveProtocolFamily(setting: ProtocolFamily, vid?: number): ProtocolFamilyResolved {
+  if (setting === 'sonix') return 'sonix'
+  if (setting === 'evision') return 'evision'
+  // auto: 0x0C45 is Sonix; anything else (incl. 0x320F and unknown/demo) -> EVision
+  return vid === VID_DEFAULT ? 'sonix' : 'evision'
+}
+
+// =====================================================================
+// SONIX / MICRODIA LIGHTING FRAME (VID 0x0C45)
+//
+// A single 64-byte FEATURE report (NOT the EVision OUTPUT cmd-0x06 frame).
+// Documented in docs/protocol-notes.md "Legacy: Sonix / Microdia" from
+// gohv + TaxMachine RE of the AK820 Pro. Layout:
+//   0      mode (firmware id; Static = 0x06)
+//   1..3   R, G, B
+//   4..7   0x00
+//   8      rainbow flag (0/1)
+//   9      brightness (0..5)
+//   10     speed (0..4; 0 = fastest)
+//   11     direction (0=L,1=U,2=D,3=R — sources disagree; passed through)
+//   12..13 0x00
+//   14     0x55 trailer (low byte)
+//   15     0xAA trailer (high byte)
+//   16..63 0x00
+// Transport: WebHID sendFeatureReport(0, data64) with byte 0 = mode (report
+// ID 0x00, mode as payload[0]); if the descriptor is numbered, Settings →
+// Report ID mode = native sends reportId = mode with a 63-byte payload.
+// =====================================================================
+export const SONIX_TRAILER_LO = 0x55
+export const SONIX_TRAILER_HI = 0xaa
+
+export function buildSonixLightingPacket(o: LightingState): Uint8Array {
+  const pkt = new Uint8Array(PACKET_LENGTH)
+  pkt[0x00] = clamp(o.mode, 0, 0xff)
+  pkt[0x01] = clamp(o.r, 0, 0xff)
+  pkt[0x02] = clamp(o.g, 0, 0xff)
+  pkt[0x03] = clamp(o.b, 0, 0xff)
+  pkt[0x08] = o.rainbow ? 1 : 0
+  pkt[0x09] = clamp(o.brightness, 0, 5)
+  pkt[0x0a] = clamp(o.speed, 0, MAX_SPEED)
+  pkt[0x0b] = clamp(o.direction, 0, 3)
+  pkt[0x0e] = SONIX_TRAILER_LO
+  pkt[0x0f] = SONIX_TRAILER_HI
+  return pkt
+}
+
+// Single source of truth for "what packets does Apply send" — shared by the
+// apply path (hooks.ts) and the wire inspector (LightingPanel) so the hex the
+// user sees is exactly what goes on the wire.
+export function buildApplyPackets(l: LightingState, family: ProtocolFamilyResolved): Uint8Array[] {
+  if (family === 'sonix') {
+    // Sonix has no documented per-key Custom blob (protocol-notes flags it
+    // un-RE'd). Route per-key "Solid Color" to the Static single-color frame
+    // so the picked RGB still lights the whole board.
+    const mode = isPerKeyMode(l.mode) ? MODE_STATIC : l.mode
+    return [buildSonixLightingPacket({ ...l, mode, rainbow: isPerKeyMode(l.mode) ? false : l.rainbow })]
+  }
+  // EVision (this keyboard): per-key Custom sends a mode switch + color chunks.
+  // Everything else (including Static) uses the BEGIN + WRITE(21 bytes) + END
+  // transaction confirmed by disassembling the official driver.
+  return isPerKeyMode(l.mode) ? buildSolidColorPackets(l) : buildLightingPackets(l)
 }
 
 // =====================================================================

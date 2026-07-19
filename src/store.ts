@@ -65,6 +65,7 @@ export function defaultSettings(): Settings {
     vid: VID_DEFAULT,
     pid: PID_DEFAULT,
     reportIdMode: 'auto',
+    protocolFamily: 'auto',
     modes: [...DEFAULT_MODES],
     showAllDevices: true,
   }

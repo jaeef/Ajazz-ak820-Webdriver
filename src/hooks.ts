@@ -1,26 +1,57 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { DeviceInfo, LightingState, Profile, Settings, StatusMessage, TabId } from './types'
+import type { DeviceInfo, LightingState, Profile, Settings, StatusMessage, TabId, ProtocolFamilyResolved } from './types'
 import type { DeviceController } from './device'
 import { MockController, WebHIDController } from './device'
 import { profileStore, settingsStore } from './store'
 import { defaultSettings } from './store'
-import { DEFAULT_LIGHTING, buildLightingPacket, buildSolidColorPackets, isPerKeyMode, resolveSend } from './protocol'
+import { DEFAULT_LIGHTING, buildApplyPackets, resolveSend } from './protocol'
 import type { ReportIdMode } from './types'
 
 // Send one fully-built 64-byte packet, choosing transport (OUTPUT vs feature)
-// and report-ID split from what the device actually declares. EVision uses
-// OUTPUT reports; demo/mock has no declared reports so we default to output.
+// and report-ID split from the device's declared reports.
+//   • EVision (0x320F): OUTPUT report, cmd 0x06 frame (byte 0 = 0x04 prefix).
+//   • Sonix  (0x0C45): FEATURE report, mode at byte 0, reportId 0x00 + 64-byte
+//     payload (or reportId = mode + 63-byte payload if the descriptor is
+//     numbered — selected by Report ID mode = native).
 async function sendPacket(
   controller: DeviceController,
   reportIdMode: ReportIdMode,
   pkt: Uint8Array,
+  family: ProtocolFamilyResolved,
 ): Promise<void> {
+  if (family === 'sonix') {
+    // Sonix lighting lives on a FEATURE report. Default to the unnumbered
+    // form (reportId 0, mode as payload byte 0) per protocol-notes; 'native'
+    // is the escape hatch for a numbered feature descriptor.
+    const ids = controller.featureReportIds.length > 0 ? controller.featureReportIds : [0]
+    const effective = reportIdMode === 'auto' ? 'payload' : reportIdMode
+    const { reportId, data } = resolveSend(pkt, effective, ids)
+    await controller.sendFeatureReport(reportId, data)
+    return
+  }
+  // EVision: OUTPUT report; fall back to feature only if the device declares
+  // no output reports (mock/demo has none — output is the safe default).
   const useOutput =
     controller.outputReportIds.length > 0 || controller.featureReportIds.length === 0
   const ids = useOutput ? controller.outputReportIds : controller.featureReportIds
   const { reportId, data } = resolveSend(pkt, reportIdMode, ids)
   if (useOutput) await controller.sendOutputReport(reportId, data)
   else await controller.sendFeatureReport(reportId, data)
+}
+
+// Gap between successive packets in a multi-packet send. OpenRGB's reference
+// EVision driver does a blocking hid_read after every hid_write, which paces
+// the stream so the firmware can ingest each 64-byte frame. WebHID's
+// sendReport resolves as soon as the OS accepts the buffer, so without a gap
+// the per-key Custom color chunks (mode-select + 7 cmd-0x11 chunks) fire
+// back-to-back and the firmware drops the color data — only the mode-switch
+// lands, which is why "Custom mode switches but the picked color never shows".
+// 30ms empirically matches the read-after-write cadence and is far below the
+// threshold a user notices on a one-shot Apply.
+const PACKET_GAP_MS = 30
+
+function delay(ms: number): Promise<void> {
+  return new Promise(r => setTimeout(r, ms))
 }
 
 // =====================================================================
@@ -116,7 +147,7 @@ export function useProfiles() {
 // =====================================================================
 // useLightingState — owns the live LightingState, applies on demand
 // =====================================================================
-export function useLightingState(controller: DeviceController, settings: Settings) {
+export function useLightingState(controller: DeviceController, settings: Settings, family: ProtocolFamilyResolved) {
   const [lighting, setLightingState] = useState<LightingState>(DEFAULT_LIGHTING)
 
   const setLighting = useCallback((updater: LightingState | ((prev: LightingState) => LightingState)) => {
@@ -125,15 +156,27 @@ export function useLightingState(controller: DeviceController, settings: Setting
 
   const apply = useCallback(async (override?: LightingState) => {
     const l = override ?? lighting
-    // Per-key "Solid Color" sends a mode switch + a sequence of LED color
-    // packets for accurate full-RGB; effect modes are a single packet.
-    const packets = isPerKeyMode(l.mode) ? buildSolidColorPackets(l) : [buildLightingPacket(l)]
-    for (const pkt of packets) {
-      await sendPacket(controller, settings.reportIdMode, pkt)
+    // Single source of truth for the wire bytes, shared with the inspector.
+    // The official driver sends BEGIN + WRITE(21 bytes) + END for each lighting
+    // change, with a 10ms delay after END. Per-key Custom adds color chunks.
+    const packets = buildApplyPackets(l, family)
+    for (let i = 0; i < packets.length; i++) {
+      if (i > 0) await delay(PACKET_GAP_MS)
+      await sendPacket(controller, settings.reportIdMode, packets[i], family)
     }
-  }, [controller, lighting, settings.reportIdMode])
+  }, [controller, lighting, settings.reportIdMode, family])
 
-  return { lighting, setLighting, apply }
+  // Send pre-built raw packets (used by the per-key KeyboardView, which
+  // builds its own BEGIN + CMD_WRITE_CONFIG color chunks + END sequence).
+  // Same transport + pacing as apply() so the firmware gets the same cadence.
+  const sendPackets = useCallback(async (packets: Uint8Array[]) => {
+    for (let i = 0; i < packets.length; i++) {
+      if (i > 0) await delay(PACKET_GAP_MS)
+      await sendPacket(controller, settings.reportIdMode, packets[i], family)
+    }
+  }, [controller, settings.reportIdMode, family])
+
+  return { lighting, setLighting, apply, sendPackets }
 }
 
 // =====================================================================

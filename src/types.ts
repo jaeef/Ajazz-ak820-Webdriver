@@ -1,5 +1,11 @@
 export type ReportIdMode = 'auto' | 'payload' | 'native'
 
+// Which wire protocol the keyboard speaks. 'auto' picks by USB VID:
+// 0x0C45 (Microdia/Sonix) -> 'sonix', 0x320F (Yichip/EVision) -> 'evision'.
+// The two families share nothing on the wire — see docs/protocol-notes.md.
+export type ProtocolFamily = 'auto' | 'evision' | 'sonix'
+export type ProtocolFamilyResolved = 'evision' | 'sonix'
+
 export type Direction = 0 | 1 | 2 | 3
 
 export interface LightingState {
@@ -36,6 +42,7 @@ export interface Settings {
   vid: number
   pid: number
   reportIdMode: ReportIdMode
+  protocolFamily: ProtocolFamily
   modes: string[]
   showAllDevices: boolean
 }
