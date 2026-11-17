@@ -1,4 +1,4 @@
-import type { Profile, Settings } from './types'
+import type { Profile, Settings, CalibrationResult } from './types'
 import { VID_DEFAULT, PID_DEFAULT, DEFAULT_MODES } from './protocol'
 
 // v4: corrected from the official driver RE — real VID/PID (0x0C45/0x1007) and
@@ -6,6 +6,7 @@ import { VID_DEFAULT, PID_DEFAULT, DEFAULT_MODES } from './protocol'
 // settings (old OpenRGB mode names + wrong VID/PID) don't mask the new table.
 const PROFILES_KEY = 'ak820_profiles_v2'
 const SETTINGS_KEY = 'ak820_settings_v4'
+const CALIBRATION_KEY = 'ak820_calibration_v1'
 
 function safeRead<T>(key: string, fallback: T): T {
   try {
@@ -85,8 +86,45 @@ export const settingsStore = {
     try {
       localStorage.removeItem(PROFILES_KEY)
       localStorage.removeItem(SETTINGS_KEY)
+      localStorage.removeItem(CALIBRATION_KEY)
     } catch {
       // ignore
     }
+  },
+}
+
+// =====================================================================
+// CALIBRATION — empirical per-mode verification results.
+// Keyed by mode number: re-testing a mode overwrites its entry so the log
+// always reflects the latest approval for each mode.
+// =====================================================================
+export const calibrationStore = {
+  load(): CalibrationResult[] {
+    return safeRead<CalibrationResult[]>(CALIBRATION_KEY, [])
+  },
+
+  save(results: CalibrationResult[]): void {
+    safeWrite(CALIBRATION_KEY, results)
+  },
+
+  // Upsert: if a result for the same mode exists, replace it; else append.
+  upsert(result: CalibrationResult): CalibrationResult[] {
+    const all = this.load()
+    const i = all.findIndex(r => r.mode === result.mode)
+    if (i >= 0) all[i] = result
+    else all.push(result)
+    all.sort((a, b) => a.mode - b.mode)
+    this.save(all)
+    return all
+  },
+
+  remove(mode: number): CalibrationResult[] {
+    const all = this.load().filter(r => r.mode !== mode)
+    this.save(all)
+    return all
+  },
+
+  clear(): void {
+    try { localStorage.removeItem(CALIBRATION_KEY) } catch { /* ignore */ }
   },
 }

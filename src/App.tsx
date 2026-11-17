@@ -1,24 +1,27 @@
-import { useCallback, useEffect, useState } from 'react'
-import type { LightingState, Profile, TabId } from './types'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import type { LightingState, Profile, TabId, PacketSnapshot, CalibrationResult } from './types'
 
 import { Header } from './ui/Header'
 import { ConnectionPanel } from './ui/ConnectionPanel'
-import { LightingPanel } from './ui/LightingPanel'
+import { SolidColorPanel } from './ui/SolidColorPanel'
 import { EffectsPanel } from './ui/EffectsPanel'
 import { ProfilesPanel } from './ui/ProfilesPanel'
 import { SettingsPanel } from './ui/SettingsPanel'
+import { CapturePanel } from './ui/CapturePanel'
+import { CalibrationModal } from './ui/CalibrationModal'
 import { StatusBar } from './ui/StatusBar'
 import { ModeEditModal } from './ui/ModeEditModal'
 
-import { modeName, MODE_STATIC, resolveProtocolFamily, hexToRgb } from './protocol'
+import { modeName, MODE_STATIC, resolveProtocolFamily, hexToRgb, hexDump } from './protocol'
 import {
-  useDevice, useSettings, useProfiles, useLightingState, useStatus, useActiveTab,
+  useDevice, useSettings, useProfiles, useLightingState, useStatus, useActiveTab, useCaptureLog, useCalibration,
 } from './hooks'
 
 const TABS: { id: TabId; label: string }[] = [
-  { id: 'lighting', label: 'Lighting' },
+  { id: 'lighting', label: 'Solid Color' },
   { id: 'effects', label: 'Effects' },
   { id: 'profiles', label: 'Profiles' },
+  { id: 'capture', label: 'Capture' },
   { id: 'settings', label: 'Settings' },
 ]
 
@@ -34,7 +37,30 @@ function App() {
   const [activeTab, setActiveTab] = useActiveTab('lighting')
   const [showModeModal, setShowModeModal] = useState(false)
 
-  const { lighting, setLighting, apply, sendPackets } = useLightingState(device.controller, settings, resolveProtocolFamily(settings.protocolFamily, device.info?.vendorId))
+  // Resolve the wire protocol ONCE per connection/settings change. Disambiguate
+  // by VID + PID: the bundled AK820 is 0x0C45/0x1007 = EVision; the AK820 Pro
+  // is 0x0C45/0x8009 = Sonix; old Yichip is 0x320F = EVision. See protocol.ts.
+  const family = useMemo(
+    () => resolveProtocolFamily(settings.protocolFamily, device.info?.vendorId, device.info?.productId),
+    [settings.protocolFamily, device.info],
+  )
+
+  const { lighting, setLighting, apply, sendPackets } = useLightingState(device.controller, settings, family)
+  const capture = useCaptureLog(device.controller)
+  const calibration = useCalibration()
+
+  // Build a quick lookup map mode→{works,colorWorks} so the LightingPanel
+  // dropdown can badge verified modes (✓ works / ✗ broken) without scanning
+  // the full results array on every render.
+  const calibrationMap = useMemo(() => {
+    const m: Record<number, { works: string; colorWorks: string }> = {}
+    for (const r of calibration.results) m[r.mode] = { works: r.works, colorWorks: r.colorWorks }
+    return m
+  }, [calibration.results])
+
+  // Pending test: the packets captured during the last "Test & Approve" send,
+  // held until the user answers the modal. `null` = modal closed.
+  const [pendingTest, setPendingTest] = useState<{ packets: PacketSnapshot[] } | null>(null)
 
   // --- Connection ---
   const handleConnect = useCallback(async () => {
@@ -98,10 +124,9 @@ function App() {
   }, [apply, device.isConnected, lighting, settings.modes, ok, err])
 
   // --- Solid color: pick a full-RGB color and light the whole keyboard in it.
-  // Forces Static mode (firmware 0x06), the one mode both EVision and Sonix
-  // honor the R/G/B bytes for. Picks update state immediately so the wire
-  // preview reflects Static + color; the apply passes an explicit override so
-  // there's no stale-state race between picking and clicking Apply.
+  // Forces Static mode (firmware 0x06) and persists it — when the user applies
+  // a solid color, the mode IS Static. The per-key color data in the packet
+  // sequence overwrites whatever the previous effect left in the LED buffer.
   const handleSolidColor = useCallback((hex: string) => {
     const { r, g, b } = hexToRgb(hex)
     setLighting({ ...lighting, mode: MODE_STATIC, rainbow: false, r, g, b })
@@ -114,18 +139,41 @@ function App() {
                 .catch(e => err('Apply failed: ' + (e as Error).message))
   }, [setLighting, apply, lighting, device.isConnected, ok, err])
 
+  // --- Test & Approve: apply the current mode+color, snapshot the exact
+  // packets that went on the wire, then open the approval modal. The user
+  // confirms whether the mode works and whether color changes are honored;
+  // the answer + the captured packets are saved to the stable-modes table.
+  const handleTestMode = useCallback(async () => {
+    const before = device.controller.log.length
+    try {
+      await apply()
+    } catch (e) {
+      err('Test apply failed: ' + (e as Error).message)
+      return
+    }
+    const sent = device.controller.log.slice(before)
+    const snapshots: PacketSnapshot[] = sent.map(e => ({
+      dir: e.dir,
+      transport: e.transport,
+      reportId: e.reportId,
+      hex: hexDump(e.data),
+      bytes: Array.from(e.data),
+      timestamp: e.timestamp,
+    }))
+    setPendingTest({ packets: snapshots })
+    info(`Test sent: ${modeName(lighting.mode, settings.modes)} (${snapshots.length} packet${snapshots.length === 1 ? '' : 's'}). Check the keyboard and approve below.`)
+  }, [apply, device.controller, lighting.mode, settings.modes, err, info])
+
+  const handleSaveCalibration = useCallback((result: CalibrationResult) => {
+    calibration.saveResult(result)
+    ok(`Saved ${result.modeName} (mode ${result.mode}) to stable modes table.`)
+  }, [calibration, ok])
+
   // --- Per-key RGB: send a custom color map built by the KeyboardView ---
   const handleApplyPerKey = useCallback((packets: Uint8Array[]) => {
     sendPackets(packets).then(() => ok(`${device.isConnected ? 'Sent' : 'Recorded (idle)'} per-key colors (${packets.length} packets)`))
                         .catch(e => err('Per-key apply failed: ' + (e as Error).message))
   }, [sendPackets, device.isConnected, ok, err])
-
-  // --- Live color sink for the Effects tab (Audio React / Screen Color) ---
-  // Pushes a Static-color frame using the current brightness. Effects call this
-  // many times a second; apply() already serializes onto the working transport.
-  const pushColor = useCallback((r: number, g: number, b: number) => {
-    return apply({ ...lighting, mode: MODE_STATIC, r, g, b, rainbow: false })
-  }, [apply, lighting])
 
   // --- Profile save / load / delete / import ---
   const handleSaveProfile = useCallback((profile: Profile) => {
@@ -171,10 +219,11 @@ function App() {
 
   // --- Reset all ---
   const handleReset = useCallback(() => {
-    if (!confirm('Clear all profiles and settings? This cannot be undone.')) return
+    if (!confirm('Clear all profiles, settings, and calibration data? This cannot be undone.')) return
     resetSettings()
+    calibration.clearAll()
     setTimeout(() => location.reload(), 50)
-  }, [resetSettings])
+  }, [resetSettings, calibration])
 
   // --- Mode name editor ---
   const handleSaveModes = useCallback((next: string[]) => {
@@ -225,21 +274,30 @@ function App() {
           </div>
 
           {activeTab === 'lighting' && (
-            <LightingPanel
+            <SolidColorPanel
               lighting={lighting}
-              modes={settings.modes}
               onChange={setLighting}
               onSolidColor={handleSolidColor}
-              onApply={handleApply}
               onApplySolid={handleApplySolid}
-              onApplyPerKey={handleApplyPerKey}
+              onTestMode={handleTestMode}
               isLive={device.isConnected}
-              family={resolveProtocolFamily(settings.protocolFamily, device.info?.vendorId)}
+              family={family}
+              calibrated={calibrationMap}
             />
           )}
 
           {activeTab === 'effects' && (
-            <EffectsPanel sink={pushColor} isLive={device.isConnected} />
+            <EffectsPanel
+              lighting={lighting}
+              modes={settings.modes}
+              onChange={setLighting}
+              onApply={handleApply}
+              onApplyPerKey={handleApplyPerKey}
+              onTestMode={handleTestMode}
+              isLive={device.isConnected}
+              family={family}
+              calibrated={calibrationMap}
+            />
           )}
 
           {activeTab === 'profiles' && (
@@ -251,6 +309,20 @@ function App() {
               onDelete={handleDeleteProfile}
               onLoad={handleLoadProfile}
               onImport={handleImportProfiles}
+            />
+          )}
+
+          {activeTab === 'capture' && (
+            <CapturePanel
+              log={capture.log}
+              version={capture.version}
+              paused={capture.paused}
+              setPaused={capture.setPaused}
+              onClear={capture.clear}
+              isLive={device.isConnected}
+              calibration={calibration.results}
+              onRemoveCalibration={calibration.removeResult}
+              onClearCalibration={calibration.clearAll}
             />
           )}
 
@@ -272,6 +344,19 @@ function App() {
           modes={settings.modes}
           onClose={() => setShowModeModal(false)}
           onSave={handleSaveModes}
+        />
+      )}
+
+      {pendingTest && (
+        <CalibrationModal
+          mode={lighting.mode}
+          modeNames={settings.modes}
+          lighting={lighting}
+          family={family}
+          packets={pendingTest.packets}
+          isLive={device.isConnected}
+          onSave={handleSaveCalibration}
+          onClose={() => setPendingTest(null)}
         />
       )}
     </>

@@ -52,10 +52,65 @@ export interface StatusMessage {
   type: '' | 'success' | 'error' | 'info'
 }
 
-export type TabId = 'lighting' | 'effects' | 'profiles' | 'settings'
+export type TabId = 'lighting' | 'effects' | 'profiles' | 'settings' | 'capture'
 
 export interface SentPacket {
   reportId: number
   data: Uint8Array
   timestamp: number
+}
+
+// One entry in the raw I/O capture log. The capture environment records every
+// byte that crosses the HID boundary in either direction so the user can
+// compare the web driver's wire format against the official driver (e.g. with
+// a Wireshark/USBPcap capture) and verify the keyboard's replies.
+//   • dir 'out' = host → device (OUTPUT or FEATURE report we sent)
+//   • dir 'in'  = device → host (INPUT report the keyboard sent unsolicited,
+//     delivered via WebHID's `inputreportevent`)
+export type PacketDirection = 'in' | 'out'
+export type PacketTransport = 'output' | 'feature' | 'input'
+
+export interface PacketLogEntry {
+  id: number
+  dir: PacketDirection
+  transport: PacketTransport
+  reportId: number
+  data: Uint8Array
+  timestamp: number
+}
+
+// =====================================================================
+// Mode calibration
+//
+// Empirical per-mode verification. When the user clicks "Test & Approve"
+// the app applies the current mode+color to the keyboard, snapshots the
+// exact packets that went on the wire, then asks the user two questions:
+//   1. Did the mode take effect at all?        (works: boolean)
+//   2. Can you change the color in this mode? (colorWorks: boolean)
+// The answer + the captured packets + timestamp are persisted as a
+// CalibrationResult. The collection of all results forms the "stable modes"
+// table — a known-good mapping of which firmware modes this specific keyboard
+// actually supports and which honor the picked RGB.
+// =====================================================================
+export type TriState = 'yes' | 'no' | 'unknown'
+
+export interface PacketSnapshot {
+  dir: PacketDirection
+  transport: PacketTransport
+  reportId: number
+  hex: string
+  bytes: number[]
+  timestamp: number
+}
+
+export interface CalibrationResult {
+  mode: number
+  modeName: string
+  works: TriState
+  colorWorks: TriState
+  notes: string
+  testedAt: number
+  family: ProtocolFamilyResolved
+  lighting: LightingState
+  packets: PacketSnapshot[]
 }

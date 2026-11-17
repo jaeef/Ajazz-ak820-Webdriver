@@ -130,20 +130,32 @@ what previously selected the wrong effects.
 
 ### Lighting packet (sent on every "Apply"):
 
+The 21-byte data block written at config offset 0 (confirmed by decoding a
+capture from the official driver):
+
 ```
-offset:  0   1   2   3   4   5   8   9  10  11  12  13 14 15   ... 63
-value:  04  CKL CKH 06  08  00   M  BR  SP  DR RND   R  G  B   ... 00
+data byte:  0    1    2    3    4    5    6    7    8    9   10-20
+value:     DIR  03   MOD  BRT  SPD  RND  R    G    B    03   00…
 ```
 
-- byte 0 = `0x04` report-id / command-class prefix
-- bytes 1-2 = 16-bit little-endian **checksum** = `sum(bytes[3..63])`
-- byte 3 = `0x06` (set-parameter), byte 4 = `0x08` (size), byte 5 = `0x00` (mode parameter)
-- `M` = mode id (0x01-0x12, 0x14)
-- `BR` = brightness (0-4, 0 = off)
-- `SP` = speed (0-5, 0 = fastest)
-- `DR` = direction (Left=0, Right=1, Up=2, Down=3)
+- `DIR` = direction (Left=0, Up=1, Down=2, Right=3)
+- byte 1 = `0x03` fixed constant (always 3 in official-driver captures)
+- `MOD` = mode id (0x01-0x12, 0x14)
+- `BRT` = brightness (0-4, 0 = off, DIRECT not inverted)
+- `SPD` = speed (0-5, 0 = fastest)
 - `RND` = random-color flag (the "Rainbow" toggle)
 - `R/G/B` = color channels
+- byte 9 = `0x03` fixed constant (always 3 in official-driver captures)
+
+This data block is wrapped in the 64-byte HID frame:
+
+```
+frame:  04  CKL CKH 06  15  00 00  [21-byte data]  [zeros]  …  63
+```
+
+- byte 0 = `0x04` report-id / command-class prefix (sent as WebHID reportId)
+- bytes 1-2 = 16-bit little-endian **checksum** = unsigned `sum(bytes[3..63])`
+- byte 3 = `0x06` (set-parameter), byte 4 = `0x15` (size = 21), bytes 5-6 = offset `0x0000`
 
 For WebHID the call is `device.sendReport(reportId, payload)`, where the report
 ID is auto-resolved from the device descriptor (see `resolveSend` in

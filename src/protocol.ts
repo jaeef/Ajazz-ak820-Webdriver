@@ -99,8 +99,7 @@ export const DEFAULT_MODES: string[] = [
 // (Screen Color) are omitted because they need host mic/screen capture that
 // this web app does not implement yet.
 export const DEFAULT_MODE_ORDER: number[] = [
-  0x14, // 20 Custom (per-key) — picked color
-  0x06, // 6  Static — picked color
+  0x06, // 6  Static — picked color (confirmed by capture)
   0x01, // 1  Wave
   0x02, // 2  Cloud
   0x03, // 3  Vortex
@@ -202,31 +201,42 @@ export function buildEndPacket(): Uint8Array {
 }
 
 // Build the 21-byte lighting state data block that the firmware expects
-// at config offset 0. Confirmed by disassembling the official driver's
-// struct-population code (this+0x21C8, copied from this+0x17E0).
+// at config offset 0. Layout confirmed by decoding a capture from the
+// OFFICIAL driver (ak820-capture-1784532299305.json):
 //
 // Byte layout (21 bytes):
-//   0: direction (0=Left, 1=Up, 2=Down, 3=Right — same as UI enum)
-//   1: mode (firmware mode ID from default_light.json)
-//   2: speed (0-4, 0=fastest)
-//   3: brightness INVERTED (4 - actual, so 4=off, 0=max)
+//   0: 0x03  — FIXED constant (always 3 in every official-driver packet)
+//   1: mode  — firmware mode ID from default_light.json
+//   2: brightness — DIRECT (0=off, 4=max; NOT inverted)
+//   3: speed (0-5; 0 = fastest)
 //   4: rainbow/multicolor flag (0 or 1)
 //   5: Red
 //   6: Green
 //   7: Blue
-//   8: selectItem / direction confirmation (mirror of byte 0)
+//   8: 0x03  — FIXED constant (always 3 in every official-driver packet)
 //   9-20: zeros (padding / reserved by firmware)
+//
+// The ORIGINAL code had mode at data[1] and R/G/B at data[5..7] — both
+// CORRECT. The original bugs were: data[0] was direction (should be 0x03),
+// data[2] and data[3] were swapped (speed vs brightness), data[3] was
+// inverted, and data[8] was direction (should be 0x03). The speed/brightness
+// swap meant: when speed=0, firmware saw brightness=0 (OFF) → Static mode
+// appeared dark → "colors can't be set". Modes still worked because mode
+// was at data[1] (correct) and effect modes don't need brightness to animate.
+//
+// A previous "off by one" fix was WRONG — it shifted mode from data[1] to
+// data[2] and put 0x03 at data[1], which broke mode selection entirely.
 function buildLightingData(o: LightingState): Uint8Array {
   const data = new Uint8Array(0x15) // 21 bytes
-  data[0] = clamp(o.direction, 0, 3)
-  data[1] = clamp(o.mode, 0, 0xff)
-  data[2] = clamp(o.speed, 0, MAX_SPEED)
-  data[3] = MAX_BRIGHTNESS - clamp(o.brightness, 0, MAX_BRIGHTNESS) // INVERTED
-  data[4] = o.rainbow ? 1 : 0
-  data[5] = clamp(o.r, 0, 0xff)
-  data[6] = clamp(o.g, 0, 0xff)
-  data[7] = clamp(o.b, 0, 0xff)
-  data[8] = clamp(o.direction, 0, 3)
+  data[0] = 0x03 // FIXED — confirmed from official-driver capture
+  data[1] = clamp(o.mode, 0, 0xff) // mode — was already correct in original
+  data[2] = clamp(o.brightness, 0, MAX_BRIGHTNESS) // brightness DIRECT (was speed)
+  data[3] = clamp(o.speed, 0, MAX_SPEED) // speed (was inverted brightness)
+  data[4] = o.rainbow ? 1 : 0 // rainbow — was already correct
+  data[5] = clamp(o.r, 0, 0xff) // R — was already correct
+  data[6] = clamp(o.g, 0, 0xff) // G — was already correct
+  data[7] = clamp(o.b, 0, 0xff) // B — was already correct
+  data[8] = 0x03 // FIXED — confirmed from official-driver capture
   return data
 }
 
@@ -297,9 +307,13 @@ export function buildCustomModePacket(o: LightingState): Uint8Array[] {
   return buildLightingPackets({ ...o, mode: MODE_CUSTOM, rainbow: false })
 }
 
-// Accurate solid color: switch to per-key Custom mode, then write the exact
-// RGB to every LED. This bypasses the firmware's quantized "mode color" so the
-// keyboard shows the true picked color. Returns the full packet sequence.
+// Accurate solid color: switch to Static mode (firmware 6) via the confirmed
+// 3-packet CMD 0x06 path, THEN write the exact RGB to every LED via CMD 0x05
+// chunks. The per-key write is the "delete previous effect / accept new
+// color" step — without it, the firmware keeps the old LED color buffer from
+// whatever effect was running, so switching from a rainbow effect to Static
+// shows rainbow instead of the picked color. This is why solid color worked
+// in earlier code (which sent per-key data) and broke when I removed it.
 export function buildSolidColorPackets(o: LightingState): Uint8Array[] {
   const buf = new Uint8Array(LED_COUNT * 3)
   for (let i = 0; i < LED_COUNT; i++) {
@@ -307,9 +321,10 @@ export function buildSolidColorPackets(o: LightingState): Uint8Array[] {
     buf[i * 3 + 1] = o.g & 0xff
     buf[i * 3 + 2] = o.b & 0xff
   }
-  // Send mode switch (BEGIN + config write + END), then color data (BEGIN + color chunks + END)
+  // 1. Mode switch to Static (BEGIN + WRITE + END) — confirmed 3-packet path
+  // 2. Per-key color data (BEGIN + color chunks + END) — overwrites effect LEDs
   return [
-    ...buildCustomModePacket(o),
+    ...buildLightingPackets({ ...o, mode: MODE_STATIC, rainbow: false }),
     buildBeginPacket(),
     ...buildCustomColorPackets(buf),
     buildEndPacket(),
@@ -319,19 +334,42 @@ export function buildSolidColorPackets(o: LightingState): Uint8Array[] {
 // =====================================================================
 // PROTOCOL FAMILY RESOLUTION
 //
-// "AK820" is sold on two unrelated controllers. USB VID is the only reliable
-// disambiguator (see docs/protocol-notes.md):
-//   • 0x0C45 = Microdia / Sonix  -> 64-byte FEATURE report, mode at byte 0
-//   • 0x320F = Yichip / "EVision" -> 64-byte OUTPUT report, cmd 0x06 frame
-// protocol.ts originally drove every unit as EVision, so a Sonix keyboard
-// (VID 0x0C45) received EVision packets and silently ignored them — which is
-// why "single color does nothing" on those units.
+// "AK820" is sold on two unrelated controllers. USB VID *alone* is NOT a
+// reliable disambiguator: the bundled official-driver unit (VID 0x0C45 /
+// PID 0x1007, chip VS11K34A — the "eevision" family, see the CORRECTION block
+// in docs/protocol-notes.md) is **EVision** and speaks a 64-byte OUTPUT
+// report, while the AK820 *Pro* reuses the same VID 0x0C45 with PID 0x8009
+// and is **Sonix** (64-byte FEATURE report, mode at byte 0). The older
+// Yichip/EVision boards used VID 0x320F.
+//
+// So `auto` decides by PID first, then VID:
+//   • PID 0x8009                -> Sonix  (AK820 Pro)
+//   • VID 0x320F                -> EVision (old Yichip family)
+//   • anything else (incl. the bundled 0x0C45/0x1007 and unknown/demo)
+//                              -> EVision (the default AK820 this driver targets)
+//
+// Before this fix, `auto` mapped VID 0x0C45 -> 'sonix', so the bundled AK820
+// received Sonix feature-report packets (mode at byte 0, 0x55 0xAA trailer)
+// which its EVision controller silently ignored — which is exactly why
+// "toggling the software did nothing" and the color/mode never matched.
 // =====================================================================
-export function resolveProtocolFamily(setting: ProtocolFamily, vid?: number): ProtocolFamilyResolved {
+export const VID_EVISION_OLD = 0x320f // legacy Yichip / OpenRGB generic EVision
+export const PID_SONIX_AK820_PRO = 0x8009 // AK820 Pro (Sonix) wired PID
+
+export function resolveProtocolFamily(
+  setting: ProtocolFamily,
+  vid?: number,
+  pid?: number,
+): ProtocolFamilyResolved {
   if (setting === 'sonix') return 'sonix'
   if (setting === 'evision') return 'evision'
-  // auto: 0x0C45 is Sonix; anything else (incl. 0x320F and unknown/demo) -> EVision
-  return vid === VID_DEFAULT ? 'sonix' : 'evision'
+  // auto: PID 0x8009 is the Sonix AK820 Pro regardless of VID.
+  if (pid === PID_SONIX_AK820_PRO) return 'sonix'
+  // Old Yichip VID 0x320F is the EVision family.
+  if (vid === VID_EVISION_OLD) return 'evision'
+  // The bundled AK820 (0x0C45/0x1007) and any unknown/demo unit default to
+  // EVision — the protocol this driver was built against.
+  return 'evision'
 }
 
 // =====================================================================
@@ -374,20 +412,22 @@ export function buildSonixLightingPacket(o: LightingState): Uint8Array {
 }
 
 // Single source of truth for "what packets does Apply send" — shared by the
-// apply path (hooks.ts) and the wire inspector (LightingPanel) so the hex the
-// user sees is exactly what goes on the wire.
+// apply path (hooks.ts) and the wire inspector so the hex the user sees is
+// exactly what goes on the wire.
+//
+//   • Effect modes (Wave, Breathing, …): 3-packet CMD 0x06 (mode switch only)
+//   • Static mode (6): mode switch + per-key color data (CMD 0x05 chunks)
+//     The per-key write overwrites the LED buffer left by whatever effect was
+//     running before — this is the "delete previous / accept new" step. Without
+//     it, switching from a rainbow effect to Static shows rainbow, not the
+//     picked color.
 export function buildApplyPackets(l: LightingState, family: ProtocolFamilyResolved): Uint8Array[] {
   if (family === 'sonix') {
-    // Sonix has no documented per-key Custom blob (protocol-notes flags it
-    // un-RE'd). Route per-key "Solid Color" to the Static single-color frame
-    // so the picked RGB still lights the whole board.
-    const mode = isPerKeyMode(l.mode) ? MODE_STATIC : l.mode
-    return [buildSonixLightingPacket({ ...l, mode, rainbow: isPerKeyMode(l.mode) ? false : l.rainbow })]
+    return [buildSonixLightingPacket({ ...l, rainbow: l.rainbow })]
   }
-  // EVision (this keyboard): per-key Custom sends a mode switch + color chunks.
-  // Everything else (including Static) uses the BEGIN + WRITE(21 bytes) + END
-  // transaction confirmed by disassembling the official driver.
-  return isPerKeyMode(l.mode) ? buildSolidColorPackets(l) : buildLightingPackets(l)
+  // EVision: Static mode needs per-key color data to override the previous
+  // effect's LED buffer. All other modes use just the 3-packet mode switch.
+  return l.mode === MODE_STATIC ? buildSolidColorPackets(l) : buildLightingPackets(l)
 }
 
 // =====================================================================
@@ -434,7 +474,7 @@ export function hexToRgb(hex: string): { r: number; g: number; b: number } {
 }
 
 export const DEFAULT_LIGHTING: LightingState = {
-  mode: MODE_CUSTOM, // Solid Color (accurate) — true full-RGB by default
+  mode: MODE_STATIC, // Static (firmware 6) — the one mode confirmed by capture
   r: 255,
   g: 0,
   b: 0,

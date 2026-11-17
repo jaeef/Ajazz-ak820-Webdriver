@@ -35,17 +35,18 @@ export function SettingsPanel({ settings, onChange, onEditModes, onReset }: Prop
           onChange={e => onChange({ ...settings, protocolFamily: e.target.value as Settings['protocolFamily'] })}
           style={{ flex: 1 }}
         >
-          <option value="auto">Auto — by USB VID (recommended)</option>
-          <option value="sonix">Sonix / Microdia (VID 0x0C45) — AK820 Pro</option>
-          <option value="evision">EVision / Yichip (VID 0x320F)</option>
+          <option value="auto">Auto — by USB VID + PID (recommended)</option>
+          <option value="evision">EVision / eevision (OUTPUT report, 64-byte 0x06 frame)</option>
+          <option value="sonix">Sonix / Microdia (feature report, mode at byte 0)</option>
         </select>
       </div>
       <div className="help" style={{ marginTop: -4 }}>
-        <b>Auto</b> picks the wire protocol from the connected keyboard's USB Vendor ID:
-        0x0C45 → Sonix (64-byte feature report, mode at byte 0), 0x320F → EVision (64-byte
-        output report, cmd 0x06). If your single color does nothing, your unit is likely
-        Sonix; if modes that worked before stop, switch back to <b>EVision</b>. The Wire
-        format box on the Lighting tab shows exactly which bytes each option sends.
+        <b>Auto</b> picks the wire protocol from the connected keyboard's USB IDs:
+        PID <code>0x8009</code> → Sonix (AK820 Pro, 64-byte feature report); VID <code>0x320F</code> → EVision
+        (legacy Yichip); anything else — including the bundled AK820 <code>0x0C45</code>/<code>0x1007</code>
+        (chip VS11K34A, eevision family) — → <b>EVision</b> (64-byte OUTPUT report, <code>0x06</code> command
+        frame). This is the default AK820 this driver was reverse-engineered from. If lighting still does
+        nothing, force a family here and compare bytes on the <b>Capture</b> tab against the official driver.
       </div>
       <div className="row">
         <label>Report ID mode:</label>

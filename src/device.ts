@@ -1,4 +1,4 @@
-import type { DeviceInfo, SentPacket } from './types'
+import type { DeviceInfo, SentPacket, PacketLogEntry, PacketTransport } from './types'
 
 // The keyboard is a *composite* HID device exposing several interfaces. The
 // lighting protocol lives on the EVision vendor control interface, identified
@@ -10,6 +10,62 @@ export const EVISION_USAGE_PAGE = 0xff1c
 export const SONIX_USAGE_PAGE = 0xff13
 const VENDOR_USAGE_PAGES = [EVISION_USAGE_PAGE, SONIX_USAGE_PAGE]
 
+// =====================================================================
+// PacketLogger — shared raw I/O capture buffer used by both the Mock and
+// WebHID controllers. This is the "environment to capture the raw output and
+// input of the keyboard": every byte that crosses the HID boundary in either
+// direction is recorded here with direction, transport, report id, and a
+// timestamp, and subscribers are notified so the Capture tab can render live.
+//
+// Efficiency:
+//   • Bounded ring buffer (LOG_CAP entries). Older entries are dropped so a
+//     long session can't grow memory unbounded.
+//   • Subscribers are notified synchronously; the React hook batches via
+//     requestAnimationFrame so a burst of packets during one Apply triggers a
+//     single render, not N.
+// =====================================================================
+const LOG_CAP = 500
+
+class PacketLogger {
+  private entries: PacketLogEntry[] = []
+  private nextId = 1
+  private subs = new Set<(e: PacketLogEntry) => void>()
+
+  get log(): PacketLogEntry[] {
+    return this.entries
+  }
+
+  record(dir: PacketLogEntry['dir'], transport: PacketTransport, reportId: number, data: Uint8Array): PacketLogEntry {
+    const entry: PacketLogEntry = {
+      id: this.nextId++,
+      dir,
+      transport,
+      reportId,
+      data: new Uint8Array(data),
+      timestamp: Date.now(),
+    }
+    this.entries.push(entry)
+    if (this.entries.length > LOG_CAP) {
+      this.entries.splice(0, this.entries.length - LOG_CAP)
+    }
+    // Clone the subscriber set before invoking so a subscriber that unsubscribes
+    // mid-dispatch doesn't mutate the set we're iterating.
+    for (const cb of [...this.subs]) {
+      try { cb(entry) } catch { /* subscriber error must not break the send path */ }
+    }
+    return entry
+  }
+
+  subscribe(cb: (e: PacketLogEntry) => void): () => void {
+    this.subs.add(cb)
+    return () => { this.subs.delete(cb) }
+  }
+
+  clear(): void {
+    this.entries.length = 0
+  }
+}
+
 export interface DeviceController {
   readonly info: DeviceInfo | null
   readonly isMock: boolean
@@ -17,6 +73,13 @@ export interface DeviceController {
   // numbered vs. unnumbered reports (WebHID is strict about this).
   readonly featureReportIds: number[]
   readonly outputReportIds: number[]
+  // Raw I/O capture log — sent packets + received INPUT reports. The Capture
+  // tab renders this live; Export uses it to dump a session to disk.
+  readonly log: PacketLogEntry[]
+  // Subscribe to every new captured packet (both directions). Returns an
+  // unsubscribe function.
+  onPacket(cb: (e: PacketLogEntry) => void): () => void
+  clearLog(): void
   connect(vid: number, pid: number, showAll: boolean): Promise<DeviceInfo>
   disconnect(): Promise<void>
   sendOutputReport(reportId: number, data: Uint8Array): Promise<void>
@@ -30,6 +93,8 @@ export class MockController implements DeviceController {
   readonly featureReportIds: number[] = []
   readonly outputReportIds: number[] = []
   readonly sent: SentPacket[] = []
+  private logger = new PacketLogger()
+  readonly log: PacketLogEntry[] = this.logger.log
 
   async connect(vid: number, pid: number, _showAll: boolean): Promise<DeviceInfo> {
     return {
@@ -42,23 +107,23 @@ export class MockController implements DeviceController {
   async disconnect(): Promise<void> {}
 
   async sendOutputReport(reportId: number, data: Uint8Array): Promise<void> {
-    this.record(reportId, data)
+    this.record(reportId, data, 'output')
   }
 
   async sendFeatureReport(reportId: number, data: Uint8Array): Promise<void> {
-    this.record(reportId, data)
+    this.record(reportId, data, 'feature')
   }
 
-  private record(reportId: number, data: Uint8Array): void {
+  private record(reportId: number, data: Uint8Array, transport: PacketTransport): void {
     this.sent.push({ reportId, data: new Uint8Array(data), timestamp: Date.now() })
+    this.logger.record('out', transport, reportId, data)
   }
+
+  onPacket(cb: (e: PacketLogEntry) => void): () => void { return this.logger.subscribe(cb) }
+  clearLog(): void { this.logger.clear(); this.sent.length = 0 }
 
   async listGranted(): Promise<DeviceInfo[]> {
     return []
-  }
-
-  clearLog(): void {
-    this.sent.length = 0
   }
 }
 
@@ -103,6 +168,12 @@ export class WebHIDController implements DeviceController {
   featureReportIds: number[] = []
   outputReportIds: number[] = []
   private device: HIDDevice | null = null
+  private logger = new PacketLogger()
+  readonly log: PacketLogEntry[] = this.logger.log
+  // Bound handler so we can remove it on disconnect. Typed as EventListener
+  // because addEventListener expects (e: Event) => unknown; we narrow to
+  // HIDInputReportEvent inside (strict-function-types safe).
+  private onInputReport: EventListener | null = null
 
   async connect(vid: number, pid: number, showAll: boolean): Promise<DeviceInfo> {
     if (!('hid' in navigator)) {
@@ -143,6 +214,17 @@ export class WebHIDController implements DeviceController {
       await this.device.open()
     }
 
+    // Attach the INPUT-report listener once. The keyboard emits unsolicited
+    // reports (e.g. ACKs, key activity on the vendor interface) on this event;
+    // capturing them is what makes this a complete raw-I/O environment.
+    this.onInputReport = (e: Event) => {
+      const ev = e as HIDInputReportEvent
+      const dv = ev.data
+      const bytes = new Uint8Array(dv.buffer, dv.byteOffset, dv.byteLength)
+      this.logger.record('in', 'input', ev.reportId, bytes)
+    }
+    this.device.addEventListener('inputreport', this.onInputReport)
+
     const featureIds = collection ? reportIds(collection.featureReports) : []
     const outputIds = collection ? reportIds(collection.outputReports) : []
     this.featureReportIds = featureIds
@@ -165,12 +247,18 @@ export class WebHIDController implements DeviceController {
   }
 
   async disconnect(): Promise<void> {
-    try {
-      if (this.device && this.device.opened) {
-        await this.device.close()
+    if (this.device) {
+      if (this.onInputReport) {
+        this.device.removeEventListener('inputreport', this.onInputReport)
+        this.onInputReport = null
       }
-    } catch {
-      // ignore close errors
+      try {
+        if (this.device.opened) {
+          await this.device.close()
+        }
+      } catch {
+        // ignore close errors
+      }
     }
     this.device = null
     this.info = null
@@ -181,12 +269,17 @@ export class WebHIDController implements DeviceController {
   async sendOutputReport(reportId: number, data: Uint8Array): Promise<void> {
     if (!this.device) throw new Error('Not connected')
     await this.device.sendReport(reportId, data as BufferSource)
+    this.logger.record('out', 'output', reportId, data)
   }
 
   async sendFeatureReport(reportId: number, data: Uint8Array): Promise<void> {
     if (!this.device) throw new Error('Not connected')
     await this.device.sendFeatureReport(reportId, data as BufferSource)
+    this.logger.record('out', 'feature', reportId, data)
   }
+
+  onPacket(cb: (e: PacketLogEntry) => void): () => void { return this.logger.subscribe(cb) }
+  clearLog(): void { this.logger.clear() }
 
   async listGranted(): Promise<DeviceInfo[]> {
     if (!('hid' in navigator)) return []

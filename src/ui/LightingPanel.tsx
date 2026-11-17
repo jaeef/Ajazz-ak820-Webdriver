@@ -16,11 +16,15 @@ interface Props {
   onApply: () => void
   onApplySolid: () => void
   onApplyPerKey: (packets: Uint8Array[]) => void
+  onTestMode: () => void
   isLive: boolean
   family: ProtocolFamilyResolved
+  // Map of mode → last calibration result, so the dropdown can badge
+  // verified modes. Optional — App may omit it if no results exist yet.
+  calibrated?: Record<number, { works: string; colorWorks: string }>
 }
 
-export function LightingPanel({ lighting, modes, onChange, onSolidColor, onApply, onApplySolid, onApplyPerKey, isLive, family }: Props) {
+export function LightingPanel({ lighting, modes, onChange, onSolidColor, onApply, onApplySolid, onApplyPerKey, onTestMode, isLive, family, calibrated }: Props) {
   const colorHex = rgbToHex(lighting.r, lighting.g, lighting.b)
   const isStatic = lighting.mode === MODE_STATIC
 
@@ -93,12 +97,23 @@ export function LightingPanel({ lighting, modes, onChange, onSolidColor, onApply
           value={lighting.mode}
           onChange={e => onChange({ ...lighting, mode: parseInt(e.target.value, 10) })}
         >
-          {DEFAULT_MODE_ORDER.map(value => (
-            <option key={value} value={value}>
-              {modeName(value, modes)}
-            </option>
-          ))}
+          {DEFAULT_MODE_ORDER.map(value => {
+            const c = calibrated?.[value]
+            const badge = c ? (c.works === 'yes' ? ' ✓' : c.works === 'no' ? ' ✗' : '') : ''
+            return (
+              <option key={value} value={value}>
+                {modeName(value, modes)}{badge}
+              </option>
+            )
+          })}
         </select>
+        <button
+          className="secondary"
+          onClick={onTestMode}
+          title="Apply this mode to the keyboard, capture the packets sent, and record whether the mode works and whether color can be changed"
+        >
+          Test &amp; Approve
+        </button>
       </div>
       <div className="help" style={{ marginTop: -4 }}>
         {isPerKeyMode(lighting.mode)

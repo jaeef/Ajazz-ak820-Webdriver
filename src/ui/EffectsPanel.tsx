@@ -1,100 +1,106 @@
-import { useState } from 'react'
-import type { ColorSink } from '../effects'
-import { useAudioReact, useScreenColor } from '../effects'
+import { useMemo } from 'react'
+import type { LightingState, ProtocolFamilyResolved } from '../types'
+import { WireFormatInspector } from './WireFormatInspector'
+import {
+  clampDirection, DEFAULT_MODE_ORDER, isPerKeyMode,
+  modeName, buildApplyPackets, MAX_BRIGHTNESS, MAX_SPEED,
+} from '../protocol'
 
 interface Props {
-  sink: ColorSink
+  lighting: LightingState
+  modes: string[]
+  onChange: (next: LightingState) => void
+  onApply: () => void
+  onApplyPerKey: (packets: Uint8Array[]) => void
+  onTestMode: () => void
   isLive: boolean
+  family: ProtocolFamilyResolved
+  calibrated?: Record<number, { works: string; colorWorks: string }>
 }
 
-// Host-computed effects (official driver modes 29 "Audio React" and 30 "Screen
-// Color"), reproduced with browser APIs. Each loop streams a live color to the
-// keyboard via the app's normal Static-color path.
-export function EffectsPanel({ sink, isLive }: Props) {
-  const [sensitivity, setSensitivity] = useState(1.5)
-  const [audioFps, setAudioFps] = useState(25)
-  const [screenFps, setScreenFps] = useState(15)
-
-  const audio = useAudioReact(sink, sensitivity, audioFps)
-  const screen = useScreenColor(sink, screenFps)
+export function EffectsPanel({
+  lighting, modes, onChange, onApply, onApplyPerKey, onTestMode,
+  isLive, family, calibrated,
+}: Props) {
+  const packets = useMemo(() => buildApplyPackets(lighting, family), [lighting, family])
 
   return (
     <div className="tab-panel active">
-      {!isLive && (
-        <div className="help" style={{ marginTop: 0 }}>
-          Idle mode — effects still run and packets are recorded, but nothing
-          lights up until you Connect a keyboard.
-        </div>
-      )}
+      <div className="row" style={{ fontWeight: 600 }}>Firmware Effects</div>
+      <div className="help" style={{ marginTop: -2 }}>
+        Pick a mode and apply it. Use <b>Test &amp; Approve</b> to verify which modes
+        work on your keyboard. To set a specific color, use the <b>Solid Color</b> tab.
+      </div>
 
-      {/* --- Audio React --- */}
-      <div className="row" style={{ marginTop: 4 }}>
-        <label style={{ fontWeight: 600 }}>Audio React</label>
-        <button onClick={() => (audio.running ? audio.stop() : audio.start())}>
-          {audio.running ? 'Stop' : 'Start'}
+      <div className="row">
+        <label>Mode:</label>
+        <select
+          style={{ flex: 1 }}
+          value={lighting.mode}
+          onChange={e => onChange({ ...lighting, mode: parseInt(e.target.value, 10) })}
+        >
+          {DEFAULT_MODE_ORDER.map(value => {
+            const c = calibrated?.[value]
+            const badge = c ? (c.works === 'yes' ? ' ✓' : c.works === 'no' ? ' ✗' : '') : ''
+            return (
+              <option key={value} value={value}>
+                {modeName(value, modes)}{badge}
+              </option>
+            )
+          })}
+        </select>
+        <button className="secondary" onClick={onTestMode} title="Apply this mode, capture packets, and record whether it works">
+          Test &amp; Approve
         </button>
-        <span className="pill">{audio.running ? 'live' : 'mode 29'}</span>
       </div>
-      <div className="help" style={{ marginTop: -4 }}>
-        Uses your microphone (or system audio via a virtual input). Bass → red,
-        mids → green, treble → blue.
-      </div>
+
       <div className="row">
-        <label>Sensitivity:</label>
+        <label>Brightness:</label>
         <div className="slider-row">
           <input
-            type="range" min={0.5} max={4} step={0.1}
-            value={sensitivity}
-            onChange={e => setSensitivity(parseFloat(e.target.value))}
+            type="range" min={0} max={MAX_BRIGHTNESS} step={1}
+            value={lighting.brightness}
+            onChange={e => onChange({ ...lighting, brightness: parseInt(e.target.value, 10) })}
           />
-          <span className="slider-value">{sensitivity.toFixed(1)}×</span>
+          <span className="slider-value">{lighting.brightness}</span>
         </div>
+        <span className="help" style={{ margin: 0 }}>0 = off, {MAX_BRIGHTNESS} = brightest</span>
       </div>
+
       <div className="row">
-        <label>Frame rate:</label>
+        <label>Speed:</label>
         <div className="slider-row">
           <input
-            type="range" min={5} max={30} step={1}
-            value={audioFps}
-            onChange={e => setAudioFps(parseInt(e.target.value, 10))}
+            type="range" min={0} max={MAX_SPEED} step={1}
+            value={lighting.speed}
+            onChange={e => onChange({ ...lighting, speed: parseInt(e.target.value, 10) })}
           />
-          <span className="slider-value">{audioFps} fps</span>
+          <span className="slider-value">{lighting.speed}</span>
         </div>
+        <span className="help" style={{ margin: 0 }}>0 = fastest, {MAX_SPEED} = slowest</span>
       </div>
-      {audio.error && <div className="help" style={{ color: '#ff6b6b' }}>Audio error: {audio.error}</div>}
 
-      <hr style={{ border: 'none', borderTop: '1px solid #333', margin: '16px 0' }} />
-
-      {/* --- Screen Color --- */}
       <div className="row">
-        <label style={{ fontWeight: 600 }}>Screen Color</label>
-        <button onClick={() => (screen.running ? screen.stop() : screen.start())}>
-          {screen.running ? 'Stop' : 'Start'}
+        <label>Direction:</label>
+        <select
+          value={lighting.direction}
+          onChange={e => onChange({ ...lighting, direction: clampDirection(parseInt(e.target.value, 10)) })}
+        >
+          <option value={0}>Left</option>
+          <option value={1}>Up</option>
+          <option value={2}>Down</option>
+          <option value={3}>Right</option>
+        </select>
+      </div>
+
+      <div className="row" style={{ marginTop: 12 }}>
+        <button onClick={onApply}>
+          {isLive ? 'Apply effect' : 'Apply effect (idle)'}
         </button>
-        <span className="pill">{screen.running ? 'live' : 'mode 30'}</span>
+        <span className="pill">Ctrl+Enter</span>
       </div>
-      <div className="help" style={{ marginTop: -4 }}>
-        Pick a screen/window/tab to share; the keyboard matches its average
-        color (ambient “ambilight”). Stop sharing to end.
-      </div>
-      <div className="row">
-        <label>Frame rate:</label>
-        <div className="slider-row">
-          <input
-            type="range" min={2} max={30} step={1}
-            value={screenFps}
-            onChange={e => setScreenFps(parseInt(e.target.value, 10))}
-          />
-          <span className="slider-value">{screenFps} fps</span>
-        </div>
-      </div>
-      {screen.error && <div className="help" style={{ color: '#ff6b6b' }}>Screen error: {screen.error}</div>}
 
-      <div className="help" style={{ marginTop: 16 }}>
-        Both effects drive the keyboard as a live <strong>Static</strong> color
-        (firmware mode 6) at your current brightness. Running both at once is not
-        recommended — the last color sent wins.
-      </div>
+      <WireFormatInspector packets={packets} family={family} />
     </div>
   )
 }
