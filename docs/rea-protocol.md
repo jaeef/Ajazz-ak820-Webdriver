@@ -42,7 +42,7 @@ Implemented in `src/protocol.ts` (`buildLightingData`, `buildKeyboardOptionsPack
 
 ### The saved capture is not vendor traffic
 
-`ak820-capture-1784532299305.json` has the shape of this app's own CapturePanel export (`id, t, dir, transport, reportId, hex, bytes`). Its `0x15` records are the web app's old 21-byte block (`0x15` = length 21), and the inbound copies are the keyboard echoing every report. An echo does not show the firmware accepted the data.
+`ak820-capture-1784532299305.json` (kept locally, not in the repo) has the shape of this app's own CapturePanel export (`id, t, dir, transport, reportId, hex, bytes`). Its `0x15` records are the web app's old 21-byte block (`0x15` = length 21), and the inbound copies are the keyboard echoing every report. An echo does not show the firmware accepted the data.
 
 Offsets in that JSON omit the leading `0x04`: subtract 1 from every packet offset above.
 
