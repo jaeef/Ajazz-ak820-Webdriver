@@ -3,8 +3,8 @@ import type { LightingState, Direction, ReportIdMode, ProtocolFamily, ProtocolFa
 // =====================================================================
 // EVision keyboard protocol ("eevision" family)
 //
-// The Ajazz AK820 unit this targets (VID 0x0C45 / PID 0x1007, chip VS11K34A —
-// confirmed by RE of the official driver) is an "EVision" controller, the same
+// The Ajazz AK820 unit this targets (live-enumerated as VID 0x320F / PID 0x505B)
+// is an "EVision" controller, the same
 // command frame found in Redragon, Glorious GMMK, Tecware, Womier and rebadged
 // boards. The 64-byte frame below is ported from OpenRGB's
 // EVisionKeyboardController (GPL-2.0); the MODE IDS, however, are this unit's
@@ -15,25 +15,30 @@ import type { LightingState, Direction, ReportIdMode, ProtocolFamily, ProtocolFa
 //     report. Every packet is 64 bytes.
 //   • byte 0      : 0x04   (report-id / command class — see resolveSend)
 //   • bytes 1..2  : 16-bit little-endian checksum = sum of bytes 3..63
-//   • byte 3      : command (0x06 = set parameter, 0x11 = write colors, …)
-//   • Effect modes are set with command 0x06, parameter 0x00, 8 data bytes:
-//       { mode, brightness, speed, direction, random, r, g, b }
+//   • byte 3      : command (0x01 begin, 0x02 end, 0x06 write parameter block)
+//   • byte 4      : data length (0x1d = 29 for the lighting block)
+//   • bytes 5..6  : data offset, little-endian
+//   • bytes 8..   : data
+// Ground truth: live WriteFile hook on the vendor app driving a real AK820,
+// 36/36 writes decoded — see docs/rea-protocol.md.
 // =====================================================================
 
-// Identifiers confirmed by reverse-engineering the official driver
-// (AJAZZ AK820 有线RGB Keyboard.exe → DefaultData/Keyboard.json: VID 3141,
-// PID 4103; chip VS11K34A / "eevision" family). The earlier 0x320F/0x505B
-// values were OpenRGB's generic EVision IDs and did not match this unit.
-export const VID_DEFAULT = 0x0c45
-export const PID_DEFAULT = 0x1007
+// IDs the live AK820 reports (docs/rea-protocol.md). The vendor bundle's
+// Keyboard.json lists 0x0C45/0x1007, but the board the vendor app actually
+// talked to during the live capture enumerated as 0x320F/0x505B.
+export const VID_DEFAULT = 0x320f
+export const PID_DEFAULT = 0x505b
 
 export const PACKET_LENGTH = 64
 
 // Commands (byte 3)
 const CMD_BEGIN = 0x01
 const CMD_END = 0x02
-const CMD_WRITE_CONFIG = 0x05 // chunked write to config/LED region
-const CMD_SET_PARAMETER = 0x06 // chunked write to parameter region
+const CMD_SYNC = 0x03 // `03 22`, no data; vendor sends it before keymap/macro writes (purpose unknown)
+const CMD_WRITE_LIGHTING = 0x06 // 29-byte lighting block at offset 0
+const CMD_WRITE_KEYMAP = 0x09 // 128 × [type, modifier, usage] at offset 0
+const CMD_WRITE_PERKEY = 0x0b // 128 × [R, G, B] at offset 0x400
+const CMD_WRITE_MACROS = 0x15 // macro table, see buildMacroPackets
 
 // Report-id / command-class prefix the firmware expects in byte 0.
 const REPORT_PREFIX = 0x04
@@ -200,135 +205,166 @@ export function buildEndPacket(): Uint8Array {
   return pkt
 }
 
-// Build the 21-byte lighting state data block that the firmware expects
-// at config offset 0. Layout confirmed by decoding a capture from the
-// OFFICIAL driver (ak820-capture-1784532299305.json):
+// The 29-byte (0x1d) lighting block the vendor app writes at offset 0.
+// Decoded from live vendor-app traffic (docs/rea-protocol.md), e.g.
+//   04 20 03 06 1d 00 00 00 | 00 01 03 04 00 00 ff f0 05 … ff@28 … 02@33
 //
-// Byte layout (21 bytes):
-//   0: 0x03  — FIXED constant (always 3 in every official-driver packet)
-//   1: mode  — firmware mode ID from default_light.json
-//   2: brightness — DIRECT (0=off, 4=max; NOT inverted)
-//   3: speed (0-5; 0 = fastest)
-//   4: rainbow/multicolor flag (0 or 1)
-//   5: Red
-//   6: Green
-//   7: Blue
-//   8: 0x03  — FIXED constant (always 3 in every official-driver packet)
-//   9-20: zeros (padding / reserved by firmware)
+//   data[1]   mode       verified: 01 Corrugated / 02 Cloud / 05 Breath / 08 Ripples / 14 Custom
+//   data[2]   brightness observed 1..4
+//   data[3]   speed      observed 2..4
+//   data[4]   direction  verified: 0 = left→right / inside, 1 = right→left / outside
+//   data[5]   random-color flag, verified: rainbow swatch sets 1
+//   data[6..8] R,G,B     verified by clicking known palette swatches
+//   data[20]  0xff, data[25] 0x02  constant in every vendor write, meaning unknown
 //
-// The ORIGINAL code had mode at data[1] and R/G/B at data[5..7] — both
-// CORRECT. The original bugs were: data[0] was direction (should be 0x03),
-// data[2] and data[3] were swapped (speed vs brightness), data[3] was
-// inverted, and data[8] was direction (should be 0x03). The speed/brightness
-// swap meant: when speed=0, firmware saw brightness=0 (OFF) → Static mode
-// appeared dark → "colors can't be set". Modes still worked because mode
-// was at data[1] (correct) and effect modes don't need brightness to animate.
-//
-// A previous "off by one" fix was WRONG — it shifted mode from data[1] to
-// data[2] and put 0x03 at data[1], which broke mode selection entirely.
+// The previous 21-byte block (0x03 / RGB at data[5..7] / 0x03) was "confirmed"
+// against ak820-capture-*.json — but that file is this app's own CapturePanel
+// export, so it only echoed what we sent. The keyboard echoes every report,
+// so an echo is not acceptance.
 function buildLightingData(o: LightingState): Uint8Array {
-  const data = new Uint8Array(0x15) // 21 bytes
-  data[0] = 0x03 // FIXED — confirmed from official-driver capture
-  data[1] = clamp(o.mode, 0, 0xff) // mode — was already correct in original
-  data[2] = clamp(o.brightness, 0, MAX_BRIGHTNESS) // brightness DIRECT (was speed)
-  data[3] = clamp(o.speed, 0, MAX_SPEED) // speed (was inverted brightness)
-  data[4] = o.rainbow ? 1 : 0 // rainbow — was already correct
-  data[5] = clamp(o.r, 0, 0xff) // R — was already correct
-  data[6] = clamp(o.g, 0, 0xff) // G — was already correct
-  data[7] = clamp(o.b, 0, 0xff) // B — was already correct
-  data[8] = 0x03 // FIXED — confirmed from official-driver capture
+  const data = new Uint8Array(0x1d)
+  data[1] = clamp(o.mode, 0, 0xff)
+  data[2] = clamp(o.brightness, 0, MAX_BRIGHTNESS)
+  data[3] = clamp(o.speed, 0, MAX_SPEED)
+  data[4] = clamp(o.direction, 0, 3)
+  data[5] = o.rainbow ? 1 : 0
+  data[6] = clamp(o.r, 0, 0xff)
+  data[7] = clamp(o.g, 0, 0xff)
+  data[8] = clamp(o.b, 0, 0xff)
+  data[20] = 0xff
+  data[25] = 0x02
   return data
 }
 
-// Chunked write-data packet (CMD 0x06). Writes `data.length` bytes at
-// `offset` in the device's config memory. One packet per chunk.
-function buildWriteDataPacket(data: Uint8Array, offset: number): Uint8Array {
+// One write packet: byte 3 cmd, byte 4 length, bytes 5..6 offset LE, data from byte 8.
+function buildWritePacket(cmd: number, data: Uint8Array, offset: number): Uint8Array {
   const pkt = new Uint8Array(PACKET_LENGTH)
   pkt[0x00] = REPORT_PREFIX
-  pkt[0x03] = CMD_SET_PARAMETER // 0x06 — write data command
+  pkt[0x03] = cmd
   pkt[0x04] = data.length & 0xff
   pkt[0x05] = offset & 0xff
   pkt[0x06] = (offset >> 8) & 0xff
-  pkt.set(data.subarray(0, Math.min(data.length, PACKET_LENGTH - 0x08)), 0x08)
+  pkt.set(data, 0x08)
   applyChecksum(pkt)
   return pkt
 }
 
-// Full lighting apply sequence: BEGIN + WRITE(21 bytes) + END.
-// This is what the official driver sends for every lighting change.
-export function buildLightingPacket(o: LightingState): Uint8Array {
-  // Single packet representation for the wire inspector — but the real
-  // transport sends 3 packets (see buildLightingPackets below).
-  const data = buildLightingData(o)
-  return buildWriteDataPacket(data, 0)
-}
-
-// The actual packet sequence sent to the keyboard for a lighting update.
-export function buildLightingPackets(o: LightingState): Uint8Array[] {
-  const data = buildLightingData(o)
-  return [
-    buildBeginPacket(),
-    buildWriteDataPacket(data, 0),
-    buildEndPacket(),
-  ]
-}
-
-// Write-colors packet (per-key custom data) — one chunk, max 0x38 bytes.
-// Uses CMD 0x05 (CMD_WRITE_CONFIG), same frame as the config writer.
-export function buildColorChunkPacket(data: Uint8Array, offset: number): Uint8Array {
-  const pkt = new Uint8Array(PACKET_LENGTH)
-  pkt[0x00] = REPORT_PREFIX
-  pkt[0x03] = CMD_WRITE_CONFIG
-  pkt[0x04] = data.length & 0xff
-  pkt[0x05] = offset & 0xff
-  pkt[0x06] = (offset >> 8) & 0xff
-  pkt.set(data.subarray(0, Math.min(data.length, COLOR_CHUNK)), 0x08)
-  applyChecksum(pkt)
-  return pkt
-}
-
-// Per-key color buffer is 126 LEDs × 3 bytes, sent in 0x36-byte chunks.
-export const LED_COUNT = 126
-const COLOR_CHUNK = 0x36 // 54 bytes = 18 LEDs per packet
-
-// Split a full LED_COUNT×3 RGB buffer into the chunked CMD_WRITE_COLORS packets
-// the firmware expects (no mode-select packet — caller selects Custom first).
-export function buildCustomColorPackets(buf: Uint8Array): Uint8Array[] {
-  const packets: Uint8Array[] = []
-  for (let off = 0; off < buf.length; off += COLOR_CHUNK) {
-    packets.push(buildColorChunkPacket(buf.subarray(off, off + COLOR_CHUNK), off))
+// BEGIN + data split into 0x38-byte chunks + END — the vendor's framing for
+// every multi-packet write (keymap, per-key colors).
+const WRITE_CHUNK = 0x38
+function buildChunkedWrite(cmd: number, data: Uint8Array, baseOffset = 0): Uint8Array[] {
+  const pkts = [buildBeginPacket()]
+  for (let off = 0; off < data.length; off += WRITE_CHUNK) {
+    pkts.push(buildWritePacket(cmd, data.subarray(off, off + WRITE_CHUNK), baseOffset + off))
   }
-  return packets
+  pkts.push(buildEndPacket())
+  return pkts
 }
 
-// Select per-key Custom mode (carries brightness; color/random ignored here).
-// Now returns the full BEGIN + WRITE + END sequence.
+// Single packet representation for the wire inspector.
+export function buildLightingPacket(o: LightingState): Uint8Array {
+  return buildWritePacket(CMD_WRITE_LIGHTING, buildLightingData(o), 0)
+}
+
+// The packet sequence the vendor sends for any lighting change, Static included.
+export function buildLightingPackets(o: LightingState): Uint8Array[] {
+  return buildChunkedWrite(CMD_WRITE_LIGHTING, buildLightingData(o))
+}
+
+// Per-key colors: 128 LEDs × RGB, LED index = keymap slot (column-major,
+// Esc 0 / W 18 / Enter 107 verified). Vendor order: colors, then Custom mode.
+export const LED_COUNT = 128
+const PERKEY_OFFSET = 0x400
+
+export function buildCustomColorPackets(buf: Uint8Array): Uint8Array[] {
+  return buildChunkedWrite(CMD_WRITE_PERKEY, buf, PERKEY_OFFSET)
+}
+
 export function buildCustomModePacket(o: LightingState): Uint8Array[] {
   return buildLightingPackets({ ...o, mode: MODE_CUSTOM, rainbow: false })
 }
 
-// Accurate solid color: switch to Static mode (firmware 6) via the confirmed
-// 3-packet CMD 0x06 path, THEN write the exact RGB to every LED via CMD 0x05
-// chunks. The per-key write is the "delete previous effect / accept new
-// color" step — without it, the firmware keeps the old LED color buffer from
-// whatever effect was running, so switching from a rainbow effect to Static
-// shows rainbow instead of the picked color. This is why solid color worked
-// in earlier code (which sent per-key data) and broke when I removed it.
-export function buildSolidColorPackets(o: LightingState): Uint8Array[] {
-  const buf = new Uint8Array(LED_COUNT * 3)
-  for (let i = 0; i < LED_COUNT; i++) {
-    buf[i * 3 + 0] = o.r & 0xff
-    buf[i * 3 + 1] = o.g & 0xff
-    buf[i * 3 + 2] = o.b & 0xff
+// --- Key remap ---------------------------------------------------------
+// 128 slots × [type, modifier, usage]. type 0x20 = keyboard (modifier is the
+// HID modifier bitmask, usage the HID usage), 0x70 = macro (modifier = macro
+// index), 0x30 = consumer, 0xA0 = Fn, 0xD0 = Fn-layer. Default table captured
+// from the vendor app's keymap write; index = slot.
+export type KeyAssignment = readonly [number, number, number]
+export const KEYMAP_SLOTS = 128
+
+// ponytail: verbatim from the live capture (E:\Tools\ghidra-dist\default-keymap.txt).
+const DEFAULT_KEYMAP_HEX =
+  '20002920003520002B200039200200200100200053D0A201' +
+  '20003A20001E200014200004200064200800200054D0A202' +
+  '20003B20001F20001A20001620001D200400200055D0A203' +
+  '20003C20002020000820000720001B200000200056D0A204' +
+  '20003D20002120001520000920000620000020005FD0A205' +
+  '20003E20002220001720000A20001920002C200060D0A206' +
+  '20003F20002320001C20000B200005200000200061D0A207' +
+  '20004020002420001820000D20001120000020005CD0A208' +
+  '20004120002520000C20000E20001020000020005D200000' +
+  '20004220002620001220000F20003620400020005E200000' +
+  '200043200027200013200033200037A0010020005730E900' +
+  '20004420002D20002F20003420003820100020005A308301' +
+  '20004520002E20003020003220000020006520005B30E200' +
+  '30E20020002A20003120002820200020005020006230EA00' +
+  '20004720004920004C20004E200052200051200063200000' +
+  '20004820004A20004B20004D20005920004F200058200000'
+
+export function defaultKeymap(): KeyAssignment[] {
+  const out: KeyAssignment[] = []
+  for (let i = 0; i < KEYMAP_SLOTS; i++) {
+    const h = DEFAULT_KEYMAP_HEX.slice(i * 6, i * 6 + 6)
+    out.push([parseInt(h.slice(0, 2), 16), parseInt(h.slice(2, 4), 16), parseInt(h.slice(4, 6), 16)])
   }
-  // 1. Mode switch to Static (BEGIN + WRITE + END) — confirmed 3-packet path
-  // 2. Per-key color data (BEGIN + color chunks + END) — overwrites effect LEDs
-  return [
-    ...buildLightingPackets({ ...o, mode: MODE_STATIC, rainbow: false }),
-    buildBeginPacket(),
-    ...buildCustomColorPackets(buf),
-    buildEndPacket(),
-  ]
+  return out
+}
+
+// `04 25 00 03 22 00…` — sent once before each keymap/macro write.
+export function buildSyncPacket(): Uint8Array {
+  const pkt = new Uint8Array(PACKET_LENGTH)
+  pkt[0x00] = REPORT_PREFIX
+  pkt[0x03] = CMD_SYNC
+  pkt[0x04] = 0x22
+  applyChecksum(pkt)
+  return pkt
+}
+
+// --- Macros --------------------------------------------------------------
+// The vendor uploads only assigned macros, the first as index 0, and the key
+// slot gets [0x70, index, 0]. Block (two live samples):
+//   AA 55 | total len u16 | count u16 | 10 junk | 12 00 | n events u16 | 2 junk | events
+//   event = delay u16 (ms, after this event) | 0x8A down / 0x0A up | HID usage
+// The junk bytes differ between uploads (stale memory in the vendor app); we send zeros.
+// ponytail: one macro only — the multi-macro directory layout was never captured.
+export interface MacroEvent { usage: number; down: boolean; delay: number }
+export const MACRO_KEY: KeyAssignment = [0x70, 0, 0]
+
+export function buildMacroPackets(events: readonly MacroEvent[]): Uint8Array[] {
+  const data = new Uint8Array(22 + events.length * 4)
+  data.set([0xaa, 0x55, data.length & 0xff, data.length >> 8, 1, 0], 0)
+  data.set([0x12, 0, events.length & 0xff, events.length >> 8], 16)
+  events.forEach((e, i) => {
+    const d = clamp(e.delay, 0, 0xffff)
+    data.set([d & 0xff, d >> 8, e.down ? 0x8a : 0x0a, e.usage & 0xff], 22 + i * 4)
+  })
+  return [buildSyncPacket(), ...buildChunkedWrite(CMD_WRITE_MACROS, data)]
+}
+
+// Text → press/release events for a-z, 0-9, space and Enter.
+export function textToMacro(text: string, delay = 20): MacroEvent[] {
+  const usage = (c: string) =>
+    c >= 'a' && c <= 'z' ? 0x04 + c.charCodeAt(0) - 97
+    : c >= '1' && c <= '9' ? 0x1e + c.charCodeAt(0) - 49
+    : c === '0' ? 0x27 : c === ' ' ? 0x2c : c === '\n' ? 0x28 : -1
+  return [...text.toLowerCase()].map(usage).filter(u => u >= 0)
+    .flatMap(u => [{ usage: u, down: true, delay }, { usage: u, down: false, delay }])
+}
+
+export function buildKeymapPackets(map: readonly KeyAssignment[]): Uint8Array[] {
+  const data = new Uint8Array(KEYMAP_SLOTS * 3)
+  map.forEach((a, i) => data.set(a, i * 3))
+  return [buildSyncPacket(), ...buildChunkedWrite(CMD_WRITE_KEYMAP, data)]
 }
 
 // =====================================================================
@@ -415,19 +451,13 @@ export function buildSonixLightingPacket(o: LightingState): Uint8Array {
 // apply path (hooks.ts) and the wire inspector so the hex the user sees is
 // exactly what goes on the wire.
 //
-//   • Effect modes (Wave, Breathing, …): 3-packet CMD 0x06 (mode switch only)
-//   • Static mode (6): mode switch + per-key color data (CMD 0x05 chunks)
-//     The per-key write overwrites the LED buffer left by whatever effect was
-//     running before — this is the "delete previous / accept new" step. Without
-//     it, switching from a rainbow effect to Static shows rainbow, not the
-//     picked color.
+//   • EVision: BEGIN + 29-byte lighting block + END for every mode.
 export function buildApplyPackets(l: LightingState, family: ProtocolFamilyResolved): Uint8Array[] {
   if (family === 'sonix') {
     return [buildSonixLightingPacket({ ...l, rainbow: l.rainbow })]
   }
-  // EVision: Static mode needs per-key color data to override the previous
-  // effect's LED buffer. All other modes use just the 3-packet mode switch.
-  return l.mode === MODE_STATIC ? buildSolidColorPackets(l) : buildLightingPackets(l)
+  // EVision: the vendor sends only the lighting block, Static included.
+  return buildLightingPackets(l)
 }
 
 // =====================================================================

@@ -8,6 +8,7 @@ import { EffectsPanel } from './ui/EffectsPanel'
 import { ProfilesPanel } from './ui/ProfilesPanel'
 import { SettingsPanel } from './ui/SettingsPanel'
 import { CapturePanel } from './ui/CapturePanel'
+import { KeyRemapPanel } from './ui/KeyRemapPanel'
 import { CalibrationModal } from './ui/CalibrationModal'
 import { StatusBar } from './ui/StatusBar'
 import { ModeEditModal } from './ui/ModeEditModal'
@@ -20,6 +21,7 @@ import {
 const TABS: { id: TabId; label: string }[] = [
   { id: 'lighting', label: 'Solid Color' },
   { id: 'effects', label: 'Effects' },
+  { id: 'keys', label: 'Keys' },
   { id: 'profiles', label: 'Profiles' },
   { id: 'capture', label: 'Capture' },
   { id: 'settings', label: 'Settings' },
@@ -175,6 +177,12 @@ function App() {
                         .catch(e => err('Per-key apply failed: ' + (e as Error).message))
   }, [sendPackets, device.isConnected, ok, err])
 
+  // --- Key remap: send the keymap built by KeyRemapPanel ---
+  const handleSendKeymap = useCallback((packets: Uint8Array[], what: string) => {
+    sendPackets(packets).then(() => ok(`${device.isConnected ? 'Sent' : 'Recorded (idle)'} ${what}`))
+                        .catch(e => err('Keymap apply failed: ' + (e as Error).message))
+  }, [sendPackets, device.isConnected, ok, err])
+
   // --- Profile save / load / delete / import ---
   const handleSaveProfile = useCallback((profile: Profile) => {
     addProfile(profile)
@@ -298,6 +306,10 @@ function App() {
               family={family}
               calibrated={calibrationMap}
             />
+          )}
+
+          {activeTab === 'keys' && (
+            <KeyRemapPanel isLive={device.isConnected} onSend={handleSendKeymap} />
           )}
 
           {activeTab === 'profiles' && (
