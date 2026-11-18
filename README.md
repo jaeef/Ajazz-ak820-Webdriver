@@ -5,7 +5,8 @@ A browser-based WebHID driver for the **Ajazz AK820** mechanical keyboard. Repla
 ## What it does (v0.2)
 
 - **Lighting control** — firmware effect modes from the **official driver's own table** (`default_light.json`): Wave, Cloud, Vortex, Mixed Color, Breathing, Static, Reactive, Stone, Traverse, Starlight, Firework, Roll, Wave Bar, Cartoon, Rain, Scan, Marquee, Speed + per-key Custom. RGB picker, preset palette (13 official colors), brightness (0-4), speed (0-4), direction.
-- **Per-key RGB** — visual keyboard layout (82 keys, 75% AK820) with click-to-paint per-key colors. The key→LED index mapping (1:1, 0-125) was extracted from the official driver's `keyboarddevice.xml`. Sends full 126-LED color data via chunked CMD_WRITE_COLORS packets.
+- **Per-key RGB** — visual keyboard layout (82 keys, 75% AK820) with click-to-paint per-key colors. Sends all 128 LEDs via CMD `0x0B` (LED index = firmware key slot, captured from the vendor app), then selects Custom mode.
+- **Key remap** — Keys tab: point any key at any standard key (or disable it) and write the 128-slot keymap with CMD `0x09`. Restore defaults puts the factory keymap back. A typed-text macro (CMD `0x15`) can be assigned to any key.
 - **Effects (host-computed)** — the official app's PC-driven modes reproduced in the browser:
   - **Audio React** (mode 29) — microphone/system audio → reactive color (Web Audio API)
   - **Screen Color** (mode 30) — average color of a shared screen/window → ambient “ambilight” (Screen Capture API)
@@ -17,8 +18,8 @@ A browser-based WebHID driver for the **Ajazz AK820** mechanical keyboard. Repla
 
 ## What it does NOT do yet (planned v0.3+)
 
-- **Key remapping** — the official driver supports 12 function types (Default, Mouse, DPI, FireKey, StandardKeyboard, Multimedia, System, Macro, etc.); UI data extracted, USB protocol needs binary analysis
-- **Macro recording** — the official driver has a full macro editor (record, fixed-time, mouse actions, delays); UI data extracted, USB protocol needs binary analysis
+- **Remap to mouse / multimedia / macro targets** — keymap entry types are known (`30` consumer, `70` macro, `A0`/`D0` Fn) but only standard keys are offered
+- **More than one macro** — a single typed-text macro works (Keys tab); the multi-macro table layout hasn't been captured
 - **Static / GIF image upload to the TFT** — this lives in a separate open-source project ([Beattrey/ajazz-ak820-config](https://github.com/Beattrey/ajazz-ak820-config))
 
 > **Not applicable to this hardware:** time sync and a sleep timer are clock/TFT
@@ -122,7 +123,7 @@ ak820-web/
 ## How the protocol works (under the hood)
 
 This driver targets the AK820 whose official Windows app is bundled here
-(VID `0x0C45` / PID `0x1007`, chip `VS11K34A`, "eevision" family). Commands are
+(live-enumerated as VID `0x320F` / PID `0x505B`; the vendor bundle lists `0x0C45`/`0x1007`, chip `VS11K34A`). Commands are
 **HID OUTPUT reports** (`device.sendReport`) sent over the vendor control
 interface (usage page `0xFF1C` / `0xFF13`). The mode IDs come straight from the
 official driver's `default_light.json` — not OpenRGB's generic table, which is
@@ -130,32 +131,29 @@ what previously selected the wrong effects.
 
 ### Lighting packet (sent on every "Apply"):
 
-The 21-byte data block written at config offset 0 (confirmed by decoding a
-capture from the official driver):
+The 29-byte data block written at config offset 0 (decoded from a live
+`WriteFile` hook on the vendor app — see [docs/rea-protocol.md](docs/rea-protocol.md)):
 
 ```
-data byte:  0    1    2    3    4    5    6    7    8    9   10-20
-value:     DIR  03   MOD  BRT  SPD  RND  R    G    B    03   00…
+data byte:  0    1    2    3    4    5    6    7    8    9-19  20   21-24  25   26-28
+value:     00   MOD  BRT  SPD  RND  00   R    G    B    00…   FF   00…    02   00…
 ```
 
-- `DIR` = direction (Left=0, Up=1, Down=2, Right=3)
-- byte 1 = `0x03` fixed constant (always 3 in official-driver captures)
-- `MOD` = mode id (0x01-0x12, 0x14)
-- `BRT` = brightness (0-4, 0 = off, DIRECT not inverted)
-- `SPD` = speed (0-5, 0 = fastest)
-- `RND` = random-color flag (the "Rainbow" toggle)
-- `R/G/B` = color channels
-- byte 9 = `0x03` fixed constant (always 3 in official-driver captures)
+- `MOD` = mode id from `default_light.json` (verified: 1 Corrugated, 2 Cloud, 5 Breath, 8 Ripples)
+- `BRT` = brightness (0-4), `SPD` = speed (0-4, 0 = fastest)
+- `RND` = random-color flag (position inferred, not yet seen non-zero from the vendor app)
+- `R/G/B` = color channels (verified by clicking known palette swatches)
+- bytes 20 = `0xFF` and 25 = `0x02` are constant in every vendor write; meaning unknown
 
 This data block is wrapped in the 64-byte HID frame:
 
 ```
-frame:  04  CKL CKH 06  15  00 00  [21-byte data]  [zeros]  …  63
+frame:  04  CKL CKH 06  1D  00 00  00  [29-byte data]  [zeros]  …  63
 ```
 
 - byte 0 = `0x04` report-id / command-class prefix (sent as WebHID reportId)
 - bytes 1-2 = 16-bit little-endian **checksum** = unsigned `sum(bytes[3..63])`
-- byte 3 = `0x06` (set-parameter), byte 4 = `0x15` (size = 21), bytes 5-6 = offset `0x0000`
+- byte 3 = `0x06` (write), byte 4 = `0x1D` (length = 29), bytes 5-6 = offset `0x0000`, data from byte 8
 
 For WebHID the call is `device.sendReport(reportId, payload)`, where the report
 ID is auto-resolved from the device descriptor (see `resolveSend` in

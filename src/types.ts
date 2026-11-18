@@ -52,7 +52,7 @@ export interface StatusMessage {
   type: '' | 'success' | 'error' | 'info'
 }
 
-export type TabId = 'lighting' | 'effects' | 'profiles' | 'settings' | 'capture'
+export type TabId = 'lighting' | 'effects' | 'keys' | 'profiles' | 'settings' | 'capture'
 
 export interface SentPacket {
   reportId: number

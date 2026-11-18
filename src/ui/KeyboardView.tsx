@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
-import { KEY_LAYOUT, FULL_LED_COUNT, type KeyDef } from '../keymap'
-import { LED_COUNT, buildCustomModePacket, buildCustomColorPackets, buildBeginPacket, buildEndPacket, hexToRgb, rgbToHex, DEFAULT_PALETTE } from '../protocol'
+import { KEY_LAYOUT, type KeyDef } from '../keymap'
+import { LED_COUNT, buildCustomModePacket, buildCustomColorPackets, hexToRgb, rgbToHex, DEFAULT_PALETTE } from '../protocol'
 import type { LightingState, ProtocolFamilyResolved } from '../types'
 
 // Scale factor: the official skin coords span ~100..575 x and ~17..202 y.
@@ -26,11 +26,11 @@ function scaleKey(k: KeyDef) {
 }
 
 export function KeyboardView({ lighting, isLive, family, onApplyPerKey }: Props) {
-  // Per-key color state: 126 LEDs, each a hex color string. Default to the
+  // Per-key color state: one entry per firmware slot, each a hex color string. Default to the
   // current lighting color so the first render matches what the user picked.
   const [keyColors, setKeyColors] = useState<string[]>(() => {
     const c = rgbToHex(lighting.r, lighting.g, lighting.b)
-    return Array.from({ length: FULL_LED_COUNT }, () => c)
+    return Array.from({ length: LED_COUNT }, () => c)
   })
   const [selectedKey, setSelectedKey] = useState<number | null>(null)
   const [paintColor, setPaintColor] = useState<string>(() => rgbToHex(lighting.r, lighting.g, lighting.b))
@@ -48,7 +48,7 @@ export function KeyboardView({ lighting, isLive, family, onApplyPerKey }: Props)
   }, [paintColor])
 
   const fillAll = useCallback((hex: string) => {
-    setKeyColors(Array.from({ length: FULL_LED_COUNT }, () => hex))
+    setKeyColors(Array.from({ length: LED_COUNT }, () => hex))
   }, [])
 
   const buildPackets = useCallback((): Uint8Array[] => {
@@ -60,8 +60,8 @@ export function KeyboardView({ lighting, isLive, family, onApplyPerKey }: Props)
       buf[i * 3 + 1] = g
       buf[i * 3 + 2] = b
     }
-    const modePkts = buildCustomModePacket(lighting)
-    return [...modePkts, buildBeginPacket(), ...buildCustomColorPackets(buf), buildEndPacket()]
+    // Vendor order: per-key colors first, then select Custom mode.
+    return [...buildCustomColorPackets(buf), ...buildCustomModePacket(lighting)]
   }, [keyColors, lighting])
 
   const handleApply = useCallback(() => {
@@ -79,8 +79,8 @@ export function KeyboardView({ lighting, isLive, family, onApplyPerKey }: Props)
       </div>
       <div className="help" style={{ marginTop: -2, marginBottom: 8 }}>
         Click any key to paint it with the selected color. Then click <strong>Apply per-key</strong> to
-        send the full color map to the keyboard. This uses Custom mode (firmware mode 20) and sends
-        {LED_COUNT} LEDs × 3 bytes of RGB data in chunked CMD_WRITE_COLORS packets.
+        send the full color map to the keyboard: {LED_COUNT} LEDs × RGB via CMD 0x0B, then Custom mode
+        (firmware mode 20).
         {isSonix && ' ⚠ Sonix family: per-key Custom is not fully RE\u2019d; this may not work on your unit.'}
       </div>
 

@@ -157,7 +157,7 @@ export function useLightingState(controller: DeviceController, settings: Setting
   const apply = useCallback(async (override?: LightingState) => {
     const l = override ?? lighting
     // Single source of truth for the wire bytes, shared with the inspector.
-    // The official driver sends BEGIN + WRITE(21 bytes) + END for each lighting
+    // The official driver sends BEGIN + WRITE(29 bytes) + END for each lighting
     // change, with a 10ms delay after END. Per-key Custom adds color chunks.
     const packets = buildApplyPackets(l, family)
     for (let i = 0; i < packets.length; i++) {

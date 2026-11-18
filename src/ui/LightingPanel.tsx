@@ -142,10 +142,9 @@ export function LightingPanel({ lighting, modes, onChange, onSolidColor, onApply
           value={lighting.direction}
           onChange={e => onChange({ ...lighting, direction: clampDirection(parseInt(e.target.value, 10)) })}
         >
-          <option value={0}>Left</option>
-          <option value={1}>Up</option>
-          <option value={2}>Down</option>
-          <option value={3}>Right</option>
+          {/* vendor-verified: data[4] = 0 / 1; the meaning depends on the effect */}
+          <option value={0}>Left → right (or inside)</option>
+          <option value={1}>Right → left (or outside)</option>
         </select>
       </div>
 

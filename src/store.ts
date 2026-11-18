@@ -1,5 +1,5 @@
 import type { Profile, Settings, CalibrationResult } from './types'
-import { VID_DEFAULT, PID_DEFAULT, DEFAULT_MODES } from './protocol'
+import { VID_DEFAULT, PID_DEFAULT, DEFAULT_MODES, type KeyAssignment } from './protocol'
 
 // v4: corrected from the official driver RE — real VID/PID (0x0C45/0x1007) and
 // the firmware mode table (default_light.json). Must bump the key so cached v3
@@ -126,5 +126,19 @@ export const calibrationStore = {
 
   clear(): void {
     try { localStorage.removeItem(CALIBRATION_KEY) } catch { /* ignore */ }
+  },
+}
+
+// =====================================================================
+// KEYMAP (last keymap sent from the Keys tab; null = firmware default)
+// =====================================================================
+const KEYMAP_KEY = 'ak820_keymap_v1'
+
+export const keymapStore = {
+  load(): KeyAssignment[] | null {
+    return safeRead<KeyAssignment[] | null>(KEYMAP_KEY, null)
+  },
+  save(map: readonly KeyAssignment[]): void {
+    safeWrite(KEYMAP_KEY, map)
   },
 }
