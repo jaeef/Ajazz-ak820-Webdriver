@@ -16,3 +16,10 @@
 **/*.log
 .DS_Store
 *.exe
+
+# Emitted by `tsc -b` from vite.config.ts (tsconfig.node.json)
+/vite.config.js
+/vite.config.d.ts
+
+# Capture-panel exports (local test data)
+/ak820-capture-*.json

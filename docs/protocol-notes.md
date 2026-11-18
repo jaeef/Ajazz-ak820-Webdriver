@@ -1,5 +1,10 @@
 # Ajazz AK820 — Protocol Notes (WebHID)
 
+> **Superseded for the EVision AK820 by [`rea-protocol.md`](rea-protocol.md)**, which is verified against live
+> vendor-app traffic and the keyboard itself. In particular the board enumerates as `0x320F` / `0x505B`, the
+> lighting block is 29 bytes, and the "official-driver capture" cited below is this app's own Capture-panel export.
+> The Sonix (AK820 Pro) section here is still the only reference for that family.
+
 > ## ✅ CORRECTION — verified against the official driver (2026-06)
 > The bundled official app **`AJAZZ AK820 有线RGB Keyboard.exe`** (NSIS → 7z →
 > native DuiLib app) was reverse-engineered. Findings that override older notes:
