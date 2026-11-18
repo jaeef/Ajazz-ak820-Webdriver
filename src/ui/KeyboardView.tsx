@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { KEY_LAYOUT, type KeyDef } from '../keymap'
-import { LED_COUNT, buildCustomModePacket, buildCustomColorPackets, hexToRgb, rgbToHex, DEFAULT_PALETTE } from '../protocol'
+import { LED_COUNT, buildCustomColorPackets, hexToRgb, rgbToHex, DEFAULT_PALETTE } from '../protocol'
 import type { LightingState, ProtocolFamilyResolved } from '../types'
 
 // Scale factor: the official skin coords span ~100..575 x and ~17..202 y.
@@ -60,9 +60,9 @@ export function KeyboardView({ lighting, isLive, family, onApplyPerKey }: Props)
       buf[i * 3 + 1] = g
       buf[i * 3 + 2] = b
     }
-    // Vendor order: per-key colors first, then select Custom mode.
-    return [...buildCustomColorPackets(buf), ...buildCustomModePacket(lighting)]
-  }, [keyColors, lighting])
+    // Colors only; the caller appends Custom mode on top of the device's block.
+    return buildCustomColorPackets(buf)
+  }, [keyColors])
 
   const handleApply = useCallback(() => {
     onApplyPerKey(buildPackets())
@@ -157,7 +157,7 @@ export function KeyboardView({ lighting, isLive, family, onApplyPerKey }: Props)
         <button onClick={handleApply}>
           {isLive ? 'Apply per-key colors' : 'Apply per-key colors (idle)'}
         </button>
-        <span className="pill">{buildPackets().length} packets</span>
+        <span className="pill">{buildPackets().length + 3} packets</span>
       </div>
     </div>
   )

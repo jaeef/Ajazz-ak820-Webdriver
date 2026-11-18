@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import {
   buildLightingPackets, buildKeymapPackets, buildCustomColorPackets, defaultKeymap, hexDump, LED_COUNT,
-  buildMacroPackets, textToMacro,
+  buildMacroPackets, textToMacro, buildReadPacket, buildKeyboardOptionsPackets, readKeyboardOptions,
 } from '../src/protocol.ts'
 import type { LightingState } from '../src/types.ts'
 
@@ -62,4 +62,16 @@ const junk = (i: number) => i === 1 || i === 2 || (i >= 8 + 6 && i < 8 + 16) || 
 theirs.forEach((b, i) => { if (!junk(i)) assert.equal(ours[i], b, `macro byte ${i}`) })
 assert.deepEqual(textToMacro('ab').map(e => [e.usage, e.down]), [[4, true], [4, false], [5, true], [5, false]])
 
-console.log('protocol ok: lighting, keymap, per-key and macro match vendor captures')
+// Read-modify-write. BLOCK is the keyboard's reply to `05 1d` (read 2026-11-19).
+const BLOCK = Uint8Array.from(
+  '00 06 04 03 00 00 FF 72 00 00 00 00 00 00 00 00 00 00 00 00 FF 00 00 00 00 02 00 00 00'.split(' '), h => parseInt(h, 16))
+assert.equal(hexDump(buildReadPacket(0x05, 0x1d)), pad('04 22 00 05 1D'))
+assert.deepEqual(readKeyboardOptions(BLOCK), { wasdSwap: false, winLock: false, pollingRate: 0 })
+// Vendor WR108: report rate 500 Hz → only data[22] changes.
+assert.equal(hexDump(buildKeyboardOptionsPackets(BLOCK, { wasdSwap: false, winLock: false, pollingRate: 1 })[1]),
+  pad('04 A3 02 06 1D 00 00 00 00 06 04 03 00 00 FF 72 00 00 00 00 00 00 00 00 00 00 00 00 FF 00 01 00 00 02'))
+// A lighting write on top of a block with Win lock on keeps it on.
+const locked = BLOCK.slice(); locked[21] = 1
+assert.equal(buildLightingPackets(light({}), locked)[1][8 + 21], 1, 'lighting write must preserve Win lock')
+
+console.log('protocol ok: lighting, keymap, per-key, macro and options match vendor captures')
