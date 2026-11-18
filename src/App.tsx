@@ -9,13 +9,18 @@ import { ProfilesPanel } from './ui/ProfilesPanel'
 import { SettingsPanel } from './ui/SettingsPanel'
 import { CapturePanel } from './ui/CapturePanel'
 import { KeyRemapPanel } from './ui/KeyRemapPanel'
+import { KeyboardOptionsPanel } from './ui/KeyboardOptionsPanel'
 import { CalibrationModal } from './ui/CalibrationModal'
 import { StatusBar } from './ui/StatusBar'
 import { ModeEditModal } from './ui/ModeEditModal'
 
-import { modeName, MODE_STATIC, resolveProtocolFamily, hexToRgb, hexDump } from './protocol'
+import {
+  modeName, MODE_STATIC, resolveProtocolFamily, hexToRgb, hexDump,
+  readKeyboardOptions, buildKeyboardOptionsPackets, type KeyboardOptions,
+} from './protocol'
 import {
   useDevice, useSettings, useProfiles, useLightingState, useStatus, useActiveTab, useCaptureLog, useCalibration,
+  readLightingBlock,
 } from './hooks'
 
 const TABS: { id: TabId; label: string }[] = [
@@ -47,7 +52,7 @@ function App() {
     [settings.protocolFamily, device.info],
   )
 
-  const { lighting, setLighting, apply, sendPackets } = useLightingState(device.controller, settings, family)
+  const { lighting, setLighting, apply, sendPackets, applyPerKey } = useLightingState(device.controller, settings, family)
   const capture = useCaptureLog(device.controller)
   const calibration = useCalibration()
 
@@ -172,10 +177,26 @@ function App() {
   }, [calibration, ok])
 
   // --- Per-key RGB: send a custom color map built by the KeyboardView ---
-  const handleApplyPerKey = useCallback((packets: Uint8Array[]) => {
-    sendPackets(packets).then(() => ok(`${device.isConnected ? 'Sent' : 'Recorded (idle)'} per-key colors (${packets.length} packets)`))
-                        .catch(e => err('Per-key apply failed: ' + (e as Error).message))
-  }, [sendPackets, device.isConnected, ok, err])
+  const handleApplyPerKey = useCallback((colorPackets: Uint8Array[]) => {
+    applyPerKey(colorPackets).then(() => ok(`${device.isConnected ? 'Sent' : 'Recorded (idle)'} per-key colors`))
+                             .catch(e => err('Per-key apply failed: ' + (e as Error).message))
+  }, [applyPerKey, device.isConnected, ok, err])
+
+  // --- Keyboard options (Win lock, WASD swap, polling rate): read, change, write back ---
+  const readBlock = useCallback(
+    () => readLightingBlock(device.controller, settings.reportIdMode, family),
+    [device.controller, settings.reportIdMode, family],
+  )
+  const handleReadOptions = useCallback(async () => {
+    const block = await readBlock()
+    return block ? readKeyboardOptions(block) : null
+  }, [readBlock])
+  const handleWriteOptions = useCallback(async (opt: KeyboardOptions) => {
+    const block = await readBlock()
+    if (!block) { err('Connect the keyboard first: options are read from it before writing.'); return }
+    sendPackets(buildKeyboardOptionsPackets(block, opt)).then(() => ok('Sent keyboard options'))
+                                                          .catch(e => err('Options apply failed: ' + (e as Error).message))
+  }, [readBlock, sendPackets, ok, err])
 
   // --- Key remap: send the keymap built by KeyRemapPanel ---
   const handleSendKeymap = useCallback((packets: Uint8Array[], what: string) => {
@@ -309,7 +330,10 @@ function App() {
           )}
 
           {activeTab === 'keys' && (
-            <KeyRemapPanel isLive={device.isConnected} onSend={handleSendKeymap} />
+            <>
+              <KeyboardOptionsPanel isLive={device.isConnected} onRead={handleReadOptions} onWrite={handleWriteOptions} />
+              <KeyRemapPanel isLive={device.isConnected} onSend={handleSendKeymap} />
+            </>
           )}
 
           {activeTab === 'profiles' && (

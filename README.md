@@ -6,6 +6,7 @@ A browser-based WebHID driver for the **Ajazz AK820** mechanical keyboard. Repla
 
 - **Lighting control** — firmware effect modes from the **official driver's own table** (`default_light.json`): Wave, Cloud, Vortex, Mixed Color, Breathing, Static, Reactive, Stone, Traverse, Starlight, Firework, Roll, Wave Bar, Cartoon, Rain, Scan, Marquee, Speed + per-key Custom. RGB picker, preset palette (13 official colors), brightness (0-4), speed (0-4), direction.
 - **Per-key RGB** — visual keyboard layout (82 keys, 75% AK820) with click-to-paint per-key colors. Sends all 128 LEDs via CMD `0x0B` (LED index = firmware key slot, captured from the vendor app), then selects Custom mode.
+- **Keyboard options** — Keys tab: Windows key lock, WASD ↔ arrow swap and USB report rate (1000/500/250/125 Hz), read from the keyboard and written back without touching anything else.
 - **Key remap** — Keys tab: point any key at any standard key (or disable it) and write the 128-slot keymap with CMD `0x09`. Restore defaults puts the factory keymap back. A typed-text macro (CMD `0x15`) can be assigned to any key.
 - **Effects (host-computed)** — the official app's PC-driven modes reproduced in the browser:
   - **Audio React** (mode 29) — microphone/system audio → reactive color (Web Audio API)

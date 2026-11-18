@@ -34,7 +34,7 @@ export const PACKET_LENGTH = 64
 // Commands (byte 3)
 const CMD_BEGIN = 0x01
 const CMD_END = 0x02
-const CMD_SYNC = 0x03 // `03 22`, no data; vendor sends it before keymap/macro writes (purpose unknown)
+const CMD_SYNC = 0x03 // `03 22`: device-info read (AA 55 block); vendor issues it before keymap/macro writes
 const CMD_WRITE_LIGHTING = 0x06 // 29-byte lighting block at offset 0
 const CMD_WRITE_KEYMAP = 0x09 // 128 × [type, modifier, usage] at offset 0
 const CMD_WRITE_PERKEY = 0x0b // 128 × [R, G, B] at offset 0x400
@@ -215,14 +215,23 @@ export function buildEndPacket(): Uint8Array {
 //   data[4]   direction  verified: 0 = left→right / inside, 1 = right→left / outside
 //   data[5]   random-color flag, verified: rainbow swatch sets 1
 //   data[6..8] R,G,B     verified by clicking known palette swatches
-//   data[20]  0xff, data[25] 0x02  constant in every vendor write, meaning unknown
+//   data[19]  WASD ↔ arrow swap (vendor "Exchange Key"), 1 = on
+//   data[21]  Windows key lock, 1 = on
+//   data[22]  USB report rate: 0 1000 Hz / 1 500 / 2 250 / 3 125
+//   data[0], [20] (0xff), [25] (0x02) and the zero bytes are firmware-owned:
+//   the vendor app never sets them, it reads the block (CMD 0x05) and writes
+//   them back unchanged. We do the same when a `base` block is available.
 //
 // The previous 21-byte block (0x03 / RGB at data[5..7] / 0x03) was "confirmed"
 // against ak820-capture-*.json — but that file is this app's own CapturePanel
 // export, so it only echoed what we sent. The keyboard echoes every report,
 // so an echo is not acceptance.
-function buildLightingData(o: LightingState): Uint8Array {
-  const data = new Uint8Array(0x1d)
+export const LIGHTING_BLOCK_LEN = 0x1d
+// What the keyboard reported for a fresh unit; used when no read-back is available.
+const LIGHTING_DEFAULTS = (() => { const d = new Uint8Array(LIGHTING_BLOCK_LEN); d[20] = 0xff; d[25] = 0x02; return d })()
+
+function buildLightingData(o: LightingState, base: Uint8Array = LIGHTING_DEFAULTS): Uint8Array {
+  const data = Uint8Array.from(base.subarray(0, LIGHTING_BLOCK_LEN))
   data[1] = clamp(o.mode, 0, 0xff)
   data[2] = clamp(o.brightness, 0, MAX_BRIGHTNESS)
   data[3] = clamp(o.speed, 0, MAX_SPEED)
@@ -231,9 +240,40 @@ function buildLightingData(o: LightingState): Uint8Array {
   data[6] = clamp(o.r, 0, 0xff)
   data[7] = clamp(o.g, 0, 0xff)
   data[8] = clamp(o.b, 0, 0xff)
-  data[20] = 0xff
-  data[25] = 0x02
   return data
+}
+
+// Keyboard options that live in the lighting block.
+export interface KeyboardOptions { wasdSwap: boolean; winLock: boolean; pollingRate: 0 | 1 | 2 | 3 }
+export const POLLING_RATES = ['1000 Hz', '500 Hz', '250 Hz', '125 Hz'] as const
+
+export function readKeyboardOptions(block: Uint8Array): KeyboardOptions {
+  return { wasdSwap: block[19] === 1, winLock: block[21] === 1, pollingRate: (block[22] & 3) as KeyboardOptions['pollingRate'] }
+}
+
+// Rewrite the device's own block with new options; every other byte unchanged.
+export function buildKeyboardOptionsPackets(block: Uint8Array, opt: KeyboardOptions): Uint8Array[] {
+  const data = Uint8Array.from(block.subarray(0, LIGHTING_BLOCK_LEN))
+  data[19] = opt.wasdSwap ? 1 : 0
+  data[21] = opt.winLock ? 1 : 0
+  data[22] = opt.pollingRate
+  return buildChunkedWrite(CMD_WRITE_LIGHTING, data)
+}
+
+// Read request: cmd, length, offset, no data. The keyboard answers with the
+// same header and the requested bytes from byte 8 (input report 4).
+//   05 len 0x1d → lighting block   07 → keymap   1B → 128-entry key→LED map
+//   03 len 0x22 → device info (AA 55 magic, VID at bytes 21..22)
+export const CMD_READ_LIGHTING = 0x05
+export function buildReadPacket(cmd: number, length: number, offset = 0): Uint8Array {
+  const pkt = new Uint8Array(PACKET_LENGTH)
+  pkt[0x00] = REPORT_PREFIX
+  pkt[0x03] = cmd
+  pkt[0x04] = length
+  pkt[0x05] = offset & 0xff
+  pkt[0x06] = (offset >> 8) & 0xff
+  applyChecksum(pkt)
+  return pkt
 }
 
 // One write packet: byte 3 cmd, byte 4 length, bytes 5..6 offset LE, data from byte 8.
@@ -267,8 +307,8 @@ export function buildLightingPacket(o: LightingState): Uint8Array {
 }
 
 // The packet sequence the vendor sends for any lighting change, Static included.
-export function buildLightingPackets(o: LightingState): Uint8Array[] {
-  return buildChunkedWrite(CMD_WRITE_LIGHTING, buildLightingData(o))
+export function buildLightingPackets(o: LightingState, base?: Uint8Array): Uint8Array[] {
+  return buildChunkedWrite(CMD_WRITE_LIGHTING, buildLightingData(o, base))
 }
 
 // Per-key colors: 128 LEDs × RGB, LED index = keymap slot (column-major,
@@ -280,8 +320,8 @@ export function buildCustomColorPackets(buf: Uint8Array): Uint8Array[] {
   return buildChunkedWrite(CMD_WRITE_PERKEY, buf, PERKEY_OFFSET)
 }
 
-export function buildCustomModePacket(o: LightingState): Uint8Array[] {
-  return buildLightingPackets({ ...o, mode: MODE_CUSTOM, rainbow: false })
+export function buildCustomModePacket(o: LightingState, base?: Uint8Array): Uint8Array[] {
+  return buildLightingPackets({ ...o, mode: MODE_CUSTOM, rainbow: false }, base)
 }
 
 // --- Key remap ---------------------------------------------------------
@@ -320,7 +360,7 @@ export function defaultKeymap(): KeyAssignment[] {
   return out
 }
 
-// `04 25 00 03 22 00…` — sent once before each keymap/macro write.
+// `04 25 00 03 22 00…` — device-info read the vendor issues before each keymap/macro write.
 export function buildSyncPacket(): Uint8Array {
   const pkt = new Uint8Array(PACKET_LENGTH)
   pkt[0x00] = REPORT_PREFIX
@@ -452,12 +492,12 @@ export function buildSonixLightingPacket(o: LightingState): Uint8Array {
 // exactly what goes on the wire.
 //
 //   • EVision: BEGIN + 29-byte lighting block + END for every mode.
-export function buildApplyPackets(l: LightingState, family: ProtocolFamilyResolved): Uint8Array[] {
+export function buildApplyPackets(l: LightingState, family: ProtocolFamilyResolved, base?: Uint8Array): Uint8Array[] {
   if (family === 'sonix') {
     return [buildSonixLightingPacket({ ...l, rainbow: l.rainbow })]
   }
   // EVision: the vendor sends only the lighting block, Static included.
-  return buildLightingPackets(l)
+  return buildLightingPackets(l, base)
 }
 
 // =====================================================================

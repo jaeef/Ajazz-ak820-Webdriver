@@ -7,7 +7,7 @@ Raw data: `E:\Tools\ghidra-dist\live-hid-analysis.txt`, `mode-apply-analysis.txt
 ## Transport
 
 - The vendor Windows app sends 64-byte HID OUTPUT reports with leading report ID `0x04` through `WriteFile`.
-- It does **not** use `HidD_SetOutputReport` for these commands (that import is used by a separate 17-byte init routine, `FUN_00486F50`).
+- It does **not** use `HidD_SetOutputReport` for these commands (that import belongs to a different product's class, see below).
 - The web driver uses WebHID `sendReport`; byte layout is the same.
 
 ## 64-byte frame layout (packet offsets)
@@ -31,10 +31,14 @@ Raw data: `E:\Tools\ghidra-dist\live-hid-analysis.txt`, `mode-apply-analysis.txt
 | 4 | 12 | direction | verified: `00` left→right / inside, `01` right→left / outside |
 | 5 | 13 | random-color flag | verified: rainbow swatch → `01` |
 | 6–8 | 14–16 | R, G, B | verified by swatch clicks |
-| 20 | 28 | `0xff` | constant, meaning unknown |
-| 25 | 33 | `0x02` | constant, meaning unknown |
+| 19 | 27 | WASD ↔ arrow swap ("Exchange Key") | verified: `01` on |
+| 21 | 29 | Windows key lock | verified: `01` on |
+| 22 | 30 | USB report rate | verified: `00` 1000 / `01` 500 / `02` 250 / `03` 125 Hz |
+| 0, 20, 25, rest | 8, 28, 33 | firmware-owned (`00`, `FF`, `02` on this unit) | see below |
 
-Implemented in `src/protocol.ts` (`buildLightingData`); self-check: `node scripts/check-protocol.ts`. Hardware-verified: Static, Cloud and Breath applied from the web app all took effect.
+**Firmware-owned bytes.** The vendor app has no UI for data[0], [20], [25] or the zero bytes, and no code in the driver stores `FF`/`02` as constants (Ghidra scan for immediate stores at those offsets: 0 hits). It reads the block from the keyboard at startup (`05 1d`) and writes those bytes back unchanged. The web app now does the same: every lighting / options write starts from the block it just read, so it no longer resets Windows lock, WASD swap or report rate. Without a keyboard (demo mode) it falls back to `FF`/`02`.
+
+Implemented in `src/protocol.ts` (`buildLightingData`, `buildKeyboardOptionsPackets`); self-check: `node scripts/check-protocol.ts`. Hardware-verified: Static, Cloud and Breath applied from the web app all took effect; Windows key lock set from the Keys tab stayed on after applying an effect.
 
 ### The saved capture is not vendor traffic
 
@@ -75,13 +79,9 @@ These match the palette in the extracted `DefaultData`/`Skin` data and the exist
 
 `src/protocol.ts` already models the same frame: byte 0 `0x04`, bytes 1–2 unsigned LE checksum, byte 3 command, `CMD_SET_PARAMETER = 0x06`, begin/end packets, and the firmware mode table from `default_light.json` (values 0–30, 12 visible function types in `KeySetControl.xml`). The fresh pass independently confirms those facts and corrects the lighting block to the vendor's 29-byte layout.
 
-## 17-byte init routine
+## 17-byte routine — not used by the AK820
 
-`FUN_00486F50` (`0x486F50`–`0x4876EA`, 1,947 bytes) issues 12 `HidD_SetOutputReport` calls with 17-byte reports. Command markers written into `local_13`:
-
-`AA22, AD22, AA44, AD44, AB22, AE22, AB44, AE44, AC22, AF22, AC44, AF44`
-
-Inference: paired write/verify operations. Not yet mapped to a UI action; no device-side confirmation.
+`FUN_00486F50` issues 12 `HidD_SetOutputReport` calls with 17-byte reports (markers `AA22 … AF44`). Its only reference is slot 148 of the vtable at `0x6947B0`, whose RTTI name is **`CEevisionHS6533Device`** — a different product the same vendor app supports. The AK820 uses `CEevisionKeyboardDevice`. Across every capture (lighting, per-key, remap, macros, options, audio wave) the hook recorded **zero** `HidD_SetOutputReport` calls. Nothing to implement.
 
 ## Commands (session 2, 2026-11-19)
 
@@ -91,16 +91,16 @@ Every write is framed BEGIN (`01`) → data packets → END (`02`), data split i
 
 | Cmd | Kind | Payload | Evidence |
 | --- | --- | --- | --- |
-| `03` | — | len `0x22`, no data; sent once before keymap/macro writes | purpose unknown |
-| `05` | read? | len `01` / `1d`, no data, at startup | inferred read of lighting block |
+| `03` | read | len `0x22`: device info, `AA 55` magic, VID `0x320F` at bytes 21–22 | verified by reply; vendor issues it before keymap/macro writes |
+| `05` | read | len `1d` → the 29-byte lighting block; len `01` → its byte 0 | verified by reply |
 | `06` | write | 29-byte lighting block at offset 0 | verified, hardware-tested from the web app |
-| `07` | read? | len `0x38`, offsets `0..0x150` at startup (384 bytes) | inferred keymap read |
+| `07` | read | keymap, same layout as `09` | verified by reply |
 | `09` | write | keymap: 128 × `[type, modifier, usage]` at offset 0 | verified: Caps → Esc wrote slot 3 = `20 00 29`; restore wrote `20 00 39` |
 | `0B` | write | per-key colors: 128 × `[R, G, B]` at offset `0x400` | verified: Esc blue → `31 53 FF` at `0x400`; W → LED 18; Enter → LED 107 |
 | `12` | write | len `0x38`, streamed continuously in Audio wave mode | visualizer levels, not needed |
 | `15` | write | macro table, see below | one sample only |
-| `1A` | — | `1a 06`, every ~5 s | poll |
-| `1B` | read? | startup only | unknown |
+| `1A` | poll | `1a 06` every ~5 s; reply has `FF` at byte 7 | keep-alive |
+| `1B` | read | 128-entry key-slot → LED map: identity except slots 71/79 = `FF` (no LED) and 93 ↔ 101 swapped | verified by reply; the firmware applies it itself (painting Right Ctrl in the vendor app writes buffer index 93) |
 
 ### Slots
 
@@ -122,7 +122,7 @@ macro_2 (X/Y/Z): AA 55 | 2E 00 | 01 00 | 59 04 48 3D 59 04 01 00 5A 74 | 12 00 |
 
 ## Unknowns
 
-- Meaning of lighting data `[20]=0xff` and `[25]=0x02`.
-- Commands `03`, `1B`; whether `05`/`07` are reads.
+- What the firmware does with lighting data `[0]`, `[20]`, `[25]` (preserved as read, so it no longer matters to the app).
+- Device-info bytes 4–8, 23–26, 31–33 (`0d 80 50 … 02`, `01 50`, `02`, `01 02 03`). The "V0103" the vendor shows is the USB device revision, not this block.
 - Multi-macro directory layout; whether the junk bytes matter to the firmware.
-- Owning class / call path for the `0x6949DC` function-pointer table.
+- Call path into `CEevisionHS6533Device` (irrelevant to the AK820).

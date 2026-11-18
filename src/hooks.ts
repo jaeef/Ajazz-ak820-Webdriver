@@ -4,7 +4,10 @@ import type { DeviceController } from './device'
 import { MockController, WebHIDController } from './device'
 import { profileStore, settingsStore, calibrationStore } from './store'
 import { defaultSettings } from './store'
-import { DEFAULT_LIGHTING, buildApplyPackets, resolveSend } from './protocol'
+import {
+  DEFAULT_LIGHTING, buildApplyPackets, buildCustomModePacket, buildReadPacket, resolveSend,
+  CMD_READ_LIGHTING, LIGHTING_BLOCK_LEN,
+} from './protocol'
 import type { ReportIdMode } from './types'
 
 // Send one fully-built 64-byte packet, choosing transport (OUTPUT vs feature)
@@ -52,6 +55,32 @@ const PACKET_GAP_MS = 30
 
 function delay(ms: number): Promise<void> {
   return new Promise(r => setTimeout(r, ms))
+}
+
+// Send a read request (cmd, len, offset) and resolve with the `len` reply
+// bytes, or null on timeout / demo mode. The keyboard answers on input report 4
+// with the request header followed by the data.
+async function readReply(
+  controller: DeviceController, reportIdMode: ReportIdMode, family: ProtocolFamilyResolved,
+  pkt: Uint8Array, len: number, timeoutMs = 300,
+): Promise<Uint8Array | null> {
+  if (controller.isMock || family !== 'evision') return null
+  return new Promise(resolve => {
+    let timer = 0
+    const off = controller.onPacket(e => {
+      if (e.dir !== 'in') return
+      const d = e.reportId === 0 ? e.data.subarray(1) : e.data // drop prefix on unnumbered reports
+      if (d[2] !== pkt[3] || d[3] !== pkt[4] || d[4] !== pkt[5] || d[5] !== pkt[6]) return
+      window.clearTimeout(timer); off(); resolve(d.slice(7, 7 + len))
+    })
+    timer = window.setTimeout(() => { off(); resolve(null) }, timeoutMs)
+    sendPacket(controller, reportIdMode, pkt, family).catch(() => { window.clearTimeout(timer); off(); resolve(null) })
+  })
+}
+
+// The keyboard's current 29-byte lighting block (CMD 0x05), or null.
+export function readLightingBlock(controller: DeviceController, reportIdMode: ReportIdMode, family: ProtocolFamilyResolved) {
+  return readReply(controller, reportIdMode, family, buildReadPacket(CMD_READ_LIGHTING, LIGHTING_BLOCK_LEN), LIGHTING_BLOCK_LEN)
 }
 
 // =====================================================================
@@ -156,10 +185,10 @@ export function useLightingState(controller: DeviceController, settings: Setting
 
   const apply = useCallback(async (override?: LightingState) => {
     const l = override ?? lighting
-    // Single source of truth for the wire bytes, shared with the inspector.
-    // The official driver sends BEGIN + WRITE(29 bytes) + END for each lighting
-    // change, with a 10ms delay after END. Per-key Custom adds color chunks.
-    const packets = buildApplyPackets(l, family)
+    // Read-modify-write like the vendor app: keep the firmware-owned bytes and
+    // keyboard options (Win lock, WASD swap, polling rate) the device reports.
+    const base = await readLightingBlock(controller, settings.reportIdMode, family)
+    const packets = buildApplyPackets(l, family, base ?? undefined)
     for (let i = 0; i < packets.length; i++) {
       if (i > 0) await delay(PACKET_GAP_MS)
       await sendPacket(controller, settings.reportIdMode, packets[i], family)
@@ -176,7 +205,13 @@ export function useLightingState(controller: DeviceController, settings: Setting
     }
   }, [controller, settings.reportIdMode, family])
 
-  return { lighting, setLighting, apply, sendPackets }
+  // Per-key: color chunks first, then Custom mode on top of the device's block.
+  const applyPerKey = useCallback(async (colorPackets: Uint8Array[]) => {
+    const base = await readLightingBlock(controller, settings.reportIdMode, family)
+    await sendPackets([...colorPackets, ...buildCustomModePacket(lighting, base ?? undefined)])
+  }, [controller, settings.reportIdMode, family, lighting, sendPackets])
+
+  return { lighting, setLighting, apply, sendPackets, applyPerKey }
 }
 
 // =====================================================================
