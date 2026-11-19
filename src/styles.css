@@ -7,6 +7,8 @@
 @property --wake { syntax: '<number>'; inherits: true; initial-value: 1; }
 
 :root {
+  --spring-press: .07s cubic-bezier(.15, .85, .35, 1);
+  --spring-release: .22s cubic-bezier(.34, 1.45, .64, 1);
   --ink: #18191b;
   --ink-2: #5b5e63;
   --ink-3: #6b6e73;
@@ -96,7 +98,7 @@ h2 { font-size: 15px; font-weight: 650; display: flex; align-items: center; gap:
 .main { padding: 16px 20px; min-width: 0; }
 .page { display: grid; gap: 14px; max-width: 1320px; margin: 0 auto; }
 /* Lighting and Profiles fit one screen: board row + work row, nothing scrolls on desktop */
-.page--fill { min-height: calc(100vh - 32px); grid-template-rows: auto minmax(0, 1fr); }
+.page--fill { min-height: calc(100vh - 66px); /* main padding + topbar */ grid-template-rows: auto minmax(0, 1fr); }
 
 .panel {
   background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
@@ -120,45 +122,212 @@ h2 { font-size: 15px; font-weight: 650; display: flex; align-items: center; gap:
 .board {
   --glow: #ffffff; --glow-a: .95; --pulse: 1; --dur: 3s;
   position: relative; container-type: inline-size; aspect-ratio: 492 / 202; width: 100%;
-  background: linear-gradient(#26272a, var(--case)); border-radius: 2.2cqi;
-  box-shadow: 0 1px 0 rgba(255, 255, 255, .06) inset, 0 22px 40px -22px rgba(24, 25, 27, .55), 0 2px 6px rgba(24, 25, 27, .2);
+  background: linear-gradient(177deg, #3c3e44 0%, #202227 6%, #18191d 92%, #121316 100%);
+  border-radius: 1.7cqi;
+  box-shadow:
+    0 14px 22px -14px rgba(0, 0, 0, 0.55),
+    0 4px 10px -4px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1.5px 0.5px rgba(255, 255, 255, 0.25),
+    inset 0 -2.5px 0 rgba(0, 0, 0, 0.9);
   transition: --glow .5s var(--ease), --glow-a .6s var(--ease);
 }
+
+/* Recessed plate bed inside the case bezel (demo: 10/12/13/10px on a 1060px case) */
+.board__bed { position: absolute; inset: 2.3% 1.15% 3% .95%; }
+.board__plate {
+  border-radius: 1.13cqi;
+  background: linear-gradient(180deg, #17191d 0%, #0d0e12 38%, #090a0d 100%);
+  box-shadow: inset 0 3px 12px rgba(0, 0, 0, 0.96), inset 0 0 0 1.5px rgba(0, 0, 0, 0.92), inset 0 -1px 0 rgba(255, 255, 255, 0.05);
+  overflow: hidden; pointer-events: none;
+}
+.board__plate-texture {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.018) 1px, transparent 1px),
+    linear-gradient(rgba(255, 255, 255, 0.01) 1px, transparent 1px);
+  background-size: 8px 8px, 100% 4px;
+}
+.board__plate-sep-f {
+  position: absolute; left: 1.5%; right: 1.5%; top: 22.8%; height: 2px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.9) 0%, rgba(20, 22, 26, 0.5) 100%);
+}
+.board__plate-sep-nav {
+  position: absolute; top: 24%; bottom: 2%; right: 11.2%; width: 3px;
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.85) 0%, rgba(20, 22, 26, 0.4) 100%);
+}
+
+/* Mechanical Switch Sockets Underneath Keycaps */
+.board__switches { position: absolute; inset: 0; pointer-events: none; }
+.board__switch-socket {
+  position: absolute; width: 2.8cqi; height: 2.8cqi; border-radius: 3px;
+  transform: translate(-50%, -50%); background: #191b20; border: 1px solid #23262d;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8); display: flex; align-items: center; justify-content: center;
+}
+.board__switch-stem {
+  width: 1.1cqi; height: 1.1cqi; border-radius: 1px;
+  background: #d8b20a; box-shadow: 0 0 2px rgba(0, 0, 0, 0.6);
+}
+
+/* Machined Rotary Knob & Collar */
+.board__knob-collar {
+  position: absolute; width: 6.8%; aspect-ratio: 1; border-radius: 50%;
+  margin-left: -0.5%; margin-top: -0.5%;
+  background: linear-gradient(135deg, #44474e 0%, #202226 100%);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.8), inset 0 1px 1px rgba(255, 255, 255, 0.3), inset 0 -1.5px 2px rgba(0, 0, 0, 0.95);
+  pointer-events: none; z-index: 10;
+}
+.board__knob {
+  position: absolute; width: 5.8%; aspect-ratio: 1; border-radius: 50%;
+  background: radial-gradient(circle at 38% 38%, #c5c8d0 0%, #9498a1 60%, #686b73 100%);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.85), 0 2px 4px rgba(0, 0, 0, 0.65), inset 0 1.5px 2px rgba(255, 255, 255, 0.65), inset 0 -2px 3px rgba(0, 0, 0, 0.9);
+  z-index: 11; display: flex; align-items: center; justify-content: center;
+}
+.board__knob::before {
+  content: ""; position: absolute; inset: 12%; border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: radial-gradient(circle, #898d96 0%, #6d7179 100%);
+  box-shadow: inset 0 1.5px 2px rgba(0, 0, 0, 0.6);
+}
+.board__knob-knurl {
+  position: absolute; inset: 2%; border-radius: 50%;
+  border: 1.5px dashed rgba(40, 42, 47, 0.45); pointer-events: none;
+}
+.board__knob-pip {
+  position: absolute; top: 12%; width: 4px; height: 4px; border-radius: 50%;
+  background: #ffffff; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.8); z-index: 2;
+}
+
+/* Status LEDs */
+.board__leds {
+  position: absolute; top: 36%; right: 9.35%; width: 14px; height: 80px;
+  display: flex; flex-direction: column; align-items: center; justify-content: space-between;
+  padding: 5px 0; background: rgba(0, 0, 0, 0.4); border-radius: 4px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.9), 0 0.5px 0 rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.04); z-index: 8; pointer-events: none;
+}
+.board__led-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.board__led-pin {
+  width: 4px; height: 4px; border-radius: 50%; background: #111215;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.95), 0 0.5px 0 rgba(255, 255, 255, 0.15);
+}
+.board__led-pin--on {
+  background: #00e676; box-shadow: 0 0 6px #00e676, 0 0 10px rgba(0, 230, 118, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+}
+.board__led-txt { font: 700 7px "JetBrains Mono", Consolas, monospace; color: #727682; line-height: 1; }
+
+/* OEM Keycaps */
 .cap {
   --lit: calc(var(--glow-a) * var(--pulse) * var(--wake) * 100%);
-  position: absolute; display: grid; place-items: start; padding: .45cqi .6cqi;
-  border: 0; border-radius: .9cqi; font: 600 1.25cqi/1.1 "Segoe UI", system-ui, sans-serif;
-  background: linear-gradient(#e0e2e3, var(--cap-alpha));
-  box-shadow: inset 0 -.35cqi 0 rgba(0, 0, 0, .18), 0 .5cqi 1.6cqi -.3cqi color-mix(in oklab, var(--led, var(--glow)) var(--lit), transparent);
-  transition: box-shadow .5s var(--ease), transform .15s var(--ease), outline-color .2s;
+  position: absolute; display: flex; flex-direction: column; justify-content: space-between;
+  padding: .35cqi .55cqi; border: 0; border-radius: .52cqi; transform-origin: center bottom;
+  font: 700 1.25cqi/1.1 "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif;
+  cursor: default;
+  background: linear-gradient(180deg, #bdbdb7 0%, #acaea7 85%, #7e8079 100%);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.85),
+    0 1px 2px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.38),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.38),
+    inset 1px 0 0 rgba(255, 255, 255, 0.22),
+    inset -1px 0 0 rgba(0, 0, 0, 0.28),
+    0 .5cqi 1.6cqi -.3cqi color-mix(in oklab, var(--led, var(--glow)) var(--lit), transparent);
+  transition: box-shadow .22s var(--spring-release), transform .22s var(--spring-release), filter .15s ease, outline-color .2s;
+  z-index: 5;
 }
-.cap svg { width: 1.5cqi; height: 1.5cqi; }
-.cap--mod { background: var(--cap-mod); }
-.cap--accent { background: linear-gradient(#efc23a, var(--mustard)); }
-/* shine-through legends: tinted by the light, kept legible on every cap */
-.cap span { color: color-mix(in oklab, var(--led, var(--glow)) calc(var(--lit) * .3), #2b2d31); transition: color .5s var(--ease); }
-.cap--mod span { color: color-mix(in oklab, var(--led, var(--glow)) calc(var(--lit) * .22), #ffffff); }
-.cap--accent span { color: #2a2205; }
-.board--dim .cap span { color: #3b3d41; }
-.board--dim .cap--mod span { color: #e9eaeb; }
+
+/* Authentic Cylindrical Dish Scoop */
+.cap::before {
+  content: ""; position: absolute; inset: 2px 2px 3.5px 2px; border-radius: .5cqi;
+  background: radial-gradient(ellipse at 50% var(--dish-tilt, 32%), rgba(255, 255, 255, 0.18) 0%, rgba(0, 0, 0, 0.08) 80%, transparent 100%);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), inset 0 -1px 1px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+}
+
+/* OEM Row Stepping Angles */
+.cap--r4 { --dish-tilt: 22%; }
+.cap--r3 { --dish-tilt: 30%; }
+.cap--r2 { --dish-tilt: 38%; }
+.cap--r1 { --dish-tilt: 46%; }
+
+/* Tactile Homing Bars on F and J */
+.cap--homing::after {
+  content: ""; position: absolute; bottom: 3px; left: 50%; transform: translateX(-50%);
+  width: 7px; height: 1.5px; background: rgba(0, 0, 0, 0.55); border-radius: 1px;
+  box-shadow: 0 .6px 0 rgba(255, 255, 255, 0.4); pointer-events: none; z-index: 6;
+}
+
+/* Spacebar dark accent groove */
+.cap__space-line {
+  position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 38%; height: 2px; background: #232219; border-radius: 1px;
+  box-shadow: 0 .5px 0 rgba(255, 255, 255, 0.25), inset 0 .5px .5px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.cap svg { width: 1.35cqi; height: 1.35cqi; }
+
+.cap--mod {
+  background: linear-gradient(180deg, #73767e 0%, #63666d 85%, #3f4247 100%);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.85),
+    0 1px 2px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.52),
+    inset 1px 0 0 rgba(255, 255, 255, 0.12),
+    inset -1px 0 0 rgba(0, 0, 0, 0.38),
+    0 .5cqi 1.6cqi -.3cqi color-mix(in oklab, var(--led, var(--glow)) var(--lit), transparent);
+}
+.cap--accent {
+  background: linear-gradient(180deg, #deb312 0%, #cda208 85%, #987500 100%);
+  box-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.85),
+    0 1px 2px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.42),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.48),
+    inset 1px 0 0 rgba(255, 255, 255, 0.28),
+    inset -1px 0 0 rgba(0, 0, 0, 0.32),
+    0 .5cqi 1.6cqi -.3cqi color-mix(in oklab, var(--led, var(--glow)) var(--lit), transparent);
+}
+
+/* shine-through legends */
+.cap span { display: inline-flex; align-items: baseline; gap: .16cqi; color: color-mix(in oklab, var(--led, var(--glow)) calc(var(--lit) * .3), #1c1e1d); transition: color .5s var(--ease); z-index: 3; }
+.cap__sub { font-style: normal; font-size: .85em; font-weight: 600; opacity: .6; }
+.cap--mod span { color: color-mix(in oklab, var(--led, var(--glow)) calc(var(--lit) * .22), #f1f3f7); }
+.cap--accent span { color: #1a180f; }
+.board--dim .cap span { color: #1c1e1d; }
+.board--dim .cap--mod span { color: #f1f3f7; }
 .board--rainbow { animation: rainbow 6s linear infinite; }
 @keyframes rainbow { 0% { --glow: #ff3b30 } 17% { --glow: #ffcc00 } 33% { --glow: #34c759 } 50% { --glow: #00c7ff } 67% { --glow: #3b5bff } 83% { --glow: #e040fb } 100% { --glow: #ff3b30 } }
 .board--breath { animation: breath var(--dur) ease-in-out infinite; }
 @keyframes breath { 50% { --pulse: .15; } }
 .board--wave .cap { animation: breath var(--dur) ease-in-out infinite; animation-delay: calc(var(--x) * var(--dur) * -1); }
-/* the one authored moment: the board lights up when you connect or explore */
 .board-wake { animation: wake 1.2s var(--ease) backwards; }
 @keyframes wake { from { --wake: 0; } }
 button.cap { cursor: pointer; }
-button.cap:hover { transform: translateY(-.25cqi); }
-button.cap:active { transform: translateY(.05cqi); }
-.cap--marked { outline: .3cqi solid var(--mustard); outline-offset: .15cqi; }
-.cap--selected { outline: .35cqi solid #fff; outline-offset: .2cqi; z-index: 1; }
-.board__knob {
-  position: absolute; width: 5.8%; aspect-ratio: 1; border-radius: 50%;
-  background: #8d9094; box-shadow: inset 0 0 0 .35cqi #6f7276, 0 .3cqi .6cqi rgba(0, 0, 0, .35);
+.cap:hover { transform: translateY(-.11cqi); filter: brightness(1.05); z-index: 10; }
+/* Bottom-out: every cap, clicked or typed on the real keyboard */
+.cap:active, .board .cap--actuated {
+  transform: translateY(.3cqi) scale(.985); filter: brightness(.94); z-index: 15;
+  box-shadow: 0 .1cqi .1cqi rgba(0, 0, 0, .85), inset 0 .14cqi .2cqi rgba(0, 0, 0, .8), inset 0 -.1cqi 0 rgba(255, 255, 255, .1);
+  transition: transform var(--spring-press), box-shadow var(--spring-press), filter var(--spring-press);
 }
-.board__knob::after { content: ""; position: absolute; left: 50%; top: 14%; width: .5cqi; height: 22%; margin-left: -.25cqi; border-radius: 1cqi; background: #e9eaeb; }
+.cap--marked { outline: .3cqi solid #deb312; outline-offset: .15cqi; }
+.cap--selected { outline: .35cqi solid #fff; outline-offset: .2cqi; z-index: 12; }
+
+
+.topbar { max-width: 1320px; margin: 0 auto 8px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.board-sound {
+  display: inline-flex; align-items: center; gap: 7px;
+  height: 26px; padding: 0 12px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface); color: var(--ink-2);
+  font: inherit; font-size: 12px; font-weight: 600; cursor: pointer;
+  transition: border-color .2s, background .2s, color .2s, transform .15s var(--ease);
+}
+.board-sound:hover { border-color: var(--line-2); background: var(--surface-2); }
+.board-sound:active { transform: scale(.97); }
+.board-sound svg { width: 14px; height: 14px; }
+.board-sound--on { background: var(--mustard-2); border-color: #ecd68a; color: var(--mustard-ink); }
 
 
 /* ---------- lighting ---------- */
