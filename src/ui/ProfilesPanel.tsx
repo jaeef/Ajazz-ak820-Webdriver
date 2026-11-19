@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { BookmarkPlus, Download, Upload, Play, Trash2, Layers } from 'lucide-react'
 import type { LightingState, Profile } from '../types'
 import { rgbToHex } from '../protocol'
 
@@ -12,12 +13,11 @@ interface Props {
   onImport: (data: unknown) => void
 }
 
-export function ProfilesPanel({
-  profiles, modes, currentLighting, onSave, onDelete, onLoad, onImport,
-}: Props) {
+export function ProfilesPanel({ profiles, modes, currentLighting, onSave, onDelete, onLoad, onImport }: Props) {
   const [name, setName] = useState('')
   const [importError, setImportError] = useState<string | null>(null)
   const fileInput = useRef<HTMLInputElement | null>(null)
+  const exists = profiles.some(p => p.name === name.trim())
 
   const handleSave = () => {
     const trimmed = name.trim()
@@ -27,9 +27,7 @@ export function ProfilesPanel({
   }
 
   const handleExport = () => {
-    const data = JSON.stringify(profiles, null, 2)
-    const blob = new Blob([data], { type: 'application/json' })
-    const url = URL.createObjectURL(blob)
+    const url = URL.createObjectURL(new Blob([JSON.stringify(profiles, null, 2)], { type: 'application/json' }))
     const a = document.createElement('a')
     a.href = url
     a.download = 'ak820-profiles.json'
@@ -37,79 +35,60 @@ export function ProfilesPanel({
     URL.revokeObjectURL(url)
   }
 
-  const handleImportClick = () => {
-    setImportError(null)
-    fileInput.current?.click()
-  }
-
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (!f) return
     const reader = new FileReader()
     reader.onload = () => {
-      try {
-        const data = JSON.parse(String(reader.result))
-        onImport(data)
-      } catch (err) {
-        setImportError((err as Error).message)
-      }
+      try { onImport(JSON.parse(String(reader.result))); setImportError(null) }
+      catch (err) { setImportError((err as Error).message) }
     }
     reader.readAsText(f)
     e.target.value = ''
   }
 
   return (
-    <div className="tab-panel">
-      <div className="row">
-        <input
-          type="text"
-          value={name}
-          onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleSave()}
-          placeholder='Profile name (e.g. "Coding red")'
-        />
-        <button onClick={handleSave}>Save current</button>
+    <div className="stack">
+      <div className="panel__head"><h2><Layers aria-hidden /> Profiles</h2></div>
+      <form className="field" onSubmit={e => { e.preventDefault(); handleSave() }}>
+        <label className="field__label" htmlFor="profile-name">Save the current lighting as</label>
+        <div className="field__row">
+          <input id="profile-name" className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Desk orange" />
+          <button className="btn btn--primary" type="submit" disabled={!name.trim()}>
+            <BookmarkPlus aria-hidden /> {exists ? 'Replace' : 'Save'}
+          </button>
+        </div>
+        <span className="muted">Stores effect, colour, brightness, speed, direction and random colours in this browser.</span>
+      </form>
+
+      {profiles.length === 0 ? (
+        <p className="empty">No profiles yet. Set up the lighting, name it above, and it will appear here and beside the keyboard.</p>
+      ) : (
+        <ul className="list">
+          {profiles.map(p => (
+            <li key={p.name} className="list__row">
+              <i className="list__chip" style={{ background: rgbToHex(p.r, p.g, p.b) }} aria-hidden />
+              <div className="list__main">
+                <strong>{p.name}</strong>
+                <span className="muted">
+                  {modes[p.mode] || `Mode ${p.mode}`} · {rgbToHex(p.r, p.g, p.b).toUpperCase()} · brightness {p.brightness} · speed {p.speed}{p.rainbow ? ' · random colours' : ''}
+                </span>
+              </div>
+              <div className="list__actions">
+                <button className="btn btn--outline btn--sm" onClick={() => onLoad(p)}><Play aria-hidden /> Load</button>
+                <button className="icon-btn icon-btn--danger" onClick={() => onDelete(p.name)} aria-label={`Delete ${p.name}`} title="Delete"><Trash2 aria-hidden /></button>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="actions">
+        <button className="btn btn--outline" onClick={handleExport} disabled={profiles.length === 0}><Download aria-hidden /> Export JSON</button>
+        <button className="btn btn--outline" onClick={() => fileInput.current?.click()}><Upload aria-hidden /> Import JSON</button>
+        <input ref={fileInput} type="file" accept=".json,application/json" hidden onChange={handleFile} />
       </div>
-      <div className="help" style={{ marginBottom: 12 }}>
-        Profiles save the full lighting state (mode, color, brightness, speed, direction, rainbow).
-      </div>
-      <ul className="profile-list">
-        {profiles.length === 0 ? (
-          <li className="profile-empty">No saved profiles yet. Set up the lighting above, then save it here.</li>
-        ) : (
-          profiles.map(p => {
-            const hex = rgbToHex(p.r, p.g, p.b)
-            return (
-              <li key={p.name}>
-                <div className="pcolor" style={{ background: hex }} />
-                <div className="pinfo">
-                  <div className="pname">{p.name}</div>
-                  <div className="pmeta">
-                    {modes[p.mode] ?? 'Mode ' + p.mode} · rgb({p.r},{p.g},{p.b}) · brightness {p.brightness} · speed {p.speed}
-                    {p.rainbow ? ' · rainbow' : ''}
-                  </div>
-                </div>
-                <div className="pactions">
-                  <button className="secondary small" onClick={() => onLoad(p)}>Load</button>
-                  <button className="secondary small" onClick={() => onDelete(p.name)}>Delete</button>
-                </div>
-              </li>
-            )
-          })
-        )}
-      </ul>
-      <div className="row" style={{ marginTop: 16 }}>
-        <button className="secondary" onClick={handleExport}>Export to JSON</button>
-        <button className="secondary" onClick={handleImportClick}>Import from JSON</button>
-        <input
-          ref={fileInput}
-          type="file"
-          accept=".json,application/json"
-          style={{ display: 'none' }}
-          onChange={handleFile}
-        />
-      </div>
-      {importError && <div className="help" style={{ color: 'var(--error)' }}>Import error: {importError}</div>}
+      {importError && <p className="notice notice--error">Couldn’t import that file: {importError}</p>}
     </div>
   )
 }

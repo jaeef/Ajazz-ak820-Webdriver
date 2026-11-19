@@ -1,53 +1,363 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-19T00:00:00Z",
+  "generatedAt": "2026-11-19T12:00:00Z",
   "title": "Design System: AK820 Web Driver",
   "extensions": {
     "colorMeta": {
-      "mustard": { "role": "primary", "displayName": "Keycap Mustard", "canonical": "#e3b419", "tonalRamp": ["#3d2f00", "#5c4600", "#7a5b00", "#a67d06", "#c99d0f", "#e3b419", "#f0d36a", "#f8e9b4"] },
-      "mustard-2": { "role": "primary", "displayName": "Mustard Wash", "canonical": "#f8e9b4" },
-      "mustard-ink": { "role": "primary", "displayName": "Mustard Ink", "canonical": "#7a5b00" },
-      "mustard-edge": { "role": "primary", "displayName": "Mustard Edge", "canonical": "#c99d0f" },
-      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#18191b", "tonalRamp": ["#18191b", "#2b2d31", "#3b3d41", "#5b5e63", "#6b6e73", "#d1d1cc", "#e2e2de", "#f2f2f0"] },
-      "ink-2": { "role": "neutral", "displayName": "Graphite", "canonical": "#5b5e63" },
-      "ink-3": { "role": "neutral", "displayName": "Pewter", "canonical": "#6b6e73" },
-      "ground": { "role": "neutral", "displayName": "Ash Ground", "canonical": "#f2f2f0" },
-      "surface": { "role": "neutral", "displayName": "Paper White", "canonical": "#ffffff" },
-      "surface-2": { "role": "neutral", "displayName": "Soft Ash", "canonical": "#f7f7f5" },
-      "line": { "role": "neutral", "displayName": "Hairline", "canonical": "#e2e2de" },
-      "line-2": { "role": "neutral", "displayName": "Firm Line", "canonical": "#d1d1cc" },
-      "case": { "role": "neutral", "displayName": "Case Black", "canonical": "#1c1d1f" },
-      "cap-alpha": { "role": "neutral", "displayName": "Light Ash Cap", "canonical": "#d4d6d7" },
-      "cap-mod": { "role": "neutral", "displayName": "Dark Ash Cap", "canonical": "#5c5f63" },
-      "ok": { "role": "status", "displayName": "Signal Green", "canonical": "#1f8a4c" },
-      "bad": { "role": "status", "displayName": "Signal Red", "canonical": "#c62f2a" },
-      "warn": { "role": "status", "displayName": "Amber Pending", "canonical": "#a35a06" }
+      "mustard": {
+        "role": "primary",
+        "displayName": "Keycap Mustard",
+        "canonical": "#e3b419",
+        "tonalRamp": [
+          "#3d2f00",
+          "#5c4600",
+          "#7a5b00",
+          "#a67d06",
+          "#c99d0f",
+          "#e3b419",
+          "#f0d36a",
+          "#f8e9b4"
+        ]
+      },
+      "mustard-2": {
+        "role": "primary",
+        "displayName": "Mustard Wash",
+        "canonical": "#f8e9b4"
+      },
+      "mustard-ink": {
+        "role": "primary",
+        "displayName": "Mustard Ink",
+        "canonical": "#7a5b00"
+      },
+      "mustard-edge": {
+        "role": "primary",
+        "displayName": "Mustard Edge",
+        "canonical": "#c99d0f"
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Ink",
+        "canonical": "#18191b",
+        "tonalRamp": [
+          "#18191b",
+          "#2b2d31",
+          "#3b3d41",
+          "#5b5e63",
+          "#6b6e73",
+          "#d1d1cc",
+          "#e2e2de",
+          "#f2f2f0"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Graphite",
+        "canonical": "#5b5e63"
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Pewter",
+        "canonical": "#6b6e73"
+      },
+      "ground": {
+        "role": "neutral",
+        "displayName": "Ash Ground",
+        "canonical": "#f2f2f0"
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Paper White",
+        "canonical": "#ffffff"
+      },
+      "surface-2": {
+        "role": "neutral",
+        "displayName": "Soft Ash",
+        "canonical": "#f7f7f5"
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#e2e2de"
+      },
+      "line-2": {
+        "role": "neutral",
+        "displayName": "Firm Line",
+        "canonical": "#d1d1cc"
+      },
+      "case": {
+        "role": "board",
+        "displayName": "Case Black",
+        "canonical": "#1c1d1f"
+      },
+      "cap-alpha": {
+        "role": "board",
+        "displayName": "Light Ash Cap",
+        "canonical": "#d4d6d7"
+      },
+      "cap-mod": {
+        "role": "board",
+        "displayName": "Dark Ash Cap",
+        "canonical": "#5c5f63"
+      },
+      "ok": {
+        "role": "status",
+        "displayName": "Signal Green",
+        "canonical": "#1f8a4c",
+        "tonalRamp": [
+          "#0d3d21",
+          "#146b39",
+          "#1f8a4c",
+          "#4fb178",
+          "#8fd3ab",
+          "#c4e6d1",
+          "#e4f4ea",
+          "#f3faf6"
+        ]
+      },
+      "warn": {
+        "role": "status",
+        "displayName": "Amber Pending",
+        "canonical": "#a35a06"
+      },
+      "mustard-hover": {
+        "role": "primary",
+        "displayName": "Mustard Glow",
+        "canonical": "#ecc232"
+      },
+      "mustard-ring": {
+        "role": "primary",
+        "displayName": "Tile Ring",
+        "canonical": "#d9b440"
+      },
+      "mustard-edge-soft": {
+        "role": "primary",
+        "displayName": "Soft Mustard Edge",
+        "canonical": "#ecd68a"
+      },
+      "track": {
+        "role": "neutral",
+        "displayName": "Recess",
+        "canonical": "#ececea"
+      },
+      "toggle-off": {
+        "role": "neutral",
+        "displayName": "Switch Off",
+        "canonical": "#d6d6d2"
+      },
+      "case-top": {
+        "role": "board",
+        "displayName": "Case Black (top)",
+        "canonical": "#26272a"
+      },
+      "cap-alpha-top": {
+        "role": "board",
+        "displayName": "Light Ash Cap (top)",
+        "canonical": "#e0e2e3"
+      },
+      "cap-accent-top": {
+        "role": "board",
+        "displayName": "Accent Cap (top)",
+        "canonical": "#efc23a"
+      },
+      "legend": {
+        "role": "board",
+        "displayName": "Legend Graphite",
+        "canonical": "#2b2d31"
+      },
+      "legend-accent": {
+        "role": "board",
+        "displayName": "Accent Legend",
+        "canonical": "#2a2205"
+      },
+      "legend-mod-dim": {
+        "role": "board",
+        "displayName": "Mod Legend",
+        "canonical": "#e9eaeb"
+      },
+      "knob": {
+        "role": "board",
+        "displayName": "Knob",
+        "canonical": "#8d9094"
+      },
+      "knob-rim": {
+        "role": "board",
+        "displayName": "Knob Rim",
+        "canonical": "#6f7276"
+      },
+      "ok-wash": {
+        "role": "status",
+        "displayName": "Green Wash",
+        "canonical": "#e4f4ea"
+      },
+      "ok-edge": {
+        "role": "status",
+        "displayName": "Green Edge",
+        "canonical": "#c4e6d1"
+      },
+      "ok-ink": {
+        "role": "status",
+        "displayName": "Green Ink",
+        "canonical": "#146b39"
+      },
+      "danger-wash": {
+        "role": "status",
+        "displayName": "Red Wash",
+        "canonical": "#fbe9e8"
+      },
+      "danger-wash-hover": {
+        "role": "status",
+        "displayName": "Red Wash (hover)",
+        "canonical": "#f8dcda"
+      },
+      "danger-edge": {
+        "role": "status",
+        "displayName": "Red Edge",
+        "canonical": "#f0c3c0"
+      },
+      "danger-ink": {
+        "role": "status",
+        "displayName": "Signal Red",
+        "canonical": "#8f1f1b",
+        "tonalRamp": [
+          "#4a1210",
+          "#8f1f1b",
+          "#c62f2a",
+          "#e0605a",
+          "#f0c3c0",
+          "#f8dcda",
+          "#fbe9e8",
+          "#fdf4f3"
+        ]
+      },
+      "toast-error": {
+        "role": "status",
+        "displayName": "Oxblood",
+        "canonical": "#4a1210"
+      },
+      "toast-ok-icon": {
+        "role": "status",
+        "displayName": "Toast Green",
+        "canonical": "#6fdc9b"
+      },
+      "toast-error-icon": {
+        "role": "status",
+        "displayName": "Toast Coral",
+        "canonical": "#ff8a80"
+      }
     },
     "typographyMeta": {
-      "headline": { "displayName": "Headline", "purpose": "Connect-screen page headline." },
-      "title": { "displayName": "Title", "purpose": "Panel headings with a 16px icon." },
-      "body": { "displayName": "Body", "purpose": "All UI text; buttons, tiles and active nav at 600." },
-      "label": { "displayName": "Label", "purpose": "Field labels, pills, tile mode numbers." },
-      "mono": { "displayName": "Mono", "purpose": "Hex values, capture log, code and kbd only." }
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Connect-screen page headline."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Panel and dialog headings with a 16px icon."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "All UI text; buttons, tiles and active nav at 600."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field labels, pills, table headers, section labels, tile mode numbers."
+      },
+      "mono": {
+        "displayName": "Mono",
+        "purpose": "Hex values, packet tables, code and kbd only."
+      },
+      "body-sm": {
+        "displayName": "Body small",
+        "purpose": "Secondary lines in list and setting rows, table body, small buttons, apply state."
+      },
+      "label-sm": {
+        "displayName": "Label small",
+        "purpose": "kbd hints, RGB channel letters, sidebar group label (uppercase, 0.06em)."
+      }
     },
     "shadows": [
-      { "name": "panel", "value": "0 1px 2px rgba(24,25,27,.06), 0 8px 24px -12px rgba(24,25,27,.18)", "purpose": "Panels at rest; tiles on hover." },
-      { "name": "board", "value": "0 1px 0 rgba(255,255,255,.06) inset, 0 22px 40px -22px rgba(24,25,27,.55), 0 2px 6px rgba(24,25,27,.2)", "purpose": "The keyboard render only." },
-      { "name": "primary-press", "value": "inset 0 -2px 0 rgba(0,0,0,.12)", "purpose": "Keycap-like bottom edge on the mustard button." },
-      { "name": "primary-hover", "value": "inset 0 -2px 0 rgba(0,0,0,.12), 0 6px 16px -8px rgba(201,157,15,.8)", "purpose": "Mustard bloom on primary hover." },
-      { "name": "toast", "value": "0 14px 34px -14px rgba(0,0,0,.55)", "purpose": "Floating toast." }
+      {
+        "name": "panel",
+        "value": "0 1px 2px rgba(24,25,27,.06), 0 8px 24px -12px rgba(24,25,27,.18)",
+        "purpose": "Panels at rest; tiles on hover."
+      },
+      {
+        "name": "dialog",
+        "value": "0 30px 60px -20px rgba(24,25,27,.45)",
+        "purpose": "Modal dialogs, over a rgba(24,25,27,.4) backdrop with blur(2px)."
+      },
+      {
+        "name": "board",
+        "value": "0 1px 0 rgba(255,255,255,.06) inset, 0 22px 40px -22px rgba(24,25,27,.55), 0 2px 6px rgba(24,25,27,.2)",
+        "purpose": "The keyboard render only."
+      },
+      {
+        "name": "primary-press",
+        "value": "inset 0 -2px 0 rgba(0,0,0,.12)",
+        "purpose": "Keycap-like bottom edge on the mustard button."
+      },
+      {
+        "name": "primary-hover",
+        "value": "inset 0 -2px 0 rgba(0,0,0,.12), 0 6px 16px -8px rgba(201,157,15,.8)",
+        "purpose": "Mustard bloom on primary hover."
+      },
+      {
+        "name": "toast",
+        "value": "0 14px 34px -14px rgba(0,0,0,.55)",
+        "purpose": "Floating toast."
+      },
+      {
+        "name": "segment-chip",
+        "value": "0 1px 2px rgba(0,0,0,.1), 0 0 0 1px #e2e2de",
+        "purpose": "Raised selected segment."
+      }
     ],
     "motion": [
-      { "name": "ease", "value": "cubic-bezier(.16, 1, .3, 1)", "purpose": "Every state transition." },
-      { "name": "glow-crossfade", "value": "--glow .5s, --glow-a .6s", "purpose": "Board legends and underglow cross-fade to the new lighting colour." },
-      { "name": "wake", "value": "1.2s", "purpose": "Board lights up once on connect or explore." },
-      { "name": "board-preview", "value": "1.6s + speed * 0.7s", "purpose": "Breath, wave (staggered by key x) and rainbow (6s) previews." },
-      { "name": "toast-in", "value": ".45s", "purpose": "Toast rises 12px in." },
-      { "name": "reduced-motion", "value": "durations .01ms", "purpose": "All animation and transitions collapse." }
+      {
+        "name": "ease",
+        "value": "cubic-bezier(.16, 1, .3, 1)",
+        "purpose": "Every state transition."
+      },
+      {
+        "name": "glow-crossfade",
+        "value": "--glow .5s, --glow-a .6s",
+        "purpose": "Board legends and underglow cross-fade to the new lighting colour."
+      },
+      {
+        "name": "wake",
+        "value": "1.2s",
+        "purpose": "Board lights up once on connect or explore."
+      },
+      {
+        "name": "board-preview",
+        "value": "1.6s + speed * 0.7s",
+        "purpose": "Breath, wave (staggered by key x) and rainbow (6s) previews."
+      },
+      {
+        "name": "toast-in",
+        "value": ".45s",
+        "purpose": "Toast rises 12px in."
+      },
+      {
+        "name": "dialog-in",
+        "value": ".35s",
+        "purpose": "Dialog rises 10px from 0.98 scale."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "durations .01ms",
+        "purpose": "All animation and transitions collapse."
+      }
     ],
     "breakpoints": [
-      { "name": "stack", "value": "1180px" },
-      { "name": "mobile", "value": "760px" }
+      {
+        "name": "stack",
+        "value": "1180px"
+      },
+      {
+        "name": "mobile",
+        "value": "760px"
+      }
     ]
   },
   "components": [
@@ -68,12 +378,12 @@
       "css": ".ds-btn-outline { display: inline-flex; align-items: center; height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid #d1d1cc; background: #fff; color: #18191b; font: 600 14px/1.45 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; cursor: pointer; transition: border-color .2s, transform .15s cubic-bezier(.16,1,.3,1); } .ds-btn-outline:hover { border-color: #6b6e73; } .ds-btn-outline:active { transform: scale(.98); } .ds-btn-outline:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; }"
     },
     {
-      "name": "Ghost Button",
+      "name": "Danger Button",
       "kind": "button",
-      "refersTo": "button-ghost",
-      "description": "Tertiary in-panel action.",
-      "html": "<button class=\"ds-btn-ghost\">Save current</button>",
-      "css": ".ds-btn-ghost { display: inline-flex; align-items: center; height: 38px; padding: 0 16px; border-radius: 10px; border: 0; background: none; color: #5b5e63; font: 600 14px/1.45 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; cursor: pointer; transition: background .2s, color .2s; } .ds-btn-ghost:hover { background: #f7f7f5; color: #18191b; } .ds-btn-ghost:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; }"
+      "refersTo": "button-danger",
+      "description": "Clear, delete and reset actions; red wash, never a full red fill.",
+      "html": "<button class=\"ds-btn-danger\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 6h18\"/><path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\"/><path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\"/></svg>Clear log</button>",
+      "css": ".ds-btn-danger { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid #f0c3c0; background: #fbe9e8; color: #8f1f1b; font: 600 14px/1.45 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; cursor: pointer; transition: background .2s, transform .15s cubic-bezier(.16,1,.3,1); } .ds-btn-danger svg { width: 16px; height: 16px; } .ds-btn-danger:hover { background: #f8dcda; } .ds-btn-danger:active { transform: scale(.98); } .ds-btn-danger:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; }"
     },
     {
       "name": "Text Input",
@@ -96,16 +406,8 @@
       "kind": "chip",
       "refersTo": "pill",
       "description": "Non-interactive status above the board.",
-      "html": "<span class=\"ds-pill ds-pill-demo\">Demo mode · nothing is sent</span> <span class=\"ds-pill\">Solid colour · #FF0000</span>",
-      "css": ".ds-pill { display: inline-block; font: 600 12px 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; padding: 3px 10px; border-radius: 999px; background: #fff; border: 1px solid #e2e2de; color: #5b5e63; } .ds-pill-demo { background: #f8e9b4; border-color: #ecd68a; color: #7a5b00; }"
-    },
-    {
-      "name": "Panel",
-      "kind": "card",
-      "refersTo": "panel",
-      "description": "The standard white container.",
-      "html": "<section class=\"ds-panel\"><h2>Profiles</h2><p>No profiles yet. Save the current lighting to switch back in one click.</p></section>",
-      "css": ".ds-panel { background: #fff; border: 1px solid #e2e2de; border-radius: 16px; padding: 18px 20px; box-shadow: 0 1px 2px rgba(24,25,27,.06), 0 8px 24px -12px rgba(24,25,27,.18); color: #18191b; font: 14px/1.45 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; max-width: 280px; } .ds-panel h2 { font-size: 15px; font-weight: 650; margin: 0 0 6px; } .ds-panel p { margin: 0; color: #5b5e63; }"
+      "html": "<span class=\"ds-pill ds-pill-ok\">Connected</span> <span class=\"ds-pill ds-pill-demo\">Demo mode · nothing is sent</span> <span class=\"ds-pill\">Solid colour · #FF0000</span>",
+      "css": ".ds-pill { display: inline-block; font: 600 12px 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; padding: 3px 10px; border-radius: 999px; background: #fff; border: 1px solid #e2e2de; color: #5b5e63; } .ds-pill-demo { background: #f8e9b4; border-color: #ecd68a; color: #7a5b00; } .ds-pill-ok { background: #e4f4ea; border-color: #c4e6d1; color: #146b39; }"
     },
     {
       "name": "Effect Tile",
@@ -114,6 +416,22 @@
       "description": "Lighting mode picker: icon, name, mode number; animates on hover and selection.",
       "html": "<div class=\"ds-tiles\"><button class=\"ds-tile ds-tile-on\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\"/><path d=\"M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\"/><path d=\"M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\"/></svg><span class=\"ds-tile-name\">Wave</span><span class=\"ds-tile-num\">Mode 1</span></button><button class=\"ds-tile\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9Z\"/></svg><span class=\"ds-tile-name\">Breath</span><span class=\"ds-tile-num\">Mode 2</span></button></div>",
       "css": ".ds-tiles { display: grid; grid-template-columns: repeat(2, 124px); gap: 8px; } .ds-tile { display: grid; gap: 2px; justify-items: start; padding: 12px; border-radius: 12px; border: 1px solid #e2e2de; background: #f7f7f5; color: #18191b; font: 14px/1.45 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; text-align: left; cursor: pointer; transition: transform .25s cubic-bezier(.16,1,.3,1), border-color .2s, background .2s, box-shadow .25s cubic-bezier(.16,1,.3,1); } .ds-tile svg { width: 22px; height: 22px; margin-bottom: 8px; color: #5b5e63; transition: transform .45s cubic-bezier(.16,1,.3,1), color .2s; } .ds-tile:hover { transform: translateY(-2px); border-color: #d1d1cc; background: #fff; box-shadow: 0 1px 2px rgba(24,25,27,.06), 0 8px 24px -12px rgba(24,25,27,.18); } .ds-tile:hover svg { transform: scale(1.12) rotate(-6deg); color: #18191b; } .ds-tile:active { transform: translateY(0) scale(.98); } .ds-tile:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; } .ds-tile-name { font-weight: 600; } .ds-tile-num { font-size: 12px; color: #5b5e63; font-variant-numeric: tabular-nums; } .ds-tile-on { background: #f8e9b4; border-color: #d9b440; box-shadow: 0 0 0 1px #d9b440; } .ds-tile-on svg { color: #7a5b00; }"
+    },
+    {
+      "name": "Packet Table",
+      "kind": "custom",
+      "refersTo": "table-header",
+      "description": "Capture and inspector tables: sticky Soft Ash header, mono tabular cells, direction markers and status cells.",
+      "html": "<div class=\"ds-table-wrap\"><table class=\"ds-table\"><thead><tr><th>Dir</th><th>Bytes</th><th>OK</th></tr></thead><tbody><tr><td><span class=\"ds-dir ds-dir-out\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M7 7h10v10\"/><path d=\"M7 17 17 7\"/></svg>out</span></td><td class=\"ds-hex\">04 18 00 01 00</td><td><span class=\"ds-tri ds-tri-yes\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg></span></td></tr><tr><td><span class=\"ds-dir ds-dir-in\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17 7 7 17\"/><path d=\"M17 17H7V7\"/></svg>in</span></td><td class=\"ds-hex\">04 18 00 01 01</td><td><span class=\"ds-tri ds-tri-no\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></span></td></tr></tbody></table></div>",
+      "css": ".ds-table-wrap { border: 1px solid #e2e2de; border-radius: 12px; overflow: auto; max-width: 420px; background: #fff; } .ds-table { width: 100%; border-collapse: collapse; font: 13px/1.45 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; color: #18191b; } .ds-table th { position: sticky; top: 0; background: #f7f7f5; text-align: left; font-size: 12px; font-weight: 650; color: #5b5e63; padding: 8px 10px; border-bottom: 1px solid #e2e2de; } .ds-table td { padding: 6px 10px; border-bottom: 1px solid #e2e2de; white-space: nowrap; font-family: 'Cascadia Mono',Consolas,monospace; font-size: 12px; font-variant-numeric: tabular-nums; } .ds-table tr:last-child td { border-bottom: 0; } .ds-table tbody tr:hover td { background: #f7f7f5; } .ds-hex { color: #5b5e63; } .ds-dir { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; } .ds-dir svg { width: 13px; height: 13px; } .ds-dir-in { color: #1f8a4c; } .ds-dir-out { color: #7a5b00; } .ds-tri { display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 6px; } .ds-tri svg { width: 14px; height: 14px; } .ds-tri-yes { background: #e4f4ea; color: #146b39; } .ds-tri-no { background: #fbe9e8; color: #8f1f1b; }"
+    },
+    {
+      "name": "Dialog",
+      "kind": "card",
+      "refersTo": "dialog",
+      "description": "Native modal dialog: title row with close, scrolling body, Soft Ash action bar with one primary.",
+      "html": "<div class=\"ds-dialog\" role=\"dialog\" aria-label=\"Rename modes\"><div class=\"ds-dialog-head\"><h2>Rename modes</h2><button class=\"ds-icon-btn\" aria-label=\"Close\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></button></div><div class=\"ds-dialog-body\">Give each effect a name you will recognise.</div><div class=\"ds-dialog-actions\"><button class=\"ds-dbtn\">Cancel</button><button class=\"ds-dbtn ds-dbtn-primary\">Save names</button></div></div>",
+      "css": ".ds-dialog { width: 420px; border: 1px solid #e2e2de; border-radius: 16px; background: #fff; color: #18191b; overflow: hidden; box-shadow: 0 30px 60px -20px rgba(24,25,27,.45); font: 14px/1.45 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; } .ds-dialog-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 6px 20px; } .ds-dialog-head h2 { margin: 0; font-size: 15px; font-weight: 650; } .ds-dialog-body { padding: 6px 20px 16px; color: #5b5e63; } .ds-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid #e2e2de; background: #f7f7f5; } .ds-icon-btn { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid #d1d1cc; background: #fff; color: #18191b; cursor: pointer; transition: background .2s, transform .2s cubic-bezier(.16,1,.3,1); } .ds-icon-btn svg { width: 16px; height: 16px; } .ds-icon-btn:hover { background: #f8e9b4; } .ds-icon-btn:active { transform: scale(.94); } .ds-icon-btn:focus-visible, .ds-dbtn:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; } .ds-dbtn { height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid #d1d1cc; background: #fff; color: #18191b; font: 600 14px 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; cursor: pointer; } .ds-dbtn:hover { border-color: #6b6e73; } .ds-dbtn-primary { background: #e3b419; border-color: #c99d0f; box-shadow: inset 0 -2px 0 rgba(0,0,0,.12); } .ds-dbtn-primary:hover { background: #ecc232; border-color: #c99d0f; }"
     },
     {
       "name": "Keycaps",
@@ -125,26 +443,49 @@
   ],
   "narrative": {
     "northStar": "The Board Is the Interface",
-    "overview": "The AK820 itself carries the screen. Its own colorway (black case, light-ash alphas, dark-ash modifiers, mustard Esc, Enter and Space) is drawn large and central, and the rest of the app is a quiet light-ash workroom around it: white panels on an ash ground, ink type, one stroke of Lucide line icons. The interface borrows its only accent from the yellow keycaps, and spends it where the keycaps would: on what is selected and on the one action that sends changes to the keyboard.\n\nDensity is that of a settings tool, not a dashboard: a 248px sidebar, a stage with the board and its status row, then effect tiles and a controls panel. Depth is soft and ambient; the only dramatic shadow belongs to the physical board. Motion is purposeful: the board's legends and underglow take the current lighting colour and cross-fade when it changes, and the board lights up once when you connect or explore. The system refuses the dark gamer dashboard and the wall of flat tabs.",
+    "overview": "The AK820 itself carries the screen. Its own colorway (black case, light-ash alphas, dark-ash modifiers, mustard Esc, Enter and Space) is drawn large and central, and the rest of the app is a quiet light-ash workroom around it: white panels on an ash ground, ink type, one stroke of Lucide line icons. The interface borrows its only accent from the yellow keycaps, and spends it where the keycaps would: on what is selected and on the one action that sends changes to the keyboard.\n\nDensity is that of a settings tool, not a dashboard: a 248px sidebar, a stage with the board and its status row, then effect tiles and a controls panel. The developer surfaces (capture log, wire-format inspector, settings, calibration and mode-name dialogs) speak the same language at a denser grain: soft-ash tables with sticky headers and mono cells, list rows, setting rows, and native modal dialogs. Depth is soft and ambient; the only dramatic shadow belongs to the physical board. Motion is purposeful: the board's legends and underglow take the current lighting colour and cross-fade when it changes, and the board lights up once when you connect or explore. The system refuses the dark gamer dashboard and the wall of flat tabs.",
     "keyCharacteristics": [
       "The rendered keyboard is the hero on every lighting and key surface.",
-      "Ash neutrals, ink text, mustard as the single accent.",
-      "System UI face; mono only for hex and capture data.",
+      "Ash neutrals, ink text, mustard as the single accent; green and red appear only as status washes.",
+      "System UI face; mono only for hex, packets, capture data and shortcuts.",
       "Lucide line icons at one stroke weight (1.9).",
-      "Soft radii (8 / 12 / 16px), soft ambient shadows.",
+      "Soft, keycap-like radii stepping from 4px chips to 16px panels; soft ambient shadows.",
       "Explicit Apply: changes are staged, the status row says so, mustard sends them."
     ],
     "rules": [
-      { "name": "The Keycap Rule", "body": "Mustard is used the way the yellow caps are: on the selected thing and the one primary action. A screen carries one mustard-filled button.", "section": "colors" },
-      { "name": "The Board Owns Its Colours Rule", "body": "Case, cap and knob colours live on the keyboard render only; UI chrome never borrows Case Black as a surface.", "section": "colors" },
-      { "name": "The Native Face Rule", "body": "No display face. Hierarchy comes from weight (400 / 600 / 650) and size, not from a second family.", "section": "typography" },
-      { "name": "The One Object Rule", "body": "Only the keyboard casts a deep shadow. UI surfaces stay at the panel shadow or flat.", "section": "elevation" }
+      {
+        "name": "The Keycap Rule",
+        "body": "Mustard is used the way the yellow caps are: on the selected thing and the one primary action. A screen or dialog carries one mustard-filled button.",
+        "section": "colors"
+      },
+      {
+        "name": "The Board Owns Its Colours Rule",
+        "body": "Case, cap, legend and knob colours live on the keyboard render only; UI chrome never borrows Case Black as a surface.",
+        "section": "colors"
+      },
+      {
+        "name": "The Wash Rule",
+        "body": "Status colour never fills at full strength in chrome: green and red appear as a pale wash with a darker edge and dark ink; full-strength green is reserved for dots and direction markers.",
+        "section": "colors"
+      },
+      {
+        "name": "The Native Face Rule",
+        "body": "No display face. Hierarchy comes from weight (400 / 600 / 650) and size, not from a second family.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Object Rule",
+        "body": "Only the keyboard casts a deep shadow on the page. UI surfaces stay at the panel shadow or flat; a modal dialog lifts above a dimmed backdrop, never alongside the board's shadow on the same plane.",
+        "section": "elevation"
+      }
     ],
     "dos": [
       "Do keep the keyboard render visible and central on lighting and key surfaces.",
       "Do spend mustard only on selection and the single primary action (The Keycap Rule).",
       "Do stage changes and state them (\"Not sent yet\") until the user presses Apply; keep Apply in the status row above the board.",
-      "Do use Lucide line icons at the shared 1.9 stroke, 16px in chrome, 22px on tiles.",
+      "Do use Lucide line icons at the shared 1.9 stroke, 16px in chrome, 22px on tiles, 12 to 14px inside pills, markers and status cells.",
+      "Do show status as a pale wash with dark ink (The Wash Rule).",
+      "Do use the native dialog for modal tasks, with one primary action in its action bar.",
       "Do ease every state change with cubic-bezier(.16, 1, .3, 1) and honour reduced-motion.",
       "Do use mono only for hex, packets and shortcuts."
     ],
