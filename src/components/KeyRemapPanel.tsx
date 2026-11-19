@@ -77,53 +77,81 @@ export function KeyRemapPanel({ isLive, onRead, onSend, aside }: Props) {
 
   const current = TARGETS.findIndex(t => same(t.a, map[selected]))
   return (
-    <div className="page page--fit">
+    <div className="page page--fit page--fill page--keys">
       <div className="stage">
         <BoardRender ariaLabel="Keyboard, click a key to remap it" selected={selected} onKeyClick={k => setSelected(k.id)}
           overlay={k => (same(map[k.id], DEFAULTS[k.id]) ? undefined : { label: targetLabel(map[k.id]), marked: true })} />
       </div>
-      <div className="split">
-        <section className="panel" aria-labelledby="remap-h">
-          <div className="panel__head"><h2 id="remap-h"><KeyboardIcon aria-hidden /> Remap</h2></div>
-          <div className="field">
-            <label className="field__label" htmlFor="remap-target"><strong>{sel.label}</strong> sends</label>
-            <div className="field__row">
-              <select id="remap-target" className="input" value={current} onChange={e => assign(TARGETS[+e.target.value].a)}>
-                {current < 0 && <option value={-1}>{targetLabel(map[selected])}</option>}
-                {TARGETS.map((t, i) => <option key={i} value={i}>{t.label}</option>)}
-              </select>
-              <button className="btn btn--outline" onClick={() => assign(DEFAULTS[selected])}><RotateCcw aria-hidden /> Reset key</button>
+      <div className="split split--compact">
+        <section className="panel panel--remap" aria-labelledby="remap-h">
+          <div className="panel__head">
+            <h2 id="remap-h"><KeyboardIcon aria-hidden /> Remap & Macro</h2>
+            <div className="actions actions--compact">
+              <button className="btn btn--primary btn--sm" onClick={() => void send(map, `keymap (${changed.length} remapped)`)}>
+                <Send aria-hidden /> {isLive ? 'Apply keymap' : 'Apply keymap (demo)'}
+              </button>
+              <button className="btn btn--ghost btn--sm" onClick={() => void send(DEFAULTS, 'default keymap')}>
+                Restore defaults
+              </button>
             </div>
           </div>
-          <p className="muted">
-            {device
-              ? (matches ? 'The keyboard already holds this table.' : 'Not on the keyboard yet: apply to send it.')
-              : !isLive ? 'Connect the keyboard to read its current table.'
-                : read === 'failed' ? 'Couldn’t read the keyboard’s table; apply writes all 128 slots.'
-                  : 'Reading the keyboard’s table…'}
-          </p>
-          <p className="muted">
-            {changed.length
-              ? <>Remapped: {changed.map(k => `${k.label} → ${targetLabel(map[k.id])}`).join(', ')}</>
-              : 'No keys remapped. Click a key on the board to change it.'}
-          </p>
-          <div className="field">
-            <label className="field__label" htmlFor="macro-text"><TextCursorInput aria-hidden /> Macro text for {sel.label}</label>
-            <div className="field__row">
-              <input id="macro-text" className="input" type="text" value={macroText} maxLength={MACRO_MAX}
-                onChange={e => setMacroText(e.target.value)} placeholder="a–z, 0–9, space" />
-              <button className="btn btn--outline" disabled={!macroEvents.length} onClick={sendMacro}>Assign macro</button>
+
+          <div className="remap__body">
+            <div className="remap__section">
+              <div className="field">
+                <label className="field__label" htmlFor="remap-target">
+                  <strong>{sel.label}</strong> sends
+                </label>
+                <div className="field__row">
+                  <select id="remap-target" className="input input--sm" value={current} onChange={e => assign(TARGETS[+e.target.value].a)}>
+                    {current < 0 && <option value={-1}>{targetLabel(map[selected])}</option>}
+                    {TARGETS.map((t, i) => <option key={i} value={i}>{t.label}</option>)}
+                  </select>
+                  <button className="btn btn--outline btn--sm" onClick={() => assign(DEFAULTS[selected])}>
+                    <RotateCcw aria-hidden /> Reset key
+                  </button>
+                </div>
+              </div>
+              <div className="remap__status-line">
+                <span className="muted">
+                  {device
+                    ? (matches ? 'The keyboard already holds this table.' : 'Not on keyboard yet: apply to send.')
+                    : !isLive ? 'Connect keyboard to read table.'
+                      : read === 'failed' ? 'Couldn’t read table; apply writes all slots.'
+                        : 'Reading keyboard table…'}
+                </span>
+                <span className="remap__status-sep" aria-hidden>·</span>
+                <span className="muted">
+                  {changed.length
+                    ? <>Remapped: {changed.map(k => `${k.label} → ${targetLabel(map[k.id])}`).join(', ')}</>
+                    : 'No keys remapped. Click a key on the board to change it.'}
+                </span>
+              </div>
             </div>
-            <div className="meter" aria-hidden><i style={{ width: `${(macroText.length / MACRO_MAX) * 100}%` }} /></div>
-            <span className="muted">{macroText.length} / {MACRO_MAX} characters. One macro at a time; assigning it moves it off any other key.</span>
-          </div>
-          <div className="actions">
-            <button className="btn btn--primary" onClick={() => void send(map, `keymap (${changed.length} remapped)`)}>
-              <Send aria-hidden /> {isLive ? 'Apply keymap' : 'Apply keymap (demo)'}
-            </button>
-            <button className="btn btn--ghost" onClick={() => void send(DEFAULTS, 'default keymap')}>
-              Restore defaults
-            </button>
+
+            <div className="remap__section">
+              <div className="field">
+                <div className="field__label-row">
+                  <label className="field__label" htmlFor="macro-text">
+                    <TextCursorInput aria-hidden /> Macro text for {sel.label}
+                  </label>
+                  <span className="field__counter">{macroText.length} / {MACRO_MAX} chars</span>
+                </div>
+                <div className="field__row">
+                  <input id="macro-text" className="input input--sm" type="text" value={macroText} maxLength={MACRO_MAX}
+                    onChange={e => setMacroText(e.target.value)} placeholder="a–z, 0–9, space" />
+                  <button className="btn btn--outline btn--sm" disabled={!macroEvents.length} onClick={sendMacro}>
+                    Assign macro
+                  </button>
+                </div>
+              </div>
+              <div className="meter meter--sm" aria-hidden>
+                <i style={{ width: `${(macroText.length / MACRO_MAX) * 100}%` }} />
+              </div>
+              <p className="remap__micro-hint muted">
+                One macro at a time; assigning it moves it off any other key.
+              </p>
+            </div>
           </div>
         </section>
         {aside}

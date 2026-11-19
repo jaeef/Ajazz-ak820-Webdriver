@@ -26,19 +26,21 @@ export function KeyboardOptionsPanel({ isLive, onRead, onWrite }: Props) {
   return (
     <section className="panel" aria-labelledby="opts-h">
       <div className="panel__head"><h2 id="opts-h"><SlidersHorizontal aria-hidden /> Keyboard options</h2></div>
-      <p className="muted">
+      <p className="muted" style={{ fontSize: '11.5px', margin: 0 }}>
         {isLive
-          ? (loaded ? 'Read from the keyboard. Changes are written right away.' : 'Reading from the keyboard…')
-          : 'Connect the keyboard to read and change these.'}
+          ? (loaded ? 'Read from keyboard. Changes are written right away.' : 'Reading from keyboard…')
+          : 'Connect keyboard to change these.'}
       </p>
-      <label className="toggle">
-        <input type="checkbox" disabled={!loaded} checked={opt.winLock} onChange={e => change({ ...opt, winLock: e.target.checked })} />
-        <span className="toggle__track" aria-hidden /> Lock the Windows key
-      </label>
-      <label className="toggle">
-        <input type="checkbox" disabled={!loaded} checked={opt.wasdSwap} onChange={e => change({ ...opt, wasdSwap: e.target.checked })} />
-        <span className="toggle__track" aria-hidden /> Swap WASD and arrow keys
-      </label>
+      <div className="options__toggles">
+        <label className="toggle">
+          <input type="checkbox" disabled={!loaded} checked={opt.winLock} onChange={e => change({ ...opt, winLock: e.target.checked })} />
+          <span className="toggle__track" aria-hidden /> Lock the Windows key
+        </label>
+        <label className="toggle">
+          <input type="checkbox" disabled={!loaded} checked={opt.wasdSwap} onChange={e => change({ ...opt, wasdSwap: e.target.checked })} />
+          <span className="toggle__track" aria-hidden /> Swap WASD and arrow keys
+        </label>
+      </div>
       <div className="field">
         <span className="field__label">USB report rate</span>
         <div className="seg" role="radiogroup" aria-label="USB report rate">
