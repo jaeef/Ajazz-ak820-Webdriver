@@ -7,8 +7,8 @@
 @property --wake { syntax: '<number>'; inherits: true; initial-value: 1; }
 
 :root {
-  --spring-press: .07s cubic-bezier(.15, .85, .35, 1);
-  --spring-release: .22s cubic-bezier(.34, 1.45, .64, 1);
+  --spring-press: .055s cubic-bezier(.2, .8, .2, 1);
+  --spring-release: .12s cubic-bezier(.16, 1, .3, 1);
   --ink: #18191b;
   --ink-2: #5b5e63;
   --ink-3: #6b6e73;
@@ -238,10 +238,26 @@ h2 { font-size: 15px; font-weight: 650; display: flex; align-items: center; gap:
     inset 0 1px 0 rgba(255, 255, 255, 0.38),
     inset 0 -2px 0 rgba(0, 0, 0, 0.38),
     inset 1px 0 0 rgba(255, 255, 255, 0.22),
-    inset -1px 0 0 rgba(0, 0, 0, 0.28),
-    0 .5cqi 1.6cqi -.3cqi color-mix(in oklab, var(--led, var(--glow)) var(--lit), transparent);
-  transition: box-shadow .22s var(--spring-release), transform .22s var(--spring-release), filter .15s ease, outline-color .2s;
+    inset -1px 0 0 rgba(0, 0, 0, 0.28);
+  transition: transform var(--spring-release), outline-color .2s;
   z-index: 5;
+}
+
+/* The LED bloom lives on its own layer: modes animate its opacity, which the
+   compositor can do, instead of re-deriving shadows on all 82 caps per frame. */
+.cap__glow {
+  position: absolute; inset: -.3cqi; border-radius: .8cqi; pointer-events: none; z-index: -1;
+  opacity: calc(var(--glow-a) * var(--wake));
+  box-shadow: 0 .1cqi 1.6cqi -.2cqi color-mix(in oklab, var(--led, var(--glow)) 100%, transparent);
+  transition: opacity .35s var(--ease), box-shadow .35s var(--ease);
+}
+
+/* Bottom-out shading gets its own layer: presses fade this, never the shadows */
+.cap__shade {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 1;
+  background: linear-gradient(180deg, rgba(0, 0, 0, .05), rgba(0, 0, 0, .3));
+  box-shadow: inset 0 .16cqi .22cqi rgba(0, 0, 0, .5);
+  opacity: 0; transition: opacity var(--spring-release);
 }
 
 /* Authentic Cylindrical Dish Scoop */
@@ -283,8 +299,7 @@ h2 { font-size: 15px; font-weight: 650; display: flex; align-items: center; gap:
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
     inset 0 -2px 0 rgba(0, 0, 0, 0.52),
     inset 1px 0 0 rgba(255, 255, 255, 0.12),
-    inset -1px 0 0 rgba(0, 0, 0, 0.38),
-    0 .5cqi 1.6cqi -.3cqi color-mix(in oklab, var(--led, var(--glow)) var(--lit), transparent);
+    inset -1px 0 0 rgba(0, 0, 0, 0.38);
 }
 .cap--accent {
   background: linear-gradient(180deg, #deb312 0%, #cda208 85%, #987500 100%);
@@ -294,8 +309,7 @@ h2 { font-size: 15px; font-weight: 650; display: flex; align-items: center; gap:
     inset 0 1px 0 rgba(255, 255, 255, 0.42),
     inset 0 -2px 0 rgba(0, 0, 0, 0.48),
     inset 1px 0 0 rgba(255, 255, 255, 0.28),
-    inset -1px 0 0 rgba(0, 0, 0, 0.32),
-    0 .5cqi 1.6cqi -.3cqi color-mix(in oklab, var(--led, var(--glow)) var(--lit), transparent);
+    inset -1px 0 0 rgba(0, 0, 0, 0.32);
 }
 
 /* shine-through legends */
@@ -307,18 +321,32 @@ h2 { font-size: 15px; font-weight: 650; display: flex; align-items: center; gap:
 .board--dim .cap--mod span { color: #f1f3f7; }
 .board--rainbow { animation: rainbow 6s linear infinite; }
 @keyframes rainbow { 0% { --glow: #ff3b30 } 17% { --glow: #ffcc00 } 33% { --glow: #34c759 } 50% { --glow: #00c7ff } 67% { --glow: #3b5bff } 83% { --glow: #e040fb } 100% { --glow: #ff3b30 } }
-.board--breath { animation: breath var(--dur) ease-in-out infinite; }
-@keyframes breath { 50% { --pulse: .15; } }
-.board--wave .cap { animation: breath var(--dur) ease-in-out infinite; animation-delay: calc(var(--x) * var(--dur) * -1); }
+/* Breath and wave fade the glow layer only: opacity runs on the compositor and
+   no cap shadows are re-derived per frame. */
+.board--breath .cap__glow { animation: glowBreath var(--dur) ease-in-out infinite; }
+.board--wave .cap__glow {
+  animation: glowBreath var(--dur) ease-in-out infinite;
+  animation-delay: calc(var(--x) * var(--dur) * -1);
+}
+@keyframes glowBreath {
+  0%, 100% { opacity: calc(var(--glow-a) * var(--wake)); }
+  50% { opacity: calc(var(--glow-a) * var(--wake) * .15); }
+}
+/* Keep typing crisp while an effect is running. */
+.board:has(.cap--actuated) .cap__glow { animation-play-state: paused; }
 .board-wake { animation: wake 1.2s var(--ease) backwards; }
 @keyframes wake { from { --wake: 0; } }
 button.cap { cursor: pointer; }
-.cap:hover { transform: translateY(-.11cqi); filter: brightness(1.05); z-index: 10; }
-/* Bottom-out: every cap, clicked or typed on the real keyboard */
+button.cap:hover { transform: translateY(-.11cqi); z-index: 10; }
+/* Bottom-out: every cap, clicked or typed on the real keyboard.
+   Transform + shade opacity only, so the compositor handles it and the glow
+   shadow is never interpolated. */
 .cap:active, .board .cap--actuated {
-  transform: translateY(.3cqi) scale(.985); filter: brightness(.94); z-index: 15;
-  box-shadow: 0 .1cqi .1cqi rgba(0, 0, 0, .85), inset 0 .14cqi .2cqi rgba(0, 0, 0, .8), inset 0 -.1cqi 0 rgba(255, 255, 255, .1);
-  transition: transform var(--spring-press), box-shadow var(--spring-press), filter var(--spring-press);
+  transform: translateY(.3cqi) scale(.985); z-index: 15; will-change: transform;
+  transition: transform var(--spring-press);
+}
+.cap:active .cap__shade, .board .cap--actuated .cap__shade {
+  opacity: 1; transition: opacity var(--spring-press);
 }
 .cap--marked { outline: .3cqi solid #deb312; outline-offset: .15cqi; }
 .cap--selected { outline: .35cqi solid #fff; outline-offset: .2cqi; z-index: 12; }

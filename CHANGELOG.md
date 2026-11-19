@@ -1,0 +1,58 @@
+# Changelog
+
+All notable changes to this project are documented here. The format follows
+[Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
+[Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.3.0] - 2026-11-19
+
+### Added
+
+- On-screen AK820 that presses along with your typing, with optional switch sound.
+- Reconnect to the keyboard this browser remembers, and detect when it is unplugged.
+- Vercel deploy config with security headers, including `Permissions-Policy: hid=(self)`.
+
+### Changed
+
+- Board redrawn as the AK820 itself: case bevels, recessed switch plate, OEM keycaps
+  with dual legends, rotary knob and status LEDs.
+- Compact one-screen layout; Apply sits under the effect tiles.
+- Profiles and Settings rebuilt on the new design.
+- Colour picker moved into a popover.
+
+### Removed
+
+- Developer tools (calibration, capture, wire-format inspector, mode editor) from the
+  shipped build.
+- Build output and local capture data are no longer tracked in git.
+
+## [0.2.0] - 2026-11-19
+
+### Added
+
+- Key remap: point any key at any standard key, or disable it.
+- Typed-text macro assignment, up to 20 characters.
+- Keyboard options: Windows-key lock, WASD ↔ arrow swap, USB report rate
+  (1000, 500, 250 or 125 Hz).
+- Read-modify-write for the lighting block, so unknown bytes are preserved.
+
+### Changed
+
+- Protocol replaced with the vendor-verified AK820 framing; packets checked byte for
+  byte against captures.
+
+## [0.1.0] - 2026-07-20
+
+### Added
+
+- WebHID driver for the AK820: connect from Chrome or Edge with no install.
+- Lighting effects with colour, brightness, speed and direction.
+- Profiles stored in the browser.
+
+### Fixed
+
+- Lighting packet layout corrected against the official driver's disassembly.
+
+Earlier work (June 2026) established the initial driver and UI.

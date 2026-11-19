@@ -1,6 +1,20 @@
+<div align="center">
+
 # AK820 Web Driver
 
-Configure the **AJAZZ AK820** mechanical keyboard from your browser. No install, no admin rights, and it works on Windows, macOS and Linux, wherever Chrome or Edge runs.
+Configure the **AJAZZ AK820** mechanical keyboard from the browser.
+
+<a href="LICENSE"><img alt="license: MIT" src="https://img.shields.io/badge/license-MIT-e3b419"></a>
+<a href="package.json"><img alt="version 0.3.0" src="https://img.shields.io/badge/version-0.3.0-5c5f63"></a>
+<a href="https://developer.mozilla.org/docs/Web/API/WebHID_API"><img alt="WebHID API" src="https://img.shields.io/badge/WebHID-API-10b981?logo=googlechrome&logoColor=white"></a>
+<a href="https://react.dev"><img alt="React 18" src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black"></a>
+<a href="https://www.typescriptlang.org"><img alt="TypeScript 5.6" src="https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white"></a>
+<a href="https://vite.dev"><img alt="Vite 5" src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white"></a>
+<a href="https://nodejs.org"><img alt="Node 18 or newer" src="https://img.shields.io/badge/Node-%E2%89%A518-339933?logo=nodedotjs&logoColor=white"></a>
+
+</div>
+
+No install, no admin rights, and it runs on Windows, macOS and Linux wherever Chrome or Edge runs.
 
 The vendor app is Windows-only. This driver talks to the keyboard directly over [WebHID](https://developer.mozilla.org/docs/Web/API/WebHID_API). Its protocol was reverse-engineered from the vendor app's USB traffic, every packet is checked byte for byte against captures, and every feature has been tested on real hardware.
 
@@ -8,12 +22,12 @@ The vendor app is Windows-only. This driver talks to the keyboard directly over 
 
 ## Features
 
-- **Lighting:** solid colour plus 17 built-in effects. Set brightness (off to 4), speed, direction and random colour.
+- **Lighting:** solid colour plus 17 built-in effects. Brightness (off to 4), speed, direction and random colour.
 - **Per-key RGB:** click keys on the on-screen board to paint each one its own colour.
-- **Key remap:** point any key at any standard key, or disable it. One click puts the factory layout back.
+- **Key remap:** point any key at any standard key, or disable it. One click restores the factory layout.
 - **Macro:** assign a typed-text macro (a–z, 0–9, space, up to 20 characters) to a key.
 - **Keyboard options:** Windows-key lock, WASD ↔ arrow swap, and USB report rate (1000, 500, 250 or 125 Hz).
-- **Profiles:** save, load, export and import lighting setups. Profiles are kept in your browser.
+- **Profiles:** save, load, export and import lighting setups. Profiles stay in your browser.
 - **Demo mode:** the whole UI works without a keyboard. Packets are recorded instead of sent. Open `/?demo` to jump straight in.
 - **Key press and sound:** the on-screen board presses along as you type, with an optional switch sound.
 
@@ -45,10 +59,13 @@ npm install
 npm run dev       # dev server at http://localhost:5173
 npm run build     # type-check + production build into dist/
 npm run preview   # serve the production build
+npm run lint      # type-check only
 npm run check     # protocol self-check against vendor captures
 ```
 
 `npm run check` uses Node's built-in TypeScript type stripping, so it needs Node 22.6+ (or 23+).
+
+Release notes live in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Deploying to Vercel
 
@@ -65,8 +82,8 @@ Any other static host works too: serve `dist/` over HTTPS with the same headers.
 │   ├── main.tsx             React entry
 │   ├── App.tsx              app state, pages and apply flow
 │   ├── styles.css           all styles
-│   ├── components/          UI: Shell, LightingPage, BoardRender, ColorPicker,
-│   │                        KeyRemapPanel, ProfilesPanel, dialogs, dev tools …
+│   ├── components/          Shell, LightingPage, KeyboardView, BoardRender,
+│   │                        KeyRemapPanel, ProfilesPanel, SettingsPanel, dialogs
 │   └── lib/
 │       ├── protocol.ts      packet builders, checksum, read-modify-write
 │       ├── device.ts        WebHID controller and the demo (mock) controller

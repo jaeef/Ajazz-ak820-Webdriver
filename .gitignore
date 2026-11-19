@@ -1,6 +1,7 @@
 
 # Local IDE and AI assistant directories
 /.claude/
+/.impeccable/
 .vscode/
 .idea/
 
