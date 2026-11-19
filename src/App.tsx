@@ -14,6 +14,7 @@ import { KeyRemapPanel } from './ui/KeyRemapPanel'
 import { KeyboardOptionsPanel } from './ui/KeyboardOptionsPanel'
 import { CalibrationModal } from './ui/CalibrationModal'
 import { ModeEditModal } from './ui/ModeEditModal'
+import { Dialog } from './ui/Dialog'
 
 import {
   modeName, resolveProtocolFamily, hexDump, rgbToHex, buildApplyPackets, MODE_STATIC,
@@ -25,7 +26,7 @@ import {
 } from './hooks'
 
 function describeLighting(p: Profile, modes: string[]): string {
-  return `${p.name} (${modeName(p.mode, modes)}, rgb(${p.r},${p.g},${p.b}), brightness ${p.brightness})`
+  return `${p.name} · ${p.mode === MODE_STATIC ? 'Solid colour' : modeName(p.mode, modes)} · ${rgbToHex(p.r, p.g, p.b).toUpperCase()} · brightness ${p.brightness}`
 }
 
 function App() {
@@ -36,6 +37,7 @@ function App() {
   const [activeTab, setActiveTab] = useActiveTab('lighting')
   const [showModeModal, setShowModeModal] = useState(false)
   // ?demo opens straight into demo mode (shareable link, screenshots).
+  const [confirmReset, setConfirmReset] = useState(false)
   const [exploring, setExploring] = useState(() => new URLSearchParams(location.search).has('demo'))
 
   // Resolve the wire protocol ONCE per connection/settings change. Disambiguate
@@ -80,50 +82,50 @@ function App() {
 
   // --- Connection ---
   const handleConnect = useCallback(async () => {
-    info('Opening device picker…')
+    info('Choose your AK820\nPick it in the list the browser just opened.')
     try {
       const di = await device.connect(settings.vid, settings.pid, settings.showAllDevices)
       setExploring(false)
-      const base = `Connected to ${di.productName} (VID 0x${di.vendorId.toString(16).toUpperCase().padStart(4,'0')} / PID 0x${di.productId.toString(16).toUpperCase().padStart(4,'0')}).`
+      const base = `Connected to ${di.productName || 'AK820'}\nVID 0x${di.vendorId.toString(16).toUpperCase().padStart(4,'0')} · PID 0x${di.productId.toString(16).toUpperCase().padStart(4,'0')}`
       if (di.matchedVendorInterface) {
-        ok(base + ' Ready to send lighting.')
+        ok(base + ' · ready')
       } else {
-        err(base + ' This entry can’t receive lighting commands. Reconnect and pick the AK820 (wired) device — or turn on “Show all HID devices” in Settings and try another entry.')
+        err(`This entry can’t take lighting commands\nReconnect and pick the AK820 (wired), or turn on “Show all HID devices” in Settings and try another entry.`)
       }
     } catch (e) {
       const errObj = e as DOMException
       if (errObj && errObj.name === 'NotFoundError') {
-        info('Connection cancelled.')
+        info('Connection cancelled\nNothing was changed.')
       } else {
-        err('Connect failed: ' + (errObj?.message || String(e)))
+        err('Couldn’t connect\n' + (errObj?.message || String(e)))
       }
     }
   }, [device, settings.vid, settings.pid, settings.showAllDevices, ok, err, info])
 
   const handleListGranted = useCallback(async () => {
     if (!('hid' in navigator)) {
-      err('WebHID not available in this browser.')
+      err('This browser can’t reach USB keyboards\nOpen the app in Chrome or Edge.')
       return
     }
     try {
       const granted = await navigator.hid.getDevices()
       if (granted.length === 0) {
-        info('No previously granted HID devices. Click Connect to open the device picker.')
+        info('No remembered devices\nClick Connect to pick your keyboard.')
         return
       }
       const lines = granted.map(d =>
         `VID 0x${d.vendorId.toString(16).toUpperCase().padStart(4,'0')} / PID 0x${d.productId.toString(16).toUpperCase().padStart(4,'0')} — ${d.productName || 'Unknown'}`
       )
-      ok(`Granted devices (${granted.length}):\n` + lines.join('\n'))
+      ok(`${granted.length} remembered device${granted.length === 1 ? '' : 's'}\n` + lines.join('\n'))
     } catch (e) {
-      err('List failed: ' + (e as Error).message)
+      err('Couldn’t list devices\n' + (e as Error).message)
     }
   }, [ok, err, info])
 
   const handleDisconnect = useCallback(async () => {
     try {
       await device.disconnect()
-      info('Disconnected — back to idle mode. Packets are recorded but not sent.')
+      info('Disconnected\nYour keyboard keeps its last settings.')
     } catch (e) {
       err('Disconnect error: ' + (e as Error).message)
     }
@@ -134,10 +136,10 @@ function App() {
     try {
       await apply()
       setLastApplied(lighting)
-      const tag = device.isConnected ? 'Sent' : 'Recorded (demo)'
-      ok(`${tag}: ${modeName(lighting.mode, settings.modes)}, rgb(${lighting.r},${lighting.g},${lighting.b}), brightness ${lighting.brightness}, speed ${lighting.speed}${lighting.rainbow ? ', rainbow' : ''}`)
+      const what = lighting.mode === MODE_STATIC ? 'Solid colour' : modeName(lighting.mode, settings.modes)
+      ok(`${device.isConnected ? 'Applied to keyboard' : 'Recorded in demo mode'}\n${what} · ${rgbToHex(lighting.r, lighting.g, lighting.b).toUpperCase()} · brightness ${lighting.brightness}${lighting.mode === MODE_STATIC ? '' : ` · speed ${lighting.speed}`}${lighting.rainbow ? ' · random colours' : ''}`)
     } catch (e) {
-      err('Apply failed: ' + (e as Error).message)
+      err('Couldn’t apply\n' + (e as Error).message)
     }
   }, [apply, device.isConnected, lighting, settings.modes, ok, err])
 
@@ -150,7 +152,7 @@ function App() {
     try {
       await apply()
     } catch (e) {
-      err('Test apply failed: ' + (e as Error).message)
+      err('Couldn’t send the test\n' + (e as Error).message)
       return
     }
     const sent = device.controller.log.slice(before)
@@ -163,18 +165,19 @@ function App() {
       timestamp: e.timestamp,
     }))
     setPendingTest({ packets: snapshots })
-    info(`Test sent: ${modeName(lighting.mode, settings.modes)} (${snapshots.length} packet${snapshots.length === 1 ? '' : 's'}). Check the keyboard and approve below.`)
+    info(`Test sent: ${lighting.mode === MODE_STATIC ? 'Solid colour' : modeName(lighting.mode, settings.modes)}\nLook at the keyboard, then answer in the dialog.`)
   }, [apply, device.controller, lighting.mode, settings.modes, err, info])
 
   const handleSaveCalibration = useCallback((result: CalibrationResult) => {
     calibration.saveResult(result)
-    ok(`Saved ${result.modeName} (mode ${result.mode}) to stable modes table.`)
+    ok(`Test result saved
+${result.modeName} (mode ${String(result.mode).padStart(2, '0')}) is in Capture log → Tested modes.`)
   }, [calibration, ok])
 
   // --- Per-key RGB: send a custom color map built by the KeyboardView ---
   const handleApplyPerKey = useCallback((colorPackets: Uint8Array[]) => {
-    applyPerKey(colorPackets).then(() => ok(`${device.isConnected ? 'Sent' : 'Recorded (idle)'} per-key colors`))
-                             .catch(e => err('Per-key apply failed: ' + (e as Error).message))
+    applyPerKey(colorPackets).then(() => ok(`${device.isConnected ? 'Per-key colours applied' : 'Per-key colours recorded (demo)'}\nThe board switched to Custom mode.`))
+                             .catch(e => err('Couldn’t apply per-key colours\n' + (e as Error).message))
   }, [applyPerKey, device.isConnected, ok, err])
 
   // --- Keyboard options (Win lock, WASD swap, polling rate): read, change, write back ---
@@ -188,21 +191,21 @@ function App() {
   }, [readBlock])
   const handleWriteOptions = useCallback(async (opt: KeyboardOptions) => {
     const block = await readBlock()
-    if (!block) { err('Connect the keyboard first: options are read from it before writing.'); return }
-    sendPackets(buildKeyboardOptionsPackets(block, opt)).then(() => ok('Sent keyboard options'))
-                                                          .catch(e => err('Options apply failed: ' + (e as Error).message))
+    if (!block) { err('Connect the keyboard first\nOptions are read from it before anything is written.'); return }
+    sendPackets(buildKeyboardOptionsPackets(block, opt)).then(() => ok(`Keyboard options saved\nWindows lock ${opt.winLock ? 'on' : 'off'} · WASD swap ${opt.wasdSwap ? 'on' : 'off'} · ${['1000', '500', '250', '125'][opt.pollingRate]} Hz`))
+                                                          .catch(e => err('Couldn’t save keyboard options\n' + (e as Error).message))
   }, [readBlock, sendPackets, ok, err])
 
   // --- Key remap: send the keymap built by KeyRemapPanel ---
   const handleSendKeymap = useCallback((packets: Uint8Array[], what: string) => {
-    sendPackets(packets).then(() => ok(`${device.isConnected ? 'Sent' : 'Recorded (idle)'} ${what}`))
-                        .catch(e => err('Keymap apply failed: ' + (e as Error).message))
+    sendPackets(packets).then(() => ok(`${device.isConnected ? 'Saved to keyboard' : 'Recorded (demo)'}\n${what[0].toUpperCase()}${what.slice(1)}`))
+                        .catch(e => err('Couldn’t save the keymap\n' + (e as Error).message))
   }, [sendPackets, device.isConnected, ok, err])
 
   // --- Profile save / load / delete / import ---
   const handleSaveProfile = useCallback((profile: Profile) => {
     addProfile(profile)
-    ok(`Saved profile "${profile.name}"`)
+    ok(`Profile saved\n“${profile.name}” is in the list beside the keyboard.`)
   }, [addProfile, ok])
 
   const handleLoadProfile = useCallback((profile: Profile) => {
@@ -217,19 +220,19 @@ function App() {
     setLighting(next)
     // Pass `next` explicitly so the packet reflects the just-loaded state,
     // not the stale value captured by `apply`'s closure.
-    apply(next).then(() => { setLastApplied(next); ok(`Loaded profile "${describeLighting(profile, settings.modes)}"`) })
-               .catch(e => err('Apply failed: ' + (e as Error).message))
+    apply(next).then(() => { setLastApplied(next); ok(`Profile loaded\n${describeLighting(profile, settings.modes)}`) })
+               .catch(e => err('Couldn’t load the profile\n' + (e as Error).message))
   }, [setLighting, apply, settings.modes, ok, err])
 
   const handleDeleteProfile = useCallback((name: string) => {
     removeProfile(name)
-    setStatus(`Deleted profile "${name}"`)
+    info(`Profile deleted\n“${name}” was removed from this browser.`)
   }, [removeProfile, setStatus])
 
   const handleImportProfiles = useCallback((data: unknown) => {
     importProfiles(data)
     const n = Array.isArray(data) ? data.length : 0
-    ok(`Imported ${n} profile(s).`)
+    ok(`Profiles imported\n${n} profile${n === 1 ? '' : 's'} added.`)
   }, [importProfiles, ok])
 
   // --- Settings: VID/PID changes reconnect if needed ---
@@ -237,13 +240,12 @@ function App() {
     setSettings(next)
     if (device.isConnected) {
       // changing VID/PID mid-session is unusual; warn but don't auto-reconnect
-      info('Settings changed. Disconnect and reconnect to apply a new VID/PID filter.')
+      info('Setting saved\nReconnect for a new device filter to take effect.')
     }
   }, [setSettings, device.isConnected, info])
 
   // --- Reset all ---
   const handleReset = useCallback(() => {
-    if (!confirm('Clear all profiles, settings, and calibration data? This cannot be undone.')) return
     resetSettings()
     calibration.clearAll()
     setTimeout(() => location.reload(), 50)
@@ -253,7 +255,7 @@ function App() {
   const handleSaveModes = useCallback((next: string[]) => {
     setSettings({ ...settings, modes: next })
     setShowModeModal(false)
-    ok('Mode names saved.')
+    ok('Mode names saved\nThey appear on the effect tiles.')
   }, [setSettings, settings, ok])
 
   // --- Global shortcut: Ctrl+Enter to apply ---
@@ -274,7 +276,7 @@ function App() {
   const page = ready ? activeTab : 'lighting'
 
   const stage = (withApply: boolean) => (
-    <div className="stage stage--split">
+    <div className="stage">
       <div className="stage__board">
         <div className="pills" aria-live="polite">
           <span className={`pill${device.isConnected ? ' pill--ok' : ' pill--demo'}`}>{device.isConnected ? 'Connected' : 'Demo mode · nothing is sent'}</span>
@@ -292,21 +294,6 @@ function App() {
           glow={glow} rainbow={lighting.rainbow} dim={lighting.brightness === 0} level={lighting.brightness}
           motion={motionFor(lighting.mode)} speed={lighting.speed} wake />
       </div>
-      <section className="panel quick" aria-labelledby="quick-h">
-        <h2 id="quick-h">Profiles</h2>
-        {profiles.length === 0 && <p className="muted">No profiles yet. Save the current lighting to switch back in one click.</p>}
-        <ul>
-          {profiles.slice(0, 5).map(p => (
-            <li key={p.name}>
-              <button className="quick__item" onClick={() => handleLoadProfile(p)}>
-                <i style={{ background: rgbToHex(p.r, p.g, p.b) }} aria-hidden />
-                <span>{p.name}</span><em>{modeName(p.mode, settings.modes)}</em>
-              </button>
-            </li>
-          ))}
-        </ul>
-        <button className="btn btn--ghost btn--block" onClick={() => setActiveTab('profiles')}><BookmarkPlus aria-hidden /> Save current</button>
-      </section>
     </div>
   )
 
@@ -324,9 +311,19 @@ function App() {
         )}
 
         {ready && page === 'lighting' && (
-          <div className="page">
+          <div className="page page--fit page--fill">
             {stage(true)}
-            <LightingPage lighting={lighting} modes={settings.modes} onChange={setLighting} onTestMode={handleTestMode} />
+            <LightingPage lighting={lighting} modes={settings.modes} onChange={setLighting} onTestMode={handleTestMode} footer={
+              <div className="chips" aria-label="Profiles">
+                <span className="chips__label">Profiles</span>
+                {profiles.slice(0, 6).map(p => (
+                  <button key={p.name} className="chip" onClick={() => handleLoadProfile(p)} title={`Load ${p.name}`}>
+                    <i style={{ background: rgbToHex(p.r, p.g, p.b) }} aria-hidden />{p.name}
+                  </button>
+                ))}
+                <button className="chip chip--add" onClick={() => setActiveTab('profiles')}><BookmarkPlus aria-hidden /> Save current</button>
+              </div>
+            } />
           </div>
         )}
 
@@ -340,7 +337,7 @@ function App() {
         )}
 
         {ready && page === 'profiles' && (
-          <div className="page">
+          <div className="page page--fit page--fill">
             {stage(false)}
             <section className="panel" aria-label="Profiles">
               <ProfilesPanel profiles={profiles} modes={settings.modes} currentLighting={lighting}
@@ -365,13 +362,22 @@ function App() {
         {ready && page === 'settings' && (
           <div className="page">
             <section className="panel" aria-label="Settings">
-              <SettingsPanel settings={settings} onChange={handleSettingsChange} onEditModes={() => setShowModeModal(true)} onReset={handleReset} />
+              <SettingsPanel settings={settings} onChange={handleSettingsChange} onEditModes={() => setShowModeModal(true)} onReset={() => setConfirmReset(true)} />
             </section>
           </div>
         )}
       </main>
 
       <Toast status={status} />
+
+      {confirmReset && (
+        <Dialog title="Clear everything?" onClose={() => setConfirmReset(false)} actions={<>
+          <button className="btn btn--outline" onClick={() => setConfirmReset(false)}>Keep my data</button>
+          <button className="btn btn--danger" onClick={handleReset}>Clear all</button>
+        </>}>
+          <p className="muted">This removes {profiles.length} profile{profiles.length === 1 ? '' : 's'}, your settings, mode names and tested modes from this browser. The keyboard itself keeps its settings. This can’t be undone.</p>
+        </Dialog>
+      )}
 
       {showModeModal && (
         <ModeEditModal modes={settings.modes} onClose={() => setShowModeModal(false)} onSave={handleSaveModes} />

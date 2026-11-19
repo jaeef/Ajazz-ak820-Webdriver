@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { PacketLogEntry, PacketDirection, CalibrationResult, TriState } from '../types'
-import { Check, X, CircleHelp } from 'lucide-react'
+import { Check, X, CircleHelp, Pause, Play, Eraser, Download, FileText, ArrowDownLeft, ArrowUpRight, Activity, ListChecks } from 'lucide-react'
 import { hexDump } from '../protocol'
 
 interface Props {
@@ -81,7 +81,7 @@ export function CapturePanel({ log, version, paused, setPaused, onClear, isLive,
   }
 
   const triIcon = (v: TriState) => v === 'yes' ? <Check aria-label="yes" /> : v === 'no' ? <X aria-label="no" /> : <CircleHelp aria-label="unknown" />
-  const triClass = (v: TriState) => v === 'yes' ? 'calib-yes' : v === 'no' ? 'calib-no' : 'calib-unknown'
+  const triClass = (v: TriState) => v === 'yes' ? 'tri--yes' : v === 'no' ? 'tri--no' : 'tri--unk'
 
   const exportCalibration = () => {
     download(
@@ -102,115 +102,88 @@ export function CapturePanel({ log, version, paused, setPaused, onClear, isLive,
     download(`ak820-stable-modes-${Date.now()}.txt`, lines.join('\n'), 'text/plain')
   }
 
+  const seg = (f: Filter, label: string) => (
+    <button role="radio" aria-checked={filter === f} onClick={() => setFilter(f)}>{label}</button>
+  )
+
   return (
-    <div className="tab-panel active">
-      <div className="row" style={{ fontWeight: 600 }}>
-        Raw I/O Capture
-        <span className="pill">{log.length} buffered</span>
-        <span className="pill" style={{ background: 'rgba(76,175,80,0.15)', color: 'var(--success)' }}>↓ {countIn}</span>
-        <span className="pill" style={{ background: 'rgba(255,208,75,0.15)', color: 'var(--accent)' }}>↑ {countOut}</span>
-      </div>
-      <div className="help" style={{ marginTop: -2 }}>
-        Every byte that crosses the HID boundary is recorded here — OUTPUT and FEATURE reports the app sends,
-        plus INPUT reports the keyboard emits (via WebHID <code>inputreportevent</code>). Compare the hex
-        against a Wireshark/USBPcap capture of the official driver to verify the wire format. The buffer holds
-        the last 500 packets; the view shows the most recent {RENDER_CAP}.
-      </div>
-
-      <div className="row" style={{ alignItems: 'center' }}>
-        <button
-          className={paused ? '' : 'secondary'}
-          onClick={() => setPaused(!paused)}
-          title={paused ? 'Resume live updates' : 'Freeze the view to inspect packets'}
-        >
-          {paused ? 'Resume' : 'Pause'}
-        </button>
-        <button className="secondary" onClick={onClear}>Clear</button>
-        <button className="secondary" onClick={exportJson} disabled={log.length === 0}>Export JSON</button>
-        <button className="secondary" onClick={exportText} disabled={log.length === 0}>Export hex</button>
-        <span style={{ flex: 1 }} />
-        <label className="switch" title="Filter by direction">
-          <input type="checkbox" checked={filter === 'in'} onChange={() => setFilter(f => f === 'in' ? 'all' : 'in')} />
-          <span className="slider-toggle" />
-        </label>
-        <span className="help" style={{ margin: 0 }}>Only received</span>
-        <label className="switch" title="Filter by direction">
-          <input type="checkbox" checked={filter === 'out'} onChange={() => setFilter(f => f === 'out' ? 'all' : 'out')} />
-          <span className="slider-toggle" />
-        </label>
-        <span className="help" style={{ margin: 0 }}>Only sent</span>
-      </div>
-
-      {!isLive && (
-        <div className="help" style={{ background: 'var(--bg-3)', padding: 8, borderRadius: 6, marginBottom: 8 }}>
-          Idle mode — packets are recorded by the mock controller but not transmitted. Click <b>Connect</b> to
-          capture real traffic to and from the keyboard.
+    <div className="stack">
+      <div className="panel__head">
+        <h2><Activity aria-hidden /> Capture log</h2>
+        <div className="pills">
+          <span className="pill">{log.length} buffered</span>
+          <span className="pill"><ArrowDownLeft aria-hidden /> {countIn} in</span>
+          <span className="pill"><ArrowUpRight aria-hidden /> {countOut} out</span>
         </div>
-      )}
+      </div>
+      <p className="muted">
+        Every report that crosses the USB boundary: what the app sends and what the keyboard answers. The buffer keeps the last 500;
+        the table shows the newest {RENDER_CAP}.{!isLive && ' In demo mode packets are recorded but not sent.'}
+      </p>
+      <div className="toolbar-row">
+        <button className={`btn ${paused ? 'btn--primary' : 'btn--outline'}`} onClick={() => setPaused(!paused)}>
+          {paused ? <><Play aria-hidden /> Resume</> : <><Pause aria-hidden /> Pause</>}
+        </button>
+        <button className="btn btn--outline" onClick={onClear}><Eraser aria-hidden /> Clear</button>
+        <button className="btn btn--outline" onClick={exportJson} disabled={log.length === 0}><Download aria-hidden /> JSON</button>
+        <button className="btn btn--outline" onClick={exportText} disabled={log.length === 0}><FileText aria-hidden /> Hex text</button>
+        <div className="seg seg--pill toolbar-row__end" role="radiogroup" aria-label="Direction">
+          {seg('all', 'All')}{seg('out', 'Sent')}{seg('in', 'Received')}
+        </div>
+      </div>
 
-      <div className="capture-log">
+      <div className="table-wrap">
         {rows.length === 0 ? (
-          <div className="capture-empty">No packets yet. Apply a lighting change or connect the keyboard to start capturing.</div>
+          <p className="empty">No packets yet. Apply a lighting change or connect the keyboard to start capturing.</p>
         ) : (
-          rows.map(e => (
-            <div key={e.id} className={`capture-row ${e.dir}`}>
-              <span className="c-time">{fmtTime(e.timestamp)}</span>
-              <span className={`c-dir ${e.dir}`}>{e.dir === 'in' ? 'IN ←' : 'OUT →'}</span>
-              <span className="c-transport">{e.transport}</span>
-              <span className="c-rid">rid {e.reportId}</span>
-              <span className="c-len">{e.data.length}B</span>
-              <span className="c-hex">{hexDump(e.data)}</span>
-            </div>
-          ))
+          <table className="table table--mono">
+            <thead><tr><th>Time</th><th>Dir</th><th>Type</th><th>ID</th><th>Len</th><th>Bytes</th></tr></thead>
+            <tbody>
+              {rows.map(e => (
+                <tr key={e.id}>
+                  <td>{fmtTime(e.timestamp)}</td>
+                  <td><span className={`dir dir--${e.dir}`}>{e.dir === 'in' ? <ArrowDownLeft aria-hidden /> : <ArrowUpRight aria-hidden />}{e.dir === 'in' ? 'in' : 'out'}</span></td>
+                  <td>{e.transport}</td>
+                  <td>{e.reportId}</td>
+                  <td>{e.data.length}</td>
+                  <td className="table__hex">{hexDump(e.data)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         )}
       </div>
 
-      {/* ===== Stable Modes — empirically verified per-mode table ===== */}
-      <hr style={{ border: 'none', borderTop: '1px solid var(--border)', margin: '16px 0' }} />
-      <div className="row" style={{ fontWeight: 600 }}>
-        Stable Modes
-        <span className="pill">{calibration.length} verified</span>
+      <div className="panel__head panel__head--section">
+        <h2><ListChecks aria-hidden /> Tested modes</h2>
+        <span className="pill">{calibration.length} tested</span>
       </div>
-      <div className="help" style={{ marginTop: -2, marginBottom: 8 }}>
-        Each row is a mode you tested with <b>Test &amp; Approve</b> on the Lighting tab. The app applied
-        the mode + color, captured the exact packets, and you confirmed whether it worked and whether
-        color changes are honored. This is the <b>stable, verified</b> mode table for your specific keyboard.
-        Export it to keep a known-good reference or share it.
+      <p className="muted">Modes you checked with “Test &amp; approve” on the Lighting page, with your answers and the exact packets sent.</p>
+      <div className="toolbar-row">
+        <button className="btn btn--outline" onClick={exportCalibration} disabled={calibration.length === 0}><Download aria-hidden /> JSON</button>
+        <button className="btn btn--outline" onClick={exportCalibrationText} disabled={calibration.length === 0}><FileText aria-hidden /> Text</button>
+        <button className="btn btn--danger toolbar-row__end" onClick={onClearCalibration} disabled={calibration.length === 0}>Clear all</button>
       </div>
-      <div className="row" style={{ alignItems: 'center' }}>
-        <button className="secondary" onClick={exportCalibration} disabled={calibration.length === 0}>Export JSON</button>
-        <button className="secondary" onClick={exportCalibrationText} disabled={calibration.length === 0}>Export text</button>
-        <button className="danger small" onClick={onClearCalibration} disabled={calibration.length === 0}>Clear all</button>
-      </div>
-
       {calibration.length === 0 ? (
-        <div className="calib-table-empty">
-          No verified modes yet. Go to the <b>Lighting</b> tab, pick a mode, and click <b>Test &amp; Approve</b>.
-        </div>
+        <p className="empty">No tested modes yet. Pick an effect on the Lighting page and click “Test &amp; approve this mode”.</p>
       ) : (
-        <div className="calib-table">
-          <div className="calib-header">
-            <span>ID</span>
-            <span>Mode</span>
-            <span>Works</span>
-            <span>Color</span>
-            <span>Tested</span>
-            <span>Pkts</span>
-            <span></span>
-          </div>
-          {calibration.map(r => (
-            <div key={r.mode} className="calib-row">
-              <span className="calib-id">{r.mode}</span>
-              <span className="calib-name">{r.modeName}{r.notes ? <em className="calib-notes-inline"> — {r.notes}</em> : ''}</span>
-              <span className={`calib-mark ${triClass(r.works)}`}>{triIcon(r.works)}</span>
-              <span className={`calib-mark ${triClass(r.colorWorks)}`}>{triIcon(r.colorWorks)}</span>
-              <span className="calib-date">{new Date(r.testedAt).toLocaleDateString()} {new Date(r.testedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-              <span className="calib-pkts">{r.packets.length}</span>
-              <span className="calib-del">
-                <button className="danger small" onClick={() => onRemoveCalibration(r.mode)} title="Remove this calibration entry" aria-label="Remove this calibration entry"><X aria-hidden /></button>
-              </span>
-            </div>
-          ))}
+        <div className="table-wrap">
+          <table className="table">
+            <thead><tr><th>Mode</th><th>Name</th><th>Works</th><th>Colour</th><th>Tested</th><th>Packets</th><th><span className="sr-only">Remove</span></th></tr></thead>
+            <tbody>
+              {calibration.map(r => (
+                <tr key={r.mode}>
+                  <td className="num">{String(r.mode).padStart(2, '0')}</td>
+                  <td>{r.modeName}{r.notes && <span className="muted"> · {r.notes}</span>}</td>
+                  <td><span className={`tri ${triClass(r.works)}`}>{triIcon(r.works)}</span></td>
+                  <td><span className={`tri ${triClass(r.colorWorks)}`}>{triIcon(r.colorWorks)}</span></td>
+                  <td className="num">{new Date(r.testedAt).toLocaleDateString()} {new Date(r.testedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</td>
+                  <td className="num">{r.packets.length}</td>
+                  <td><button className="icon-btn icon-btn--danger" onClick={() => onRemoveCalibration(r.mode)} aria-label={`Remove mode ${r.mode}`} title="Remove"><X aria-hidden /></button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
     </div>

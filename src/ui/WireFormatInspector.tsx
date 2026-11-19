@@ -1,3 +1,4 @@
+import { Binary } from 'lucide-react'
 import { hexDump } from '../protocol'
 import type { ProtocolFamilyResolved } from '../types'
 
@@ -6,19 +7,22 @@ interface Props {
   family: ProtocolFamilyResolved
 }
 
+// The exact reports the next Apply will send, one row per 64-byte packet.
 export function WireFormatInspector({ packets, family }: Props) {
   return (
-    <div className="row" style={{ flexDirection: 'column', alignItems: 'stretch' }}>
-      <label>
-        Wire format <span className="help" style={{ margin: 0 }}>({family} · {packets.length} packet{packets.length === 1 ? '' : 's'}):</span>
-      </label>
-      <div className="hex-inspector">
-        {packets.map((p, i) => (
-          <div key={i} style={{ whiteSpace: 'pre', fontFamily: 'inherit' }}>
-            {packets.length > 1 && <span className="help" style={{ marginRight: 8 }}>#{i + 1}</span>}
-            {hexDump(p)}
-          </div>
-        ))}
+    <div className="stack">
+      <div className="panel__head">
+        <h2><Binary aria-hidden /> Next Apply sends</h2>
+        <span className="pill">{family} · {packets.length} packet{packets.length === 1 ? '' : 's'}</span>
+      </div>
+      <div className="table-wrap">
+        <table className="table table--mono">
+          <tbody>
+            {packets.map((p, i) => (
+              <tr key={i}><td className="num">#{i + 1}</td><td className="table__hex">{hexDump(p)}</td></tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   )

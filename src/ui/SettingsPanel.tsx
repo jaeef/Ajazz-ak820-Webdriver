@@ -1,3 +1,4 @@
+import { Settings as SettingsIcon, PencilLine, Trash2 } from 'lucide-react'
 import type { Settings, ReportIdMode } from '../types'
 
 interface Props {
@@ -7,95 +8,73 @@ interface Props {
   onReset: () => void
 }
 
-export function SettingsPanel({ settings, onChange, onEditModes, onReset }: Props) {
-  const vidText = '0x' + settings.vid.toString(16).toUpperCase().padStart(4, '0')
-  const pidText = settings.pid ? '0x' + settings.pid.toString(16).toUpperCase().padStart(4, '0') : '0'
+const hex4 = (n: number) => '0x' + n.toString(16).toUpperCase().padStart(4, '0')
 
+export function SettingsPanel({ settings, onChange, onEditModes, onReset }: Props) {
   return (
-    <div className="tab-panel">
-      <div className="row">
-        <label>Vendor ID:</label>
-        <input
-          type="text" value={vidText} disabled
-          style={{ width: 100 }}
-        />
-        <label style={{ minWidth: 'auto' }}>Product ID:</label>
-        <input
-          type="text" value={pidText} disabled
-          style={{ width: 100 }}
-        />
-        <span className="help" style={{ margin: 0 }}>
-          These are the USB IDs used to identify and connect to the AK820 keyboard.
-        </span>
-      </div>
-      <div className="row">
-        <label>Protocol family:</label>
-        <select
-          value={settings.protocolFamily}
-          onChange={e => onChange({ ...settings, protocolFamily: e.target.value as Settings['protocolFamily'] })}
-          style={{ flex: 1 }}
-        >
-          <option value="auto">Auto — by USB VID + PID (recommended)</option>
-          <option value="evision">EVision / eevision (OUTPUT report, 64-byte 0x06 frame)</option>
-          <option value="sonix">Sonix / Microdia (feature report, mode at byte 0)</option>
-        </select>
-      </div>
-      <div className="help" style={{ marginTop: -4 }}>
-        <b>Auto</b> picks the wire protocol from the connected keyboard's USB IDs:
-        PID <code>0x8009</code> → Sonix (AK820 Pro, 64-byte feature report); VID <code>0x320F</code> → EVision
-        (legacy Yichip); anything else — including the bundled AK820 <code>0x0C45</code>/<code>0x1007</code>
-        (chip VS11K34A, eevision family) — → <b>EVision</b> (64-byte OUTPUT report, <code>0x06</code> command
-        frame). This is the default AK820 this driver was reverse-engineered from. If lighting still does
-        nothing, force a family here and compare bytes on the <b>Capture</b> tab against the official driver.
-      </div>
-      <div className="row">
-        <label>Report ID mode:</label>
-        <select
-          value={settings.reportIdMode}
-          onChange={e => onChange({ ...settings, reportIdMode: e.target.value as ReportIdMode })}
-          style={{ flex: 1 }}
-        >
-          <option value="auto">Auto — detect from the device descriptor (recommended)</option>
-          <option value="native">Mode as HID report ID (numbered reports)</option>
-          <option value="payload">0x00 + mode as payload byte 0 (unnumbered)</option>
-        </select>
-      </div>
-      <div className="help" style={{ marginTop: -4 }}>
-        <b>Auto</b> reads the connected keyboard's HID descriptor and sends numbered vs. unnumbered
-        feature reports accordingly. If lighting still does nothing, connect, open the browser
-        console to see the detected feature report IDs, then try forcing <b>native</b> or <b>payload</b> here.
-      </div>
-      <div className="row">
-        <label>Edit mode names:</label>
-        <button className="secondary" onClick={onEditModes}>Edit</button>
-        <span className="help" style={{ margin: 0 }}>
-          The 20 mode IDs (0x00–0x13) are documented, but their friendly names are guesses. Rename to match what your keyboard actually does.
-        </span>
-      </div>
-      <div className="row">
-        <label>Show all HID devices:</label>
-        <label className="switch">
-          <input
-            type="checkbox"
-            checked={settings.showAllDevices}
-            onChange={e => onChange({ ...settings, showAllDevices: e.target.checked })}
-          />
-          <span className="slider-toggle" />
+    <div className="stack">
+      <div className="panel__head"><h2><SettingsIcon aria-hidden /> Settings</h2></div>
+
+      <div className="setting">
+        <div className="setting__text">
+          <strong>Show all HID devices</strong>
+          <span className="muted">The browser’s device list shows every USB device, not just {hex4(settings.vid)} / {settings.pid ? hex4(settings.pid) : 'any product'}. Turn off for a shorter list.</span>
+        </div>
+        <label className="toggle">
+          <input type="checkbox" checked={settings.showAllDevices} onChange={e => onChange({ ...settings, showAllDevices: e.target.checked })} />
+          <span className="toggle__track" aria-hidden /><span className="sr-only">Show all HID devices</span>
         </label>
-        <span className="help" style={{ margin: 0 }}>
-          When on, the device picker shows <i>all</i> HID devices (bypassing the VID/PID filter). Turn off if you have many USB devices and want a focused list.
-        </span>
       </div>
-      <div className="row">
-        <label>Reset all data:</label>
-        <button className="danger" onClick={onReset}>Clear profiles &amp; settings</button>
+
+      <div className="setting">
+        <div className="setting__text">
+          <strong>Mode names</strong>
+          <span className="muted">Rename effects to match what your keyboard actually shows. Saved in this browser.</span>
+        </div>
+        <button className="btn btn--outline" onClick={onEditModes}><PencilLine aria-hidden /> Edit names</button>
       </div>
-      <div className="row">
-        <label>About:</label>
-        <span style={{ color: 'var(--fg-2)', fontSize: 12, lineHeight: 1.6 }}>
-          v0.2 · Runs entirely in your browser — no install, no account, no network. Your settings stay on this device.
-        </span>
+
+      <h3 className="section-label">Protocol (advanced)</h3>
+      <div className="setting setting--stack">
+        <label className="setting__text" htmlFor="family">
+          <strong>Protocol family</strong>
+          <span className="muted">Auto picks Sonix for the AK820 Pro (PID {hex4(0x8009)}) and EVision for everything else, including the AK820 at {hex4(0x320f)} / {hex4(0x505b)}. Force one only if Apply does nothing, then compare bytes in the Capture log.</span>
+        </label>
+        <select id="family" className="input" value={settings.protocolFamily}
+          onChange={e => onChange({ ...settings, protocolFamily: e.target.value as Settings['protocolFamily'] })}>
+          <option value="auto">Auto, from the USB IDs (recommended)</option>
+          <option value="evision">EVision: 64-byte output report</option>
+          <option value="sonix">Sonix / Microdia: feature report</option>
+        </select>
       </div>
+      <div className="setting setting--stack">
+        <label className="setting__text" htmlFor="rid">
+          <strong>Report ID mode</strong>
+          <span className="muted">Auto reads the keyboard’s HID descriptor and chooses numbered or unnumbered reports.</span>
+        </label>
+        <select id="rid" className="input" value={settings.reportIdMode}
+          onChange={e => onChange({ ...settings, reportIdMode: e.target.value as ReportIdMode })}>
+          <option value="auto">Auto, from the device descriptor (recommended)</option>
+          <option value="native">Numbered: first byte is the report ID</option>
+          <option value="payload">Unnumbered: report ID 0, first byte in the payload</option>
+        </select>
+      </div>
+      <div className="setting">
+        <div className="setting__text">
+          <strong>USB IDs used for the device filter</strong>
+          <span className="muted mono">VID {hex4(settings.vid)} · PID {settings.pid ? hex4(settings.pid) : 'any'}</span>
+        </div>
+      </div>
+
+      <h3 className="section-label">Data</h3>
+      <div className="setting">
+        <div className="setting__text">
+          <strong>Clear profiles, settings and test results</strong>
+          <span className="muted">Everything is stored only in this browser. This can’t be undone.</span>
+        </div>
+        <button className="btn btn--danger" onClick={onReset}><Trash2 aria-hidden /> Clear all</button>
+      </div>
+      <p className="muted">v0.3 · Runs entirely in your browser: no install, no account, no network.</p>
     </div>
   )
 }

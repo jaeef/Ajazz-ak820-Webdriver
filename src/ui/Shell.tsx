@@ -117,10 +117,14 @@ export function Toast({ status }: { status: StatusMessage }) {
   }, [status])
   if (!status.message || !shown) return null
   const Icon = TOAST_ICON[status.type]
+  const [title, ...rest] = status.message.split('\n')
   return (
-    <div className={`toast toast--${status.type || 'info'}`} role="status" aria-live="polite">
-      <Icon aria-hidden /> <span>{status.message}</span>
+    <div key={status.message} className={`toast toast--${status.type || 'info'}`} role="status" aria-live="polite">
+      <Icon aria-hidden />
+      <span className="toast__title">{title}</span>
       <button className="toast__close" onClick={() => setShown(false)} aria-label="Dismiss"><X aria-hidden /></button>
+      {rest.length > 0 && <span className="toast__detail">{rest.join('\n')}</span>}
+      {status.type !== 'error' && <i className="toast__timer" aria-hidden />}
     </div>
   )
 }
