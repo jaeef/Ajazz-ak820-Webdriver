@@ -34,7 +34,7 @@ export function KeyboardView({ lighting, isLive, family, onApplyPerKey }: Props)
   const sel = KEY_LAYOUT.find(k => k.id === selected)
 
   return (
-    <div className="page">
+    <div className="page page--fit">
       <div className="stage">
         <BoardRender ariaLabel="Keyboard, click a key to paint it" overlay={k => ({ led: keyColors[k.id] })}
           selected={selected} onKeyClick={paintKey} dim={lighting.brightness === 0} />

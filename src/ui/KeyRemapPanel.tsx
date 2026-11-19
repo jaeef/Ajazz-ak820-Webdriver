@@ -56,7 +56,7 @@ export function KeyRemapPanel({ isLive, onSend, aside }: Props) {
 
   const current = TARGETS.findIndex(t => same(t.a, map[selected]))
   return (
-    <div className="page">
+    <div className="page page--fit">
       <div className="stage">
         <BoardRender ariaLabel="Keyboard, click a key to remap it" selected={selected} onKeyClick={k => setSelected(k.id)}
           overlay={k => (same(map[k.id], DEFAULTS[k.id]) ? undefined : { label: targetLabel(map[k.id]), marked: true })} />
