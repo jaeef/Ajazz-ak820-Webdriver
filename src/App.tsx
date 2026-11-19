@@ -4,7 +4,7 @@ import type { LightingState, Profile, TabId, PacketSnapshot, CalibrationResult }
 
 import { Sidebar, ConnectScreen, Toast } from './components/Shell'
 import { LightingPage } from './components/LightingPage'
-import { BoardRender, motionFor } from './components/BoardRender'
+import { BoardRender, KeySoundToggle, motionFor } from './components/BoardRender'
 import { KeyboardView } from './components/KeyboardView'
 import { WireFormatInspector } from './components/WireFormatInspector'
 import { ProfilesPanel } from './components/ProfilesPanel'
@@ -314,10 +314,6 @@ ${result.modeName} (mode ${String(result.mode).padStart(2, '0')}) is in Capture 
   const stage = (
     <div className="stage">
       <div className="stage__board">
-        <div className="pills" aria-live="polite">
-          <span className={`pill${device.isConnected ? ' pill--ok' : ' pill--demo'}`}>{device.isConnected ? 'Connected' : 'Demo mode · nothing is sent'}</span>
-          <span className="pill">{lighting.mode === MODE_STATIC ? 'Solid colour' : modeName(lighting.mode, settings.modes)} · {glow.toUpperCase()}</span>
-        </div>
         <BoardRender ariaLabel={`Keyboard preview: ${modeName(lighting.mode, settings.modes)}, colour ${glow}`}
           glow={glow} rainbow={lighting.rainbow} dim={lighting.brightness === 0} level={lighting.brightness}
           motion={motionFor(lighting.mode)} speed={lighting.speed} wake />
@@ -336,6 +332,16 @@ ${result.modeName} (mode ${String(result.mode).padStart(2, '0')}) is in Capture 
           <ConnectScreen webHIDSupported={device.webHIDSupported} settings={settings} onConnect={handleConnect}
             onExplore={() => { setExploring(true); info('Demo mode: changes are recorded in the Capture log, nothing is sent.') }}
             onListGranted={handleListGranted} />
+        )}
+
+        {ready && ['lighting', 'perkey', 'keys', 'profiles'].includes(page) && (
+          <div className="topbar">
+            <div className="pills" aria-live="polite">
+              <span className={`pill${device.isConnected ? ' pill--ok' : ' pill--demo'}`}>{device.isConnected ? 'Connected' : 'Demo mode · nothing is sent'}</span>
+              <span className="pill">{lighting.mode === MODE_STATIC ? 'Solid colour' : modeName(lighting.mode, settings.modes)} · {glow.toUpperCase()}</span>
+            </div>
+            <KeySoundToggle />
+          </div>
         )}
 
         {ready && page === 'lighting' && (
