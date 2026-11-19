@@ -16,7 +16,7 @@ A browser-based driver for the AK820: lighting effects, solid and per-key color,
 
 ## Positioning
 
-Runs entirely in the browser over WebHID: no download, no admin rights, works where the vendor app doesn't. Its protocol is reverse-engineered from the vendor app's live traffic and checked byte for byte (`scripts/check-protocol.ts`, `docs/rea-protocol.md`), and every feature is verified on real hardware.
+Runs entirely in the browser over WebHID: no download, no admin rights, works where the vendor app doesn't. Its protocol is reverse-engineered from the vendor app's live traffic and checked byte for byte (`scripts/check-protocol.ts`, `docs/protocol.md`), and every feature is verified on real hardware.
 
 ## Operating Context
 
@@ -38,8 +38,8 @@ Independent and unofficial. Names the AK820 for compatibility only; must not imi
 
 ## Evidence on Hand
 
-- Real product photo: `src/ui/wired-keyboard.png`.
-- Protocol spec and hardware-verification notes: `docs/rea-protocol.md`.
+- Real product photo: `public/wired-keyboard.png`.
+- Protocol spec and hardware-verification notes: `docs/protocol.md`.
 - No users, testimonials, download counts or press exist; don't invent any.
 
 ## Product Principles

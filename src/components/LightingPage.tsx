@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react'
 import { Shuffle, FlaskConical, ArrowRight, ArrowLeft } from 'lucide-react'
-import type { LightingState } from '../types'
-import { DEFAULT_MODE_ORDER, MAX_BRIGHTNESS, MAX_SPEED, MODE_STATIC, clampDirection } from '../protocol'
+import type { LightingState } from '../lib/types'
+import { DEFAULT_MODE_ORDER, MAX_BRIGHTNESS, MAX_SPEED, MODE_STATIC, clampDirection } from '../lib/protocol'
 import { modeIcon } from './modeIcons'
 import { ColorPicker } from './ColorPicker'
 
@@ -43,7 +43,7 @@ export function LightingPage({ lighting, modes, onChange, onTestMode, footer }: 
       </section>
 
       <section className="panel lighting__controls" aria-label="Lighting settings">
-        <div className="field">
+        <div className="field field--stack">
           <span className="field__label">Colour{lighting.rainbow && <em>random colours on</em>}</span>
           <ColorPicker r={lighting.r} g={lighting.g} b={lighting.b} onChange={rgb => set(rgb)} />
         </div>
@@ -59,7 +59,7 @@ export function LightingPage({ lighting, modes, onChange, onTestMode, footer }: 
 
         <fieldset className="motion-fields" disabled={isStatic}>
           <div className="field">
-            <span className="field__label">Speed <em>{isStatic ? 'not used by solid colour' : '0 is fastest'}</em></span>
+            <span className="field__label" title={isStatic ? 'Not used by solid colour' : '0 is fastest'}>Speed <em>{isStatic ? 'not used by solid colour' : '0 is fastest'}</em></span>
             <div className="seg" role="radiogroup" aria-label="Speed">
               {range(MAX_SPEED).map(v => (
                 <button key={v} role="radio" aria-checked={lighting.speed === v} onClick={() => set({ speed: v })}>{v}</button>

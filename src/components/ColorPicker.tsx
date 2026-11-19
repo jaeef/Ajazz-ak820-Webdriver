@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type PointerEvent as RPointerEvent } from 'react'
 import { Check } from 'lucide-react'
-import { DEFAULT_PALETTE, hexToRgb, rgbToHex } from '../protocol'
+import { DEFAULT_PALETTE, hexToRgb, rgbToHex } from '../lib/protocol'
 
 // RGB <-> HSV (h 0..360, s/v 0..1)
 function toHsv(r: number, g: number, b: number) {

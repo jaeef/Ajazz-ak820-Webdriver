@@ -1,6 +1,6 @@
 # Ajazz AK820 — Protocol Notes (WebHID)
 
-> **Superseded for the EVision AK820 by [`rea-protocol.md`](rea-protocol.md)**, which is verified against live
+> **Superseded for the EVision AK820 by [`protocol.md`](protocol.md)**, which is verified against live
 > vendor-app traffic and the keyboard itself. In particular the board enumerates as `0x320F` / `0x505B`, the
 > lighting block is 29 bytes, and the "official-driver capture" cited below is this app's own Capture-panel export.
 > The Sonix (AK820 Pro) section here is still the only reference for that family.
@@ -62,7 +62,7 @@
 > elements, each with `name="key_N"` and `userdata="light_N"` — confirming
 > the **key ID == LED index** (1:1 mapping) for all 126 entries. 82 keys
 > are visible on the 75% AK820 layout; 44 are hidden (numpad, M1-M5,
-> K14/K45/K56/K107, etc.). The mapping is now in `src/keymap.ts`.
+> K14/K45/K56/K107, etc.). The mapping is now in `src/lib/keymap.ts`.
 >
 > Additional findings from the extracted app:
 >

@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react'
 import { BookmarkPlus, Download, Upload, Play, Trash2, Layers } from 'lucide-react'
-import type { LightingState, Profile } from '../types'
-import { rgbToHex } from '../protocol'
+import type { LightingState, Profile } from '../lib/types'
+import { rgbToHex } from '../lib/protocol'
 
 interface Props {
   profiles: Profile[]

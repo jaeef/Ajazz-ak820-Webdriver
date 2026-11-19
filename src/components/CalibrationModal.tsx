@@ -1,7 +1,7 @@
 import { useState } from 'react'
-import type { CalibrationResult, TriState, PacketSnapshot, ProtocolFamilyResolved, LightingState } from '../types'
+import type { CalibrationResult, TriState, PacketSnapshot, ProtocolFamilyResolved, LightingState } from '../lib/types'
 import { Check, X, CircleHelp, Download, ArrowDownLeft, ArrowUpRight } from 'lucide-react'
-import { modeName } from '../protocol'
+import { modeName } from '../lib/protocol'
 import { Dialog } from './Dialog'
 
 interface Props {

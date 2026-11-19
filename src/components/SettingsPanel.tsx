@@ -1,5 +1,5 @@
 import { Settings as SettingsIcon, PencilLine, Trash2 } from 'lucide-react'
-import type { Settings, ReportIdMode } from '../types'
+import type { Settings, ReportIdMode } from '../lib/types'
 
 interface Props {
   settings: Settings

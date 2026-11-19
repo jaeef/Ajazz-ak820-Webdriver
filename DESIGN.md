@@ -348,7 +348,7 @@ The colour picker shows the colour space itself, so its surfaces are spectrum, n
 
 A two-column app grid: 248px sticky sidebar, fluid main (padding 16px 20px, page max-width 1320px, 14px gaps between blocks). Not connected, the main column becomes a centred 820px connect guide over the same shell.
 
-**One window.** Lighting and Profiles are fit pages: the page fills the viewport height (100vh less main padding) as two rows, the board row and a work row that takes the rest. The board's width is capped by the height left over, `max(520px, calc((100vh - 452px) * 2.436))` (2.436 is the board's 492:202 aspect), and centred, so the board shrinks before anything scrolls; 520px is the floor. Per-key RGB and Keys & macro use the same board cap without the fill. On Lighting the work row is the effect panel (tiles, then a profile-chip footer pinned to its bottom by a hairline) beside a 320px controls panel; side-by-side cards stretch to one height, and the tile grid scrolls inside its panel if it ever runs out of room. The status row above the board carries the pills, the pending line and Apply (end-aligned).
+**One window.** Lighting and Profiles are fit pages: the page fills the viewport height (100vh less main padding) as two rows, the board row and a work row that takes the rest. The board's width is capped by the height left over, `max(520px, calc((100vh - 426px) * 2.436))` (2.436 is the board's 492:202 aspect), and centred, so the board shrinks before anything scrolls; 520px is the floor. Per-key RGB and Keys & macro use the same board cap without the fill. On Lighting the work row is the effect panel (tiles, then a footer pinned to its bottom by a hairline: profile chips on the left, the pending line and Apply on the right) beside a 320px controls panel with label-left rows; side-by-side cards stretch to one height, and the tile grid scrolls inside its panel if it ever runs out of room. The status row above the board carries only the pills.
 
 Developer pages stack inside a single panel and may scroll: a wrapping toolbar row of segmented filter and buttons (end-aligned actions), scrolling tables capped at 420px (180px inside dialogs), and section breaks drawn as a hairline with 18px above. Settings run as full-width rows, text left (max 68ch) and control right, separated by hairlines and grouped under section labels. Dialogs are 480px (680px wide variant), with a head, a scrolling body at 16px gaps, and an action bar.
 
@@ -447,7 +447,7 @@ The AK820 render: black case gradient, light-ash alphas, dark-ash modifiers, mus
 ### Do:
 - **Do** keep the keyboard render visible and central on lighting and key surfaces.
 - **Do** spend mustard only on selection and the single primary action (The Keycap Rule).
-- **Do** stage changes and state them ("Not sent yet") until the user presses Apply; keep Apply in the status row above the board.
+- **Do** stage changes and state them ("Not sent yet") until the user presses Apply; keep Apply at the foot of the effect panel, right under the tiles.
 - **Do** fit Lighting and Profiles in one window; shrink the board and scroll inside panels before the page ever scrolls (The One Window Rule).
 - **Do** use Lucide line icons at the shared 1.9 stroke, 16px in chrome, 18px on tiles, 20px in toasts, 12 to 14px inside pills, chips, markers and status cells.
 - **Do** show status as a pale wash with dark ink (The Wash Rule).
