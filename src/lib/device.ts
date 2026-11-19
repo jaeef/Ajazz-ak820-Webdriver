@@ -162,6 +162,8 @@ function pickVendorDevice(devices: HIDDevice[]): {
   return { device: d, collection: d.collections[0] ?? null, matched: false }
 }
 
+const LAST_DEVICE_KEY = 'ak820.lastDevice'
+
 export class WebHIDController implements DeviceController {
   info: DeviceInfo | null = null
   readonly isMock = false
@@ -207,7 +209,31 @@ export class WebHIDController implements DeviceController {
     } catch {
       // getDevices unavailable — fall back to just the picked device(s).
     }
+    return this.open(pool)
+  }
 
+  // Reopen a keyboard this site is already allowed to use (after a page reload
+  // or a replug): no chooser, no click. Prefers the device last connected, since
+  // "Show all HID devices" can connect one that doesn't match the Settings VID/PID.
+  // Null when none is remembered.
+  async reconnect(vid: number, pid: number): Promise<DeviceInfo | null> {
+    if (!('hid' in navigator)) return null
+    const last = JSON.parse(localStorage.getItem(LAST_DEVICE_KEY) ?? 'null') as { vid: number; pid: number } | null
+    if (last) { vid = last.vid; pid = last.pid }
+    const granted = await navigator.hid.getDevices()
+    const pool = granted.filter(d => d.vendorId === vid && (!pid || d.productId === pid))
+    const why = granted.length === 0 ? 'the browser remembers no device for this site'
+      : pool.length === 0 ? `no remembered device matches ${vid.toString(16)}:${pid.toString(16)}`
+      : !pickVendorDevice(pool).matched ? 'the lighting interface is not available yet' : ''
+    if (why) {
+      console.info(`[ak820] auto-reconnect skipped: ${why}`,
+        granted.map(d => `${d.vendorId.toString(16)}:${d.productId.toString(16)} pages ${d.collections.map(c => (c.usagePage ?? 0).toString(16)).join(',')}`))
+      return null
+    }
+    return this.open(pool)
+  }
+
+  private async open(pool: HIDDevice[]): Promise<DeviceInfo> {
     const { device, collection, matched } = pickVendorDevice(pool)
     this.device = device
     if (!this.device.opened) {
@@ -242,7 +268,7 @@ export class WebHIDController implements DeviceController {
       matchedVendorInterface: matched,
     }
     this.info = info
-
+    localStorage.setItem(LAST_DEVICE_KEY, JSON.stringify({ vid: info.vendorId, pid: info.productId }))
     return info
   }
 
@@ -256,6 +282,9 @@ export class WebHIDController implements DeviceController {
         if (this.device.opened) {
           await this.device.close()
         }
+        // Drop the permission too, so a manual Disconnect isn't undone by auto-reconnect.
+        localStorage.removeItem(LAST_DEVICE_KEY)
+        await this.device.forget?.()
       } catch {
         // ignore close errors
       }

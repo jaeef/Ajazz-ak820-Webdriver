@@ -50,6 +50,7 @@ interface HIDDevice extends EventTarget {
   sendFeatureReport(reportId: number, data: BufferSource): Promise<void>
   sendReport(reportId: number, data: BufferSource): Promise<void>
   receiveFeatureReport(reportId: number): Promise<DataView>
+  forget?(): Promise<void>
   oninputreport: ((this: HIDDevice, ev: HIDInputReportEvent) => unknown) | null
 }
 

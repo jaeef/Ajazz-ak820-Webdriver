@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { BookmarkPlus, Send } from 'lucide-react'
 import type { LightingState, Profile, TabId, PacketSnapshot, CalibrationResult } from './lib/types'
 
@@ -125,11 +125,47 @@ function App() {
   const handleDisconnect = useCallback(async () => {
     try {
       await device.disconnect()
-      info('Disconnected\nYour keyboard keeps its last settings.')
+      info('Disconnected\nYour keyboard keeps its last settings. Connect again to pick it in the browser list.')
     } catch (e) {
       err('Disconnect error: ' + (e as Error).message)
     }
   }, [device, err, info])
+
+  // --- Auto-reconnect ---
+  // A page reload closes the device, but the browser remembers the permission:
+  // reopen it on load and whenever the keyboard is plugged back in.
+  // Unplugging drops back to the connect screen.
+  const reconnecting = useRef(false)
+  const { isConnected, info: devInfo, reconnect, switchToMock } = device
+  useEffect(() => {
+    if (!('hid' in navigator)) return
+    const tryReconnect = () => {
+      if (isConnected || reconnecting.current) return
+      reconnecting.current = true
+      reconnect(settings.vid, settings.pid)
+        .then(di => { if (di) { setExploring(false); ok(`Reconnected to ${di.productName || 'AK820'}\nPicked up the keyboard this browser remembers.`) } })
+        .catch(e => console.info('[ak820] auto-reconnect failed:', e))
+        .finally(() => { reconnecting.current = false })
+    }
+    const onUnplug = (e: Event) => {
+      const d = (e as HIDConnectionEvent).device
+      if (isConnected && d.vendorId === devInfo?.vendorId && d.productId === devInfo?.productId) {
+        switchToMock()
+        err('Keyboard unplugged\nPlug it back in and it reconnects on its own.')
+      }
+    }
+    // A replug arrives as one connect event per interface; wait for the last one.
+    let timer = 0
+    const onPlug = () => { clearTimeout(timer); timer = window.setTimeout(tryReconnect, 600) }
+    tryReconnect()
+    navigator.hid.addEventListener('connect', onPlug)
+    navigator.hid.addEventListener('disconnect', onUnplug)
+    return () => {
+      clearTimeout(timer)
+      navigator.hid.removeEventListener('connect', onPlug)
+      navigator.hid.removeEventListener('disconnect', onUnplug)
+    }
+  }, [isConnected, devInfo, reconnect, switchToMock, settings.vid, settings.pid, ok, err])
 
   // --- Apply lighting ---
   const handleApply = useCallback(async () => {
