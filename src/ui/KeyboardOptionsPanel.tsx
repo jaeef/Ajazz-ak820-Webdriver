@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { SlidersHorizontal } from 'lucide-react'
 import { POLLING_RATES, type KeyboardOptions } from '../protocol'
 
 interface Props {
@@ -23,31 +24,30 @@ export function KeyboardOptionsPanel({ isLive, onRead, onWrite }: Props) {
   const change = (next: KeyboardOptions) => { setOpt(next); onWrite(next) }
 
   return (
-    <div className="tab-panel active">
-      <div className="row" style={{ fontWeight: 600 }}>Keyboard Options</div>
-      <div className="help" style={{ marginTop: -2 }}>
+    <section className="panel" aria-labelledby="opts-h">
+      <div className="panel__head"><h2 id="opts-h"><SlidersHorizontal aria-hidden /> Keyboard options</h2></div>
+      <p className="muted">
         {isLive
-          ? (loaded ? 'Read from the keyboard. Changes are written immediately.' : 'Reading from the keyboard…')
+          ? (loaded ? 'Read from the keyboard. Changes are written right away.' : 'Reading from the keyboard…')
           : 'Connect the keyboard to read and change these.'}
+      </p>
+      <label className="toggle">
+        <input type="checkbox" disabled={!loaded} checked={opt.winLock} onChange={e => change({ ...opt, winLock: e.target.checked })} />
+        <span className="toggle__track" aria-hidden /> Lock the Windows key
+      </label>
+      <label className="toggle">
+        <input type="checkbox" disabled={!loaded} checked={opt.wasdSwap} onChange={e => change({ ...opt, wasdSwap: e.target.checked })} />
+        <span className="toggle__track" aria-hidden /> Swap WASD and arrow keys
+      </label>
+      <div className="field">
+        <span className="field__label">USB report rate</span>
+        <div className="seg" role="radiogroup" aria-label="USB report rate">
+          {POLLING_RATES.map((r, i) => (
+            <button key={r} role="radio" aria-checked={opt.pollingRate === i} disabled={!loaded}
+              onClick={() => change({ ...opt, pollingRate: i as KeyboardOptions['pollingRate'] })}>{r}</button>
+          ))}
+        </div>
       </div>
-
-      <div className="row" style={{ gap: 16, flexWrap: 'wrap', alignItems: 'center' }}>
-        <label style={{ minWidth: 'auto' }}>
-          <input type="checkbox" disabled={!loaded} checked={opt.winLock}
-            onChange={e => change({ ...opt, winLock: e.target.checked })} /> Lock Windows key
-        </label>
-        <label style={{ minWidth: 'auto' }}>
-          <input type="checkbox" disabled={!loaded} checked={opt.wasdSwap}
-            onChange={e => change({ ...opt, wasdSwap: e.target.checked })} /> Swap WASD and arrow keys
-        </label>
-        <label style={{ minWidth: 'auto' }}>
-          USB report rate{' '}
-          <select disabled={!loaded} value={opt.pollingRate}
-            onChange={e => change({ ...opt, pollingRate: +e.target.value as KeyboardOptions['pollingRate'] })}>
-            {POLLING_RATES.map((r, i) => <option key={r} value={i}>{r}</option>)}
-          </select>
-        </label>
-      </div>
-    </div>
+    </section>
   )
 }
