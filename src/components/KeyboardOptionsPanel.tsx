@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
-import { POLLING_RATES, type KeyboardOptions } from '../protocol'
+import { POLLING_RATES, type KeyboardOptions } from '../lib/protocol'
 
 interface Props {
   isLive: boolean

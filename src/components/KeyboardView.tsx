@@ -1,8 +1,8 @@
 import { useCallback, useState } from 'react'
 import { PaintBucket, Eraser, Pipette, Send } from 'lucide-react'
-import { KEY_LAYOUT, type KeyDef } from '../keymap'
-import { LED_COUNT, buildCustomColorPackets, hexToRgb, rgbToHex, DEFAULT_PALETTE } from '../protocol'
-import type { LightingState, ProtocolFamilyResolved } from '../types'
+import { KEY_LAYOUT, type KeyDef } from '../lib/keymap'
+import { LED_COUNT, buildCustomColorPackets, hexToRgb, rgbToHex, DEFAULT_PALETTE } from '../lib/protocol'
+import type { LightingState, ProtocolFamilyResolved } from '../lib/types'
 import { BoardRender } from './BoardRender'
 
 interface Props {

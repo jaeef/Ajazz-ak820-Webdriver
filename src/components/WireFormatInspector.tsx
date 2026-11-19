@@ -1,6 +1,6 @@
 import { Binary } from 'lucide-react'
-import { hexDump } from '../protocol'
-import type { ProtocolFamilyResolved } from '../types'
+import { hexDump } from '../lib/protocol'
+import type { ProtocolFamilyResolved } from '../lib/types'
 
 interface Props {
   packets: Uint8Array[]

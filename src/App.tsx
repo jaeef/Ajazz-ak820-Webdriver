@@ -1,29 +1,29 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { BookmarkPlus, Send } from 'lucide-react'
-import type { LightingState, Profile, TabId, PacketSnapshot, CalibrationResult } from './types'
+import type { LightingState, Profile, TabId, PacketSnapshot, CalibrationResult } from './lib/types'
 
-import { Sidebar, ConnectScreen, Toast } from './ui/Shell'
-import { LightingPage } from './ui/LightingPage'
-import { BoardRender, motionFor } from './ui/BoardRender'
-import { KeyboardView } from './ui/KeyboardView'
-import { WireFormatInspector } from './ui/WireFormatInspector'
-import { ProfilesPanel } from './ui/ProfilesPanel'
-import { SettingsPanel } from './ui/SettingsPanel'
-import { CapturePanel } from './ui/CapturePanel'
-import { KeyRemapPanel } from './ui/KeyRemapPanel'
-import { KeyboardOptionsPanel } from './ui/KeyboardOptionsPanel'
-import { CalibrationModal } from './ui/CalibrationModal'
-import { ModeEditModal } from './ui/ModeEditModal'
-import { Dialog } from './ui/Dialog'
+import { Sidebar, ConnectScreen, Toast } from './components/Shell'
+import { LightingPage } from './components/LightingPage'
+import { BoardRender, motionFor } from './components/BoardRender'
+import { KeyboardView } from './components/KeyboardView'
+import { WireFormatInspector } from './components/WireFormatInspector'
+import { ProfilesPanel } from './components/ProfilesPanel'
+import { SettingsPanel } from './components/SettingsPanel'
+import { CapturePanel } from './components/CapturePanel'
+import { KeyRemapPanel } from './components/KeyRemapPanel'
+import { KeyboardOptionsPanel } from './components/KeyboardOptionsPanel'
+import { CalibrationModal } from './components/CalibrationModal'
+import { ModeEditModal } from './components/ModeEditModal'
+import { Dialog } from './components/Dialog'
 
 import {
   modeName, resolveProtocolFamily, hexDump, rgbToHex, buildApplyPackets, MODE_STATIC,
   readKeyboardOptions, buildKeyboardOptionsPackets, type KeyboardOptions,
-} from './protocol'
+} from './lib/protocol'
 import {
   useDevice, useSettings, useProfiles, useLightingState, useStatus, useActiveTab, useCaptureLog, useCalibration,
   readLightingBlock,
-} from './hooks'
+} from './lib/hooks'
 
 function describeLighting(p: Profile, modes: string[]): string {
   return `${p.name} · ${p.mode === MODE_STATIC ? 'Solid colour' : modeName(p.mode, modes)} · ${rgbToHex(p.r, p.g, p.b).toUpperCase()} · brightness ${p.brightness}`
@@ -275,20 +275,12 @@ ${result.modeName} (mode ${String(result.mode).padStart(2, '0')}) is in Capture 
   const ready = device.isConnected || exploring
   const page = ready ? activeTab : 'lighting'
 
-  const stage = (withApply: boolean) => (
+  const stage = (
     <div className="stage">
       <div className="stage__board">
         <div className="pills" aria-live="polite">
           <span className={`pill${device.isConnected ? ' pill--ok' : ' pill--demo'}`}>{device.isConnected ? 'Connected' : 'Demo mode · nothing is sent'}</span>
           <span className="pill">{lighting.mode === MODE_STATIC ? 'Solid colour' : modeName(lighting.mode, settings.modes)} · {glow.toUpperCase()}</span>
-          {withApply && (
-            <div className="applybar">
-              <span className={`apply__state${unsent.length ? ' apply__state--pending' : ''}`} aria-live="polite">
-                {unsent.length ? <>Not sent yet: {unsent.join(', ')}</> : 'Keyboard matches'}
-              </span>
-              <button className="btn btn--primary" onClick={handleApply}><Send aria-hidden /> Apply to keyboard <kbd>Ctrl Enter</kbd></button>
-            </div>
-          )}
         </div>
         <BoardRender ariaLabel={`Keyboard preview: ${modeName(lighting.mode, settings.modes)}, colour ${glow}`}
           glow={glow} rainbow={lighting.rainbow} dim={lighting.brightness === 0} level={lighting.brightness}
@@ -312,16 +304,24 @@ ${result.modeName} (mode ${String(result.mode).padStart(2, '0')}) is in Capture 
 
         {ready && page === 'lighting' && (
           <div className="page page--fit page--fill">
-            {stage(true)}
+            {stage}
             <LightingPage lighting={lighting} modes={settings.modes} onChange={setLighting} onTestMode={handleTestMode} footer={
-              <div className="chips" aria-label="Profiles">
-                <span className="chips__label">Profiles</span>
-                {profiles.slice(0, 6).map(p => (
-                  <button key={p.name} className="chip" onClick={() => handleLoadProfile(p)} title={`Load ${p.name}`}>
-                    <i style={{ background: rgbToHex(p.r, p.g, p.b) }} aria-hidden />{p.name}
-                  </button>
-                ))}
-                <button className="chip chip--add" onClick={() => setActiveTab('profiles')}><BookmarkPlus aria-hidden /> Save current</button>
+              <div className="effect-foot">
+                <div className="chips" aria-label="Profiles">
+                  <span className="chips__label">Profiles</span>
+                  {profiles.slice(0, 4).map(p => (
+                    <button key={p.name} className="chip" onClick={() => handleLoadProfile(p)} title={`Load ${p.name}`}>
+                      <i style={{ background: rgbToHex(p.r, p.g, p.b) }} aria-hidden />{p.name}
+                    </button>
+                  ))}
+                  <button className="chip chip--add" onClick={() => setActiveTab('profiles')}><BookmarkPlus aria-hidden /> Save current</button>
+                </div>
+                <div className="applybar">
+                  <span className={`apply__state${unsent.length ? ' apply__state--pending' : ''}`} aria-live="polite">
+                    {unsent.length ? <>Not sent: {unsent.join(', ')}</> : 'Keyboard matches'}
+                  </span>
+                  <button className="btn btn--primary" onClick={handleApply}><Send aria-hidden /> Apply to keyboard <kbd>Ctrl Enter</kbd></button>
+                </div>
               </div>
             } />
           </div>
@@ -338,7 +338,7 @@ ${result.modeName} (mode ${String(result.mode).padStart(2, '0')}) is in Capture 
 
         {ready && page === 'profiles' && (
           <div className="page page--fit page--fill">
-            {stage(false)}
+            {stage}
             <section className="panel" aria-label="Profiles">
               <ProfilesPanel profiles={profiles} modes={settings.modes} currentLighting={lighting}
                 onSave={handleSaveProfile} onDelete={handleDeleteProfile} onLoad={handleLoadProfile} onImport={handleImportProfiles} />

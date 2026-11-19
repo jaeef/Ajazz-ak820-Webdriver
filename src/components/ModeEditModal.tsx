@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { DEFAULT_MODE_ORDER } from '../protocol'
+import { DEFAULT_MODE_ORDER } from '../lib/protocol'
 import { Dialog } from './Dialog'
 import { modeIcon } from './modeIcons'
 

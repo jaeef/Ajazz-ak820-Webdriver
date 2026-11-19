@@ -38,7 +38,7 @@ Raw data: `E:\Tools\ghidra-dist\live-hid-analysis.txt`, `mode-apply-analysis.txt
 
 **Firmware-owned bytes.** The vendor app has no UI for data[0], [20], [25] or the zero bytes, and no code in the driver stores `FF`/`02` as constants (Ghidra scan for immediate stores at those offsets: 0 hits). It reads the block from the keyboard at startup (`05 1d`) and writes those bytes back unchanged. The web app now does the same: every lighting / options write starts from the block it just read, so it no longer resets Windows lock, WASD swap or report rate. Without a keyboard (demo mode) it falls back to `FF`/`02`.
 
-Implemented in `src/protocol.ts` (`buildLightingData`, `buildKeyboardOptionsPackets`); self-check: `node scripts/check-protocol.ts`. Hardware-verified: Static, Cloud and Breath applied from the web app all took effect; Windows key lock set from the Keys tab stayed on after applying an effect.
+Implemented in `src/lib/protocol.ts` (`buildLightingData`, `buildKeyboardOptionsPackets`); self-check: `node scripts/check-protocol.ts`. Hardware-verified: Static, Cloud and Breath applied from the web app all took effect; Windows key lock set from the Keys tab stayed on after applying an effect.
 
 ### The saved capture is not vendor traffic
 
@@ -73,11 +73,11 @@ Clicking palette swatches in the vendor UI (hook active) produced:
 | blue | `31 53 ff` |
 | light blue | `00 99 ff` |
 
-These match the palette in the extracted `DefaultData`/`Skin` data and the existing `DEFAULT_PALETTE` in `src/protocol.ts`.
+These match the palette in the extracted `DefaultData`/`Skin` data and the existing `DEFAULT_PALETTE` in `src/lib/protocol.ts`.
 
 ## Cross-check with existing code
 
-`src/protocol.ts` already models the same frame: byte 0 `0x04`, bytes 1–2 unsigned LE checksum, byte 3 command, `CMD_SET_PARAMETER = 0x06`, begin/end packets, and the firmware mode table from `default_light.json` (values 0–30, 12 visible function types in `KeySetControl.xml`). The fresh pass independently confirms those facts and corrects the lighting block to the vendor's 29-byte layout.
+`src/lib/protocol.ts` already models the same frame: byte 0 `0x04`, bytes 1–2 unsigned LE checksum, byte 3 command, `CMD_SET_PARAMETER = 0x06`, begin/end packets, and the firmware mode table from `default_light.json` (values 0–30, 12 visible function types in `KeySetControl.xml`). The fresh pass independently confirms those facts and corrects the lighting block to the vendor's 29-byte layout.
 
 ## 17-byte routine — not used by the AK820
 
@@ -104,7 +104,7 @@ Every write is framed BEGIN (`01`) → data packets → END (`02`), data split i
 
 ### Slots
 
-Keymap slot = LED index, column-major: Esc 0, `` ` `` 1, Tab 2, Caps 3, LShift 4, LCtrl 5, F1 8, 1 9, Q 10 … Enter 107. Full default table: `DEFAULT_KEYMAP_HEX` in `src/protocol.ts`.
+Keymap slot = LED index, column-major: Esc 0, `` ` `` 1, Tab 2, Caps 3, LShift 4, LCtrl 5, F1 8, 1 9, Q 10 … Enter 107. Full default table: `DEFAULT_KEYMAP_HEX` in `src/lib/protocol.ts`.
 
 Entry types: `20` keyboard (`[20, modifier-mask, usage]`), `30` consumer, `70` macro (`[70, macro-index, 0]`), `A0` Fn, `D0` Fn layer.
 

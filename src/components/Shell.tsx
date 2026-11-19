@@ -3,8 +3,7 @@ import {
   Lightbulb, Paintbrush, Keyboard, Layers, Activity, Settings, Cable, MousePointerClick,
   Plug, Unplug, CircleCheck, CircleAlert, Info, ChevronDown, X, type LucideIcon,
 } from 'lucide-react'
-import type { DeviceInfo, Settings as AppSettings, StatusMessage, TabId } from '../types'
-import boardPhoto from './wired-keyboard.png'
+import type { DeviceInfo, Settings as AppSettings, StatusMessage, TabId } from '../lib/types'
 import { BoardRender } from './BoardRender'
 
 const hex4 = (n: number) => n.toString(16).toUpperCase().padStart(4, '0')
@@ -49,7 +48,7 @@ export function Sidebar({ active, onNavigate, info, isConnected, exploring, webH
         <span>Unofficial · runs in your browser</span>
       </div>
       <div className={`device${isConnected ? ' device--on' : ''}`}>
-        <img src={boardPhoto} alt="" className="device__img" />
+        <img src="/wired-keyboard.png" alt="" className="device__img" />
         <div className="device__text">
           <strong>{info?.productName || 'AJAZZ AK820'}</strong>
           <span><i className="dot" aria-hidden />{isConnected ? `Connected · ${hex4(info!.vendorId)}:${hex4(info!.productId)}` : exploring ? 'Demo mode' : 'Not connected'}</span>

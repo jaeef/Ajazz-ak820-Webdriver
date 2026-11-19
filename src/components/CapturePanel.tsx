@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
-import type { PacketLogEntry, PacketDirection, CalibrationResult, TriState } from '../types'
+import type { PacketLogEntry, PacketDirection, CalibrationResult, TriState } from '../lib/types'
 import { Check, X, CircleHelp, Pause, Play, Eraser, Download, FileText, ArrowDownLeft, ArrowUpRight, Activity, ListChecks } from 'lucide-react'
-import { hexDump } from '../protocol'
+import { hexDump } from '../lib/protocol'
 
 interface Props {
   log: PacketLogEntry[]

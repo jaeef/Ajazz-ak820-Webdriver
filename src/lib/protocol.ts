@@ -20,10 +20,10 @@ import type { LightingState, Direction, ReportIdMode, ProtocolFamily, ProtocolFa
 //   • bytes 5..6  : data offset, little-endian
 //   • bytes 8..   : data
 // Ground truth: live WriteFile hook on the vendor app driving a real AK820,
-// 36/36 writes decoded — see docs/rea-protocol.md.
+// 36/36 writes decoded — see docs/protocol.md.
 // =====================================================================
 
-// IDs the live AK820 reports (docs/rea-protocol.md). The vendor bundle's
+// IDs the live AK820 reports (docs/protocol.md). The vendor bundle's
 // Keyboard.json lists 0x0C45/0x1007, but the board the vendor app actually
 // talked to during the live capture enumerated as 0x320F/0x505B.
 export const VID_DEFAULT = 0x320f
@@ -206,7 +206,7 @@ export function buildEndPacket(): Uint8Array {
 }
 
 // The 29-byte (0x1d) lighting block the vendor app writes at offset 0.
-// Decoded from live vendor-app traffic (docs/rea-protocol.md), e.g.
+// Decoded from live vendor-app traffic (docs/protocol.md), e.g.
 //   04 20 03 06 1d 00 00 00 | 00 01 03 04 00 00 ff f0 05 … ff@28 … 02@33
 //
 //   data[1]   mode       verified: 01 Corrugated / 02 Cloud / 05 Breath / 08 Ripples / 14 Custom
@@ -413,7 +413,7 @@ export function buildKeymapPackets(map: readonly KeyAssignment[]): Uint8Array[] 
 // "AK820" is sold on two unrelated controllers. USB VID *alone* is NOT a
 // reliable disambiguator: the bundled official-driver unit (VID 0x0C45 /
 // PID 0x1007, chip VS11K34A — the "eevision" family, see the CORRECTION block
-// in docs/protocol-notes.md) is **EVision** and speaks a 64-byte OUTPUT
+// in docs/legacy-protocol-notes.md) is **EVision** and speaks a 64-byte OUTPUT
 // report, while the AK820 *Pro* reuses the same VID 0x0C45 with PID 0x8009
 // and is **Sonix** (64-byte FEATURE report, mode at byte 0). The older
 // Yichip/EVision boards used VID 0x320F.
@@ -452,7 +452,7 @@ export function resolveProtocolFamily(
 // SONIX / MICRODIA LIGHTING FRAME (VID 0x0C45)
 //
 // A single 64-byte FEATURE report (NOT the EVision OUTPUT cmd-0x06 frame).
-// Documented in docs/protocol-notes.md "Legacy: Sonix / Microdia" from
+// Documented in docs/legacy-protocol-notes.md "Legacy: Sonix / Microdia" from
 // gohv + TaxMachine RE of the AK820 Pro. Layout:
 //   0      mode (firmware id; Static = 0x06)
 //   1..3   R, G, B

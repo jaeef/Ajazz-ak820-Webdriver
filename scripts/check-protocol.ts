@@ -4,8 +4,8 @@ import assert from 'node:assert/strict'
 import {
   buildLightingPackets, buildKeymapPackets, buildCustomColorPackets, defaultKeymap, hexDump, LED_COUNT,
   buildMacroPackets, textToMacro, buildReadPacket, buildKeyboardOptionsPackets, readKeyboardOptions,
-} from '../src/protocol.ts'
-import type { LightingState } from '../src/types.ts'
+} from '../src/lib/protocol.ts'
+import type { LightingState } from '../src/lib/types.ts'
 
 const pad = (s: string) => {
   const b = s.trim().split(/\s+/)

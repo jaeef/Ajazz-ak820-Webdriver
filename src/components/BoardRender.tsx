@@ -1,6 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from 'lucide-react'
-import { KEY_LAYOUT, type KeyDef } from '../keymap'
+import { KEY_LAYOUT, type KeyDef } from '../lib/keymap'
 
 // The AK820 drawn in its own colorway (black case, light-ash alphas, dark-ash
 // modifiers, mustard Esc / Enter / Space). Positions come from the vendor

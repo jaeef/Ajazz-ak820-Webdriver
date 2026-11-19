@@ -1,10 +1,10 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { RotateCcw, Send, Keyboard as KeyboardIcon, TextCursorInput } from 'lucide-react'
-import { KEY_LAYOUT } from '../keymap'
+import { KEY_LAYOUT } from '../lib/keymap'
 import {
   buildKeymapPackets, buildMacroPackets, defaultKeymap, hexDump, textToMacro, MACRO_KEY, type KeyAssignment,
-} from '../protocol'
-import { keymapStore } from '../store'
+} from '../lib/protocol'
+import { keymapStore } from '../lib/store'
 
 import { BoardRender } from './BoardRender'
 

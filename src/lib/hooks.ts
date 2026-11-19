@@ -24,7 +24,7 @@ async function sendPacket(
 ): Promise<void> {
   if (family === 'sonix') {
     // Sonix lighting lives on a FEATURE report. Default to the unnumbered
-    // form (reportId 0, mode as payload byte 0) per protocol-notes; 'native'
+    // form (reportId 0, mode as payload byte 0) per docs/legacy-protocol-notes.md; 'native'
     // is the escape hatch for a numbered feature descriptor.
     const ids = controller.featureReportIds.length > 0 ? controller.featureReportIds : [0]
     const effective = reportIdMode === 'auto' ? 'payload' : reportIdMode
