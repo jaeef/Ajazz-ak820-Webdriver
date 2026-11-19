@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { DeviceInfo, LightingState, Profile, Settings, StatusMessage, TabId, ProtocolFamilyResolved, PacketLogEntry, CalibrationResult } from './types'
+import type { DeviceInfo, LightingState, Profile, Settings, StatusMessage, TabId, ProtocolFamilyResolved } from './types'
 import type { DeviceController } from './device'
 import { MockController, WebHIDController } from './device'
-import { profileStore, settingsStore, calibrationStore } from './store'
+import { profileStore, settingsStore } from './store'
 import { defaultSettings } from './store'
 import {
   DEFAULT_LIGHTING, buildApplyPackets, buildCustomModePacket, buildReadPacket, resolveSend,
@@ -253,71 +253,3 @@ export function useActiveTab(initial: TabId = 'lighting') {
   return [tab, setTab] as const
 }
 
-// =====================================================================
-// useCaptureLog — live view of the controller's raw I/O capture buffer.
-//
-// The controller records every sent and received packet into a bounded ring
-// buffer and notifies subscribers synchronously. To keep a multi-packet
-// Apply (BEGIN + WRITE + END + up to 7 color chunks = ~10 packets) from
-// triggering ~10 React renders, we coalesce notifications into a single
-// requestAnimationFrame tick. `paused` stops the re-render cadence while the
-// buffer keeps filling (so no packets are lost while the user inspects a
-// frozen view).
-// =====================================================================
-export function useCaptureLog(controller: DeviceController) {
-  const [version, setVersion] = useState(0)
-  const [paused, setPaused] = useState(false)
-  const pausedRef = useRef(paused)
-  pausedRef.current = paused
-  const scheduledRef = useRef(false)
-
-  useEffect(() => {
-    const unsub = controller.onPacket(() => {
-      if (pausedRef.current) return
-      if (scheduledRef.current) return
-      scheduledRef.current = true
-      requestAnimationFrame(() => {
-        scheduledRef.current = false
-        setVersion(v => (v + 1) & 0x3fffffff)
-      })
-    })
-    return unsub
-  }, [controller])
-
-  const clear = useCallback(() => {
-    controller.clearLog()
-    setVersion(v => (v + 1) & 0x3fffffff)
-  }, [controller])
-
-  // `log` is the live buffer reference; `version` is the render signal. Read
-  // the buffer (e.g. via `.slice(-N)`) in the consumer keyed on `version`.
-  return { log: controller.log, version, paused, setPaused, clear }
-}
-
-// =====================================================================
-// useCalibration — load + persist + delete mode verification results.
-//
-// The test flow itself (apply → snapshot capture log → open modal) lives in
-// App.tsx where `apply` is already wired to the correct controller/settings.
-// This hook just manages the persisted results collection: load on mount,
-// upsert on save, remove on delete, clear on reset. The "stable modes" table
-// in the Capture tab reads `results` directly.
-// =====================================================================
-export function useCalibration() {
-  const [results, setResults] = useState<CalibrationResult[]>(() => calibrationStore.load())
-
-  const saveResult = useCallback((result: CalibrationResult) => {
-    setResults(calibrationStore.upsert(result))
-  }, [])
-
-  const removeResult = useCallback((mode: number) => {
-    setResults(calibrationStore.remove(mode))
-  }, [])
-
-  const clearAll = useCallback(() => {
-    calibrationStore.clear()
-    setResults([])
-  }, [])
-
-  return { results, saveResult, removeResult, clearAll }
-}

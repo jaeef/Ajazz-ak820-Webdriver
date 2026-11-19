@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { useEffect, useRef, useState, useSyncExternalStore, type CSSProperties, type ReactNode } from 'react'
 import { ArrowUp, ArrowDown, ArrowLeft, ArrowRight, ArrowBigUpDash, Delete, Volume2, VolumeX } from 'lucide-react'
 import { KEY_LAYOUT, type KeyDef } from '../lib/keymap'
 
@@ -60,6 +60,19 @@ export function codeLabel(code: string): string | null {
   if (/^Digit\d$/.test(code)) return code.slice(5)
   return /^F\d{1,2}$/.test(code) ? code : null
 }
+
+// Indicator LEDs beside the nav column, top to bottom C / W / OS, lit white.
+// C follows Caps Lock (read from key events while the page has focus), W follows
+// the Windows-key lock read from the keyboard. OS has no readable state, so it stays dark.
+// ponytail: OS LED unwired; light it once the OS-mode byte is known.
+let ledState = { caps: false, win: false }
+const ledSubs = new Set<() => void>()
+export function setLeds(next: Partial<typeof ledState>) {
+  if (Object.entries(next).every(([k, v]) => ledState[k as keyof typeof ledState] === v)) return
+  ledState = { ...ledState, ...next }
+  ledSubs.forEach(f => f())
+}
+const subscribeLeds = (f: () => void) => { ledSubs.add(f); return () => { ledSubs.delete(f) } }
 
 const SOUND_KEY = 'ak820.keySound'
 let soundOn = localStorage.getItem(SOUND_KEY) !== 'off'
@@ -147,6 +160,7 @@ export function BoardRender({ glow = '#ffffff', rainbow, dim, level = 4, motion 
   const fx = rainbow ? 'rainbow' : motion
   const vars = { '--glow': glow, '--glow-a': dim ? 0 : 0.35 + 0.15 * Math.min(4, Math.max(1, level)), '--dur': `${1.6 + speed * 0.7}s` } as CSSProperties
   const boardRef = useRef<HTMLDivElement>(null)
+  const led = useSyncExternalStore(subscribeLeds, () => ledState)
 
   // Type on the real keyboard and the drawn caps bottom out in time with it.
   useEffect(() => {
@@ -155,6 +169,7 @@ export function BoardRender({ glow = '#ffffff', rainbow, dim, level = 4, motion 
       return label ? boardRef.current?.querySelector<HTMLElement>(`[data-label="${CSS.escape(label)}"]`) ?? null : null
     }
     const down = (e: KeyboardEvent) => {
+      if (e.getModifierState) setLeds({ caps: e.getModifierState('CapsLock') })
       if (e.repeat) return
       const t = e.target
       if (t instanceof HTMLElement && t.closest('input, textarea, select, [contenteditable="true"]')) return
@@ -163,7 +178,10 @@ export function BoardRender({ glow = '#ffffff', rainbow, dim, level = 4, motion 
       el.classList.add('cap--actuated')
       press()
     }
-    const up = (e: KeyboardEvent) => capFor(e)?.classList.remove('cap--actuated')
+    const up = (e: KeyboardEvent) => {
+      if (e.getModifierState) setLeds({ caps: e.getModifierState('CapsLock') })
+      capFor(e)?.classList.remove('cap--actuated')
+    }
     const clear = () => boardRef.current?.querySelectorAll('.cap--actuated').forEach(c => c.classList.remove('cap--actuated'))
     window.addEventListener('keydown', down)
     window.addEventListener('keyup', up)
@@ -179,6 +197,7 @@ export function BoardRender({ glow = '#ffffff', rainbow, dim, level = 4, motion 
     <div ref={boardRef} className={`board board--${fx}${dim ? ' board--dim' : ''}`} style={vars}
       role={onKeyClick ? 'group' : 'img'} aria-label={ariaLabel}
       onPointerDown={e => { if ((e.target as Element).closest('.cap')) press() }}>
+      <div className="board__case" aria-hidden="true" />
       <div className="board__plate board__bed" aria-hidden="true">
         <div className="board__plate-texture" />
         <div className="board__plate-sep-f" />
@@ -203,18 +222,12 @@ export function BoardRender({ glow = '#ffffff', rainbow, dim, level = 4, motion 
       </div>
 
       <div className="board__leds" aria-hidden="true">
-        <div className="board__led-item">
-          <div className="board__led-pin" />
-          <span className="board__led-txt">1</span>
-        </div>
-        <div className="board__led-item">
-          <div className="board__led-pin board__led-pin--on" />
-          <span className="board__led-txt">A</span>
-        </div>
-        <div className="board__led-item">
-          <div className="board__led-pin" />
-          <span className="board__led-txt">W</span>
-        </div>
+        {([['C', led.caps], ['W', led.win], ['OS', false]] as const).map(([t, on]) => (
+          <div key={t} className="board__led-item">
+            <div className={`board__led-pin${on ? ' board__led-pin--on' : ''}`} />
+            <span className="board__led-txt">{t}</span>
+          </div>
+        ))}
       </div>
 
       {KEY_LAYOUT.map(k => {

@@ -92,7 +92,7 @@ h2 { font-size: 15px; font-weight: 650; display: flex; align-items: center; gap:
 .nav__item--on { background: var(--mustard-2); color: var(--ink); font-weight: 600; }
 .nav__item--on svg { color: var(--mustard-ink); }
 .nav__item:disabled { opacity: .45; cursor: default; }
-.nav__group { font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); padding: 16px 10px 4px; }
+.nav__sep { display: block; height: 1px; background: var(--line); margin: 10px 10px; }
 .sidebar__foot { margin-top: auto; font-size: 12px; color: var(--ink-3); padding: 0 10px; }
 
 .main { padding: 16px 20px; min-width: 0; }
@@ -122,15 +122,23 @@ h2 { font-size: 15px; font-weight: 650; display: flex; align-items: center; gap:
 .board {
   --glow: #ffffff; --glow-a: .95; --pulse: 1; --dur: 3s;
   position: relative; container-type: inline-size; aspect-ratio: 492 / 202; width: 100%;
+  transition: --glow .5s var(--ease), --glow-a .6s var(--ease);
+}
+/* Case: on a child so 1.7cqi is measured against the board (demo: 18px on a 1060px case) */
+.board__case {
+  position: absolute; inset: 0; border-radius: 1.7cqi;
   background: linear-gradient(177deg, #3c3e44 0%, #202227 6%, #18191d 92%, #121316 100%);
-  border-radius: 1.7cqi;
   box-shadow:
     0 14px 22px -14px rgba(0, 0, 0, 0.55),
     0 4px 10px -4px rgba(0, 0, 0, 0.4),
     0 0 0 1px rgba(255, 255, 255, 0.1),
     inset 0 1.5px 0.5px rgba(255, 255, 255, 0.25),
     inset 0 -2.5px 0 rgba(0, 0, 0, 0.9);
-  transition: --glow .5s var(--ease), --glow-a .6s var(--ease);
+}
+/* Front chamfer highlight, as on the demo case */
+.board__case::after {
+  content: ""; position: absolute; bottom: .2cqi; left: 2.2cqi; right: 2.2cqi; height: .2cqi;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .1) 20%, rgba(255, 255, 255, .1) 80%, transparent);
 }
 
 /* Recessed plate bed inside the case bezel (demo: 10/12/13/10px on a 1060px case) */
@@ -200,21 +208,21 @@ h2 { font-size: 15px; font-weight: 650; display: flex; align-items: center; gap:
 
 /* Status LEDs */
 .board__leds {
-  position: absolute; top: 36%; right: 9.35%; width: 14px; height: 80px;
+  position: absolute; top: 36%; right: 9.2%; width: 1.5cqi; height: 7.2cqi;
   display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-  padding: 5px 0; background: rgba(0, 0, 0, 0.4); border-radius: 4px;
+  padding: .45cqi 0; background: rgba(0, 0, 0, 0.4); border-radius: .35cqi;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.9), 0 0.5px 0 rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.04); z-index: 8; pointer-events: none;
 }
-.board__led-item { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.board__led-item { display: flex; flex-direction: column; align-items: center; gap: .18cqi; }
 .board__led-pin {
-  width: 4px; height: 4px; border-radius: 50%; background: #111215;
+  width: .36cqi; height: .36cqi; border-radius: 50%; background: #111215; transition: background .2s, box-shadow .2s;
   box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.95), 0 0.5px 0 rgba(255, 255, 255, 0.15);
 }
 .board__led-pin--on {
-  background: #00e676; box-shadow: 0 0 6px #00e676, 0 0 10px rgba(0, 230, 118, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.6);
+  background: #fff; box-shadow: 0 0 .45cqi #fff, 0 0 .9cqi rgba(255, 255, 255, .55);
 }
-.board__led-txt { font: 700 7px "JetBrains Mono", Consolas, monospace; color: #727682; line-height: 1; }
+.board__led-txt { font: 700 .6cqi "JetBrains Mono", Consolas, monospace; color: #727682; line-height: 1; }
 
 /* OEM Keycaps */
 .cap {
@@ -349,21 +357,19 @@ button.cap { cursor: pointer; }
 .chip--add svg { width: 14px; height: 14px; }
 .tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); grid-auto-rows: minmax(34px, 44px); gap: 6px; overflow: auto; align-content: start; flex: 1 1 auto; min-height: 0; }
 .tile {
-  display: grid; grid-template-columns: 16px 1fr auto; align-items: center; gap: 7px; padding: 0 9px;
+  display: grid; grid-template-columns: 16px 1fr; align-items: center; gap: 8px; padding: 0 10px;
   border-radius: 8px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink);
   font: inherit; font-size: 13px; text-align: left; cursor: pointer; min-width: 0;
   transition: transform .2s var(--ease), border-color .2s, background .2s, box-shadow .2s var(--ease);
 }
 .tile:hover { border-color: var(--line-2); background: var(--surface); box-shadow: 0 2px 6px -3px rgba(24, 25, 27, .25); }
 .tile:active { transform: scale(.98); }
-.tile__icon { width: 16px; height: 16px; color: var(--ink-2); transition: transform .45s var(--ease), color .2s; }
-.tile:hover .tile__icon { transform: scale(1.15) rotate(-8deg); color: var(--ink); }
+.tile__icon { width: 16px; height: 16px; color: var(--ink-2); transform: translateZ(0); backface-visibility: hidden; transition: transform .2s var(--ease), color .2s; }
+@media (hover: hover) { .tile:hover .tile__icon { transform: translate3d(0, -1px, 0); color: var(--ink); } }
 .tile__name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tile__num { font-size: 11px; color: var(--ink-3); font-family: "Cascadia Mono", Consolas, monospace; font-variant-numeric: tabular-nums; }
 .tile--on { background: var(--mustard-2); border-color: #d9b440; box-shadow: inset 0 0 0 1px #d9b440; }
-.tile--on .tile__icon { color: var(--mustard-ink); animation: icon-pop .5s var(--ease); }
-.tile--on .tile__num { color: var(--mustard-ink); }
-@keyframes icon-pop { 40% { transform: scale(1.3) rotate(-8deg); } }
+.tile--on .tile__icon { color: var(--mustard-ink); animation: icon-pop .32s var(--ease); }
+@keyframes icon-pop { 45% { transform: translate3d(0, 0, 0) scale(1.18); } }
 
 .lighting__controls { display: flex; flex-direction: column; gap: 10px; }
 /* label-left rows keep the controls card as short as the effect grid */
@@ -375,7 +381,6 @@ button.cap { cursor: pointer; }
 .field--split { display: grid; }
 .field--split .seg { width: 88px; }
 .lighting__controls .seg { min-width: 0; }
-.lighting__test { margin-top: auto; align-self: flex-start; }
 
 /* colour picker: swatch trigger + presets inline, popover with SV area + hue */
 .picker { position: relative; display: grid; gap: 8px; }
@@ -626,7 +631,7 @@ button.cap { cursor: pointer; }
   .brand, .sidebar__foot { display: none; }
   .device { margin: 0; flex: 1 1 100%; }
   .nav { grid-auto-flow: column; overflow-x: auto; flex: 1 1 100%; }
-  .nav__group { display: none; }
+  .nav__sep { display: none; }
   .main { padding: 16px; }
   .connect__steps, .toolbar { grid-template-columns: 1fr; }
   .setting, .setting--stack { display: grid; grid-template-columns: 1fr; }
