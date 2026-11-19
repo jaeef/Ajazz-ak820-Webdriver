@@ -107,6 +107,17 @@ export function useDevice() {
     return deviceInfo
   }, [])
 
+  // Silent reconnect to an already-allowed keyboard; null if there is none.
+  const reconnect = useCallback(async (vid: number, pid: number) => {
+    const next = new WebHIDController()
+    const deviceInfo = await next.reconnect(vid, pid)
+    if (!deviceInfo) return null
+    setController(next)
+    setInfo(deviceInfo)
+    setIsConnected(true)
+    return deviceInfo
+  }, [])
+
   const disconnect = useCallback(async () => {
     try {
       await controllerRef.current.disconnect()
@@ -123,7 +134,7 @@ export function useDevice() {
     setIsConnected(false)
   }, [])
 
-  return { controller, info, isConnected, webHIDSupported, connect, disconnect, switchToMock }
+  return { controller, info, isConnected, webHIDSupported, connect, reconnect, disconnect, switchToMock }
 }
 
 // =====================================================================
