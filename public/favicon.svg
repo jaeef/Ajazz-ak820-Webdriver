@@ -1,0 +1,576 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" shape-rendering="geometricPrecision" text-rendering="geometricPrecision">
+  <defs>
+    <!-- Soft Physical Multi-Stage Contact Drop Shadow on Transparent Canvas -->
+    <filter id="kb-depth-shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="22" stdDeviation="18" flood-color="#000000" flood-opacity="0.85" />
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#000000" flood-opacity="0.6" />
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#000000" flood-opacity="0.4" />
+    </filter>
+
+    <!-- Keycap Depth Shadow -->
+    <filter id="cap-depth" x="-12%" y="-12%" width="124%" height="145%">
+      <feDropShadow dx="0" dy="2.4" stdDeviation="1.2" flood-color="#000000" flood-opacity="0.8" />
+    </filter>
+
+    <!-- Rotary Knob Shadow -->
+    <filter id="knob-shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="3.5" stdDeviation="3" flood-color="#000000" flood-opacity="0.75" />
+    </filter>
+
+    <!-- Chassis CNC Bevel Gradient -->
+    <linearGradient id="chassis-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4a4d56" />
+      <stop offset="3.5%" stop-color="#2d3036" />
+      <stop offset="92%" stop-color="#1b1c20" />
+      <stop offset="100%" stop-color="#0e0f12" />
+    </linearGradient>
+
+    <!-- Recessed Switch Plate Cavity Gradient -->
+    <linearGradient id="plate-cavity-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0a0b0e" />
+      <stop offset="15%" stop-color="#121317" />
+      <stop offset="85%" stop-color="#15171b" />
+      <stop offset="100%" stop-color="#181a1f" />
+    </linearGradient>
+
+    <!-- Machined Aluminum Rotary Knob Radial Gradient -->
+    <radialGradient id="knob-face-radial" cx="35%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="25%" stop-color="#e2e6ef" />
+      <stop offset="55%" stop-color="#b6bac6" />
+      <stop offset="85%" stop-color="#808491" />
+      <stop offset="100%" stop-color="#555862" />
+    </radialGradient>
+
+    <linearGradient id="knob-rim-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="45%" stop-color="#8a8e99" />
+      <stop offset="100%" stop-color="#22242a" />
+    </linearGradient>
+
+    <!-- Keycap Tones (PBT Double-Shot OEM Profile Gradients) -->
+    <!-- 1. AK820 Warm Marigold Mustard Accent (ESC, Enter, Space) -->
+    <linearGradient id="mustard-skirt" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#c99d05" />
+      <stop offset="100%" stop-color="#6e5200" />
+    </linearGradient>
+    <linearGradient id="mustard-face" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#fade38" />
+      <stop offset="18%" stop-color="#deb312" />
+      <stop offset="85%" stop-color="#c69d08" />
+      <stop offset="100%" stop-color="#997600" />
+    </linearGradient>
+
+    <!-- 2. Light Cement Grey Alpha Keys -->
+    <linearGradient id="alpha-skirt" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#a4a49e" />
+      <stop offset="100%" stop-color="#666661" />
+    </linearGradient>
+    <linearGradient id="alpha-face" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#e4e4df" />
+      <stop offset="18%" stop-color="#bebdb8" />
+      <stop offset="85%" stop-color="#b1b0aa" />
+      <stop offset="100%" stop-color="#888882" />
+    </linearGradient>
+
+    <!-- 3. Slate Charcoal Modifier Keys -->
+    <linearGradient id="mod-skirt" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4a4c52" />
+      <stop offset="100%" stop-color="#242529" />
+    </linearGradient>
+    <linearGradient id="mod-face" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7c7f88" />
+      <stop offset="18%" stop-color="#5f6269" />
+      <stop offset="85%" stop-color="#4e5057" />
+      <stop offset="100%" stop-color="#32343a" />
+    </linearGradient>
+
+    <!-- 4. F5-F8 Dark Charcoal Block -->
+    <linearGradient id="fn-dark-skirt" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#323439" />
+      <stop offset="100%" stop-color="#161719" />
+    </linearGradient>
+    <linearGradient id="fn-dark-face" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#5c5f67" />
+      <stop offset="18%" stop-color="#45474e" />
+      <stop offset="85%" stop-color="#38393f" />
+      <stop offset="100%" stop-color="#222327" />
+    </linearGradient>
+  </defs>
+
+  <!-- ================= 100% TRANSPARENT CANVAS ================= -->
+
+  <!-- The AK820 Keyboard Assembly Centered in 512x512 -->
+  <g filter="url(#kb-depth-shadow)">
+
+    <!-- 1. Outer Beveled CNC Chassis (X=20, Y=145, W=472, H=222) -->
+    <rect x="20" y="145" width="472" height="222" rx="17" ry="17" fill="url(#chassis-gradient)" stroke="#060709" stroke-width="2" />
+    
+    <!-- Top Chamfer Highlight Line -->
+    <path d="M 36 146.5 L 476 146.5" stroke="rgba(255, 255, 255, 0.32)" stroke-width="1.5" stroke-linecap="round" />
+    <!-- Bottom Rim Specular Highlight -->
+    <path d="M 40 365.5 L 472 365.5" stroke="rgba(255, 255, 255, 0.16)" stroke-width="1.2" stroke-linecap="round" />
+    <!-- Side Subtle Corner Highlights -->
+    <path d="M 21.5 160 L 21.5 352" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+    <path d="M 490.5 160 L 490.5 352" stroke="rgba(255, 255, 255, 0.08)" stroke-width="1" />
+
+    <!-- 2. Recessed Switch Plate Cavity (X=28, Y=153, W=456, H=206) -->
+    <rect x="28" y="153" width="456" height="206" rx="11" ry="11" fill="url(#plate-cavity-gradient)" stroke="#050608" stroke-width="2" />
+    <!-- Inner Cavity Bevel Shadow -->
+    <rect x="29" y="154" width="454" height="204" rx="10" ry="10" fill="none" stroke="rgba(0, 0, 0, 0.75)" stroke-width="2" />
+
+    <!-- 3. Machined Rotary Volume Knob (Top Right: Centered at X=450, Y=175) -->
+    <g filter="url(#knob-shadow)">
+      <!-- Collar Cutout in Plate (R=15.5, from X=434.5 to X=465.5 -> 10.5px gap to Del at 424) -->
+      <circle cx="450" cy="175" r="15.5" fill="#14161a" stroke="#252830" stroke-width="1.5" />
+      <!-- Outer Knurled Edge / Grip Ring -->
+      <circle cx="450" cy="175" r="14" fill="#2d3038" stroke="url(#knob-rim-gradient)" stroke-width="1" />
+      <circle cx="450" cy="175" r="14" fill="none" stroke="rgba(0, 0, 0, 0.6)" stroke-width="1.2" stroke-dasharray="1.8 1.2" />
+      
+      <!-- Concentric Machined Radial Dial Face -->
+      <circle cx="450" cy="175" r="12.5" fill="url(#knob-face-radial)" />
+      <!-- Concentric Machined Micro-Grooves (Audio Studio Radial Finish) -->
+      <circle cx="450" cy="175" r="10.5" fill="none" stroke="rgba(255, 255, 255, 0.32)" stroke-width="0.55" />
+      <circle cx="450" cy="175" r="8.5" fill="none" stroke="rgba(0, 0, 0, 0.3)" stroke-width="0.55" />
+      <circle cx="450" cy="175" r="6.5" fill="none" stroke="rgba(255, 255, 255, 0.25)" stroke-width="0.55" />
+      <circle cx="450" cy="175" r="4.5" fill="none" stroke="rgba(0, 0, 0, 0.35)" stroke-width="0.55" />
+      
+      <!-- Center Indent Core -->
+      <circle cx="450" cy="175" r="2.4" fill="#50535e" stroke="rgba(0, 0, 0, 0.4)" stroke-width="0.5" />
+      
+      <!-- Radial Specular Reflection Arc -->
+      <path d="M 439.5 166.5 A 12.5 12.5 0 0 1 460.5 166.5" fill="none" stroke="rgba(255, 255, 255, 0.68)" stroke-width="1.2" stroke-linecap="round" />
+      <!-- Knob Position Indicator Pip (Crisp White Dot at 12 o'clock) -->
+      <circle cx="450" cy="164.8" r="1.5" fill="#ffffff" filter="drop-shadow(0 0.8px 1px rgba(0,0,0,0.85))" />
+    </g>
+
+    <!-- 4. Vertical Status LEDs (Beside Enter & Nav Column: X=424, Y=236 to 282) -->
+    <!-- Caps Lock LED (Active White Glow) -->
+    <circle cx="424" cy="242" r="3" fill="rgba(255, 255, 255, 0.35)" filter="blur(1px)" />
+    <circle cx="424" cy="242" r="1.8" fill="#ffffff" filter="drop-shadow(0 0 2.5px #ffffff)" />
+    <!-- Win Lock LED (Off) -->
+    <circle cx="424" cy="256" r="1.8" fill="#202228" stroke="#14151a" stroke-width="0.5" />
+    <!-- OS Mode LED (Off) -->
+    <circle cx="424" cy="270" r="1.8" fill="#202228" stroke="#14151a" stroke-width="0.5" />
+
+    <!-- 5. Sculpted 3D OEM Keycaps Matrix with Dish Scoops & Skirts -->
+    <g filter="url(#cap-depth)">
+
+      <!-- ================= ROW 1: FUNCTION ROW (Y=163, H=24) ================= -->
+      <!-- ESC Key (Mustard Yellow Accent) -->
+      <g id="key-esc">
+        <rect x="36" y="165" width="25" height="23" rx="4" ry="4" fill="url(#mustard-skirt)" />
+        <rect x="36" y="163" width="25" height="22" rx="3.5" ry="3.5" fill="url(#mustard-face)" stroke="rgba(255, 255, 255, 0.42)" stroke-width="0.8" />
+        <!-- Top Edge Micro-Highlight -->
+        <path d="M 39 164.2 L 58 164.2" stroke="rgba(255, 255, 255, 0.55)" stroke-width="0.6" stroke-linecap="round" />
+        <ellipse cx="48.5" cy="169" rx="8" ry="3" fill="rgba(255, 255, 255, 0.24)" />
+        <text x="48.5" y="177.5" font-family="system-ui, -apple-system, sans-serif" font-weight="800" font-size="8.5" fill="#1b1704" text-anchor="middle">ESC</text>
+      </g>
+
+      <!-- F1 - F4 (Light Cement Grey: X=69 to X=170) -->
+      <g id="keys-f1-f4">
+        <!-- F1 -->
+        <rect x="69" y="165" width="23" height="23" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="69" y="163" width="23" height="22" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <path d="M 72 164.2 L 89 164.2" stroke="rgba(255, 255, 255, 0.45)" stroke-width="0.6" stroke-linecap="round" />
+        <ellipse cx="80.5" cy="169" rx="7" ry="2.5" fill="rgba(255, 255, 255, 0.25)" />
+        <text x="80.5" y="177.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">F1</text>
+        <!-- F2 -->
+        <rect x="95" y="165" width="23" height="23" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="95" y="163" width="23" height="22" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <path d="M 98 164.2 L 115 164.2" stroke="rgba(255, 255, 255, 0.45)" stroke-width="0.6" stroke-linecap="round" />
+        <ellipse cx="106.5" cy="169" rx="7" ry="2.5" fill="rgba(255, 255, 255, 0.25)" />
+        <text x="106.5" y="177.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">F2</text>
+        <!-- F3 -->
+        <rect x="121" y="165" width="23" height="23" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="121" y="163" width="23" height="22" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <path d="M 124 164.2 L 141 164.2" stroke="rgba(255, 255, 255, 0.45)" stroke-width="0.6" stroke-linecap="round" />
+        <ellipse cx="132.5" cy="169" rx="7" ry="2.5" fill="rgba(255, 255, 255, 0.25)" />
+        <text x="132.5" y="177.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">F3</text>
+        <!-- F4 -->
+        <rect x="147" y="165" width="23" height="23" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="147" y="163" width="23" height="22" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <path d="M 150 164.2 L 167 164.2" stroke="rgba(255, 255, 255, 0.45)" stroke-width="0.6" stroke-linecap="round" />
+        <ellipse cx="158.5" cy="169" rx="7" ry="2.5" fill="rgba(255, 255, 255, 0.25)" />
+        <text x="158.5" y="177.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">F4</text>
+      </g>
+
+      <!-- F5 - F8 (Distinct Deep Charcoal Block: X=179 to X=280) -->
+      <g id="keys-f5-f8">
+        <!-- F5 -->
+        <rect x="179" y="165" width="23" height="23" rx="4" ry="4" fill="url(#fn-dark-skirt)" />
+        <rect x="179" y="163" width="23" height="22" rx="3.5" ry="3.5" fill="url(#fn-dark-face)" stroke="rgba(255, 255, 255, 0.18)" stroke-width="0.8" />
+        <ellipse cx="190.5" cy="169" rx="7" ry="2.5" fill="rgba(255, 255, 255, 0.12)" />
+        <text x="190.5" y="177.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#f1f3f7" text-anchor="middle">F5</text>
+        <!-- F6 -->
+        <rect x="205" y="165" width="23" height="23" rx="4" ry="4" fill="url(#fn-dark-skirt)" />
+        <rect x="205" y="163" width="23" height="22" rx="3.5" ry="3.5" fill="url(#fn-dark-face)" stroke="rgba(255, 255, 255, 0.18)" stroke-width="0.8" />
+        <ellipse cx="216.5" cy="169" rx="7" ry="2.5" fill="rgba(255, 255, 255, 0.12)" />
+        <text x="216.5" y="177.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#f1f3f7" text-anchor="middle">F6</text>
+        <!-- F7 -->
+        <rect x="231" y="165" width="23" height="23" rx="4" ry="4" fill="url(#fn-dark-skirt)" />
+        <rect x="231" y="163" width="23" height="22" rx="3.5" ry="3.5" fill="url(#fn-dark-face)" stroke="rgba(255, 255, 255, 0.18)" stroke-width="0.8" />
+        <ellipse cx="242.5" cy="169" rx="7" ry="2.5" fill="rgba(255, 255, 255, 0.12)" />
+        <text x="242.5" y="177.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#f1f3f7" text-anchor="middle">F7</text>
+        <!-- F8 -->
+        <rect x="257" y="165" width="23" height="23" rx="4" ry="4" fill="url(#fn-dark-skirt)" />
+        <rect x="257" y="163" width="23" height="22" rx="3.5" ry="3.5" fill="url(#fn-dark-face)" stroke="rgba(255, 255, 255, 0.18)" stroke-width="0.8" />
+        <ellipse cx="268.5" cy="169" rx="7" ry="2.5" fill="rgba(255, 255, 255, 0.12)" />
+        <text x="268.5" y="177.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#f1f3f7" text-anchor="middle">F8</text>
+      </g>
+
+      <!-- F9 - F12 (Light Cement Grey: X=289 to X=390) -->
+      <g id="keys-f9-f12">
+        <rect x="289" y="165" width="23" height="23" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="289" y="163" width="23" height="22" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="300.5" y="177.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">F9</text>
+
+        <rect x="315" y="165" width="23" height="23" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="315" y="163" width="23" height="22" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="326.5" y="177.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="7" fill="#1c1e1d" text-anchor="middle">F10</text>
+
+        <rect x="341" y="165" width="23" height="23" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="341" y="163" width="23" height="22" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="352.5" y="177.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="7" fill="#1c1e1d" text-anchor="middle">F11</text>
+
+        <rect x="367" y="165" width="23" height="23" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="367" y="163" width="23" height="22" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="378.5" y="177.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="7" fill="#1c1e1d" text-anchor="middle">F12</text>
+      </g>
+
+      <!-- Del Key (Modifier Charcoal: X=400 to X=424. Left edge of Knob is at 434.5 -> Clear 10.5px Gap!) -->
+      <g id="key-del">
+        <rect x="400" y="165" width="24" height="23" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="400" y="163" width="24" height="22" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="412" y="177.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="7.5" fill="#f1f3f7" text-anchor="middle">Del</text>
+      </g>
+
+      <!-- ================= ROW 2: NUMBER ROW (Y=195, H=25) ================= -->
+      <g id="row-numbers">
+        <!-- ` ~ -->
+        <rect x="36" y="197" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="36" y="195" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="48" y="210" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">~</text>
+
+        <!-- 1 to =+ (Cement Grey Keys) -->
+        <rect x="62.5" y="197" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="62.5" y="195" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="74.5" y="210" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">1!</text>
+
+        <rect x="89" y="197" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="89" y="195" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="101" y="210" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">2@</text>
+
+        <rect x="115.5" y="197" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="115.5" y="195" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="127.5" y="210" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">3#</text>
+
+        <rect x="142" y="197" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="142" y="195" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="154" y="210" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">4$</text>
+
+        <rect x="168.5" y="197" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="168.5" y="195" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="180.5" y="210" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">5%</text>
+
+        <rect x="195" y="197" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="195" y="195" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="207" y="210" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">6^</text>
+
+        <rect x="221.5" y="197" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="221.5" y="195" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="233.5" y="210" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">7&amp;</text>
+
+        <rect x="248" y="197" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="248" y="195" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="260" y="210" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">8*</text>
+
+        <rect x="274.5" y="197" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="274.5" y="195" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="286.5" y="210" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">9(</text>
+
+        <rect x="301" y="197" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="301" y="195" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="313" y="210" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">0)</text>
+
+        <rect x="327.5" y="197" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="327.5" y="195" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="339.5" y="210" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">-_</text>
+
+        <rect x="354" y="197" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="354" y="195" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="366" y="210" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#1c1e1d" text-anchor="middle">=+</text>
+
+        <!-- BackSpace (Charcoal Modifier: X=381 to X=428) -->
+        <rect x="381" y="197" width="47" height="24" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="381" y="195" width="47" height="23" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="404.5" y="210" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#f1f3f7" text-anchor="middle">Bksp ⌫</text>
+
+        <!-- Home (Charcoal Modifier: X=438 to X=462, Directly Under Knob) -->
+        <rect x="438" y="197" width="24" height="24" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="438" y="195" width="24" height="23" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="450" y="210" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="7.5" fill="#f1f3f7" text-anchor="middle">Home</text>
+      </g>
+
+      <!-- ================= ROW 3: QWERTY ROW (Y=228, H=25) ================= -->
+      <g id="row-qwerty">
+        <!-- Tab (Charcoal) -->
+        <rect x="36" y="230" width="35" height="24" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="36" y="228" width="35" height="23" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="53.5" y="243" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#f1f3f7" text-anchor="middle">Tab ⇥</text>
+
+        <!-- Q to P, [ {, ] } (Cement Grey) -->
+        <rect x="73.5" y="230" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="73.5" y="228" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="85.5" y="243" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">Q</text>
+
+        <rect x="100" y="230" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="100" y="228" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="112" y="243" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">W</text>
+
+        <rect x="126.5" y="230" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="126.5" y="228" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="138.5" y="243" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">E</text>
+
+        <rect x="153" y="230" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="153" y="228" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="165" y="243" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">R</text>
+
+        <rect x="179.5" y="230" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="179.5" y="228" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="191.5" y="243" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">T</text>
+
+        <rect x="206" y="230" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="206" y="228" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="218" y="243" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">Y</text>
+
+        <rect x="232.5" y="230" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="232.5" y="228" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="244.5" y="243" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">U</text>
+
+        <rect x="259" y="230" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="259" y="228" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="271" y="243" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">I</text>
+
+        <rect x="285.5" y="230" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="285.5" y="228" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="297.5" y="243" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">O</text>
+
+        <rect x="312" y="230" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="312" y="228" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="324" y="243" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">P</text>
+
+        <rect x="338.5" y="230" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="338.5" y="228" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="350.5" y="243" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">[{</text>
+
+        <rect x="365" y="230" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="365" y="228" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="377" y="243" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">]}</text>
+
+        <rect x="391.5" y="230" width="34.5" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="391.5" y="228" width="34.5" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="408.7" y="243" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8.5" fill="#1c1e1d" text-anchor="middle">\|</text>
+
+        <!-- PgUp (Charcoal) -->
+        <rect x="438" y="230" width="24" height="24" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="438" y="228" width="24" height="23" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="450" y="243" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="7.5" fill="#f1f3f7" text-anchor="middle">PgUp</text>
+      </g>
+
+      <!-- ================= ROW 4: ASDF ROW (Y=261, H=25) ================= -->
+      <g id="row-asdf">
+        <!-- CapsLk (Charcoal) -->
+        <rect x="36" y="263" width="41" height="24" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="36" y="261" width="41" height="23" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="56.5" y="276" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#f1f3f7" text-anchor="middle">CapsLk</text>
+
+        <!-- A to L, ;, ' (Cement Grey) -->
+        <rect x="79.5" y="263" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="79.5" y="261" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="91.5" y="276" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">A</text>
+
+        <rect x="106" y="263" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="106" y="261" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="118" y="276" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">S</text>
+
+        <rect x="132.5" y="263" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="132.5" y="261" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="144.5" y="276" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">D</text>
+
+        <!-- F Key with Tactile Homing Dash -->
+        <g id="key-f">
+          <rect x="159" y="263" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+          <rect x="159" y="261" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+          <text x="171" y="276" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">F</text>
+          <!-- Homing Bar -->
+          <rect x="166" y="281" width="10" height="1.6" rx="0.8" ry="0.8" fill="#1c1e1d" opacity="0.65" />
+        </g>
+
+        <rect x="185.5" y="263" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="185.5" y="261" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="197.5" y="276" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">G</text>
+
+        <rect x="212" y="263" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="212" y="261" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="224" y="276" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">H</text>
+
+        <!-- J Key with Tactile Homing Dash -->
+        <g id="key-j">
+          <rect x="238.5" y="263" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+          <rect x="238.5" y="261" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+          <text x="250.5" y="276" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">J</text>
+          <!-- Homing Bar -->
+          <rect x="245.5" y="281" width="10" height="1.6" rx="0.8" ry="0.8" fill="#1c1e1d" opacity="0.65" />
+        </g>
+
+        <rect x="265" y="263" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="265" y="261" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="277" y="276" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">K</text>
+
+        <rect x="291.5" y="263" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="291.5" y="261" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="303.5" y="276" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">L</text>
+
+        <rect x="318" y="263" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="318" y="261" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="330" y="276" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">;:</text>
+
+        <rect x="344.5" y="263" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="344.5" y="261" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="356.5" y="276" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">'&quot;</text>
+
+        <!-- Enter Key (Mustard Yellow Accent: X=371 to X=426) -->
+        <g id="key-enter">
+          <rect x="371" y="263" width="55" height="24" rx="4" ry="4" fill="url(#mustard-skirt)" />
+          <rect x="371" y="261" width="55" height="23" rx="3.5" ry="3.5" fill="url(#mustard-face)" stroke="rgba(255, 255, 255, 0.42)" stroke-width="0.8" />
+          <path d="M 375 262.2 L 422 262.2" stroke="rgba(255, 255, 255, 0.55)" stroke-width="0.6" stroke-linecap="round" />
+          <ellipse cx="398.5" cy="267" rx="16" ry="3" fill="rgba(255, 255, 255, 0.24)" />
+          <text x="398.5" y="276.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8.5" fill="#1b1704" text-anchor="middle">Enter ↵</text>
+        </g>
+
+        <!-- PgDn (Charcoal) -->
+        <rect x="438" y="263" width="24" height="24" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="438" y="261" width="24" height="23" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="450" y="276" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="7.5" fill="#f1f3f7" text-anchor="middle">PgDn</text>
+      </g>
+
+      <!-- ================= ROW 5: ZXCV ROW (Y=294, H=25) ================= -->
+      <g id="row-zxcv">
+        <!-- Left Shift (Charcoal: X=36 to X=90) -->
+        <rect x="36" y="296" width="54" height="24" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="36" y="294" width="54" height="23" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="63" y="309.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8.5" fill="#f1f3f7" text-anchor="middle">↑ Shift</text>
+
+        <!-- Z to /? (Cement Grey) -->
+        <rect x="92.5" y="296" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="92.5" y="294" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="104.5" y="309" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">Z</text>
+
+        <rect x="119" y="296" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="119" y="294" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="131" y="309" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">X</text>
+
+        <rect x="145.5" y="296" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="145.5" y="294" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="157.5" y="309" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">C</text>
+
+        <rect x="172" y="296" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="172" y="294" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="184" y="309" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">V</text>
+
+        <rect x="198.5" y="296" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="198.5" y="294" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="210.5" y="309" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">B</text>
+
+        <rect x="225" y="296" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="225" y="294" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="237" y="309" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">N</text>
+
+        <rect x="251.5" y="296" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="251.5" y="294" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="263.5" y="309" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">M</text>
+
+        <rect x="278" y="296" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="278" y="294" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="290" y="309" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">&lt;,</text>
+
+        <rect x="304.5" y="296" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="304.5" y="294" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="316.5" y="309" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">&gt;.</text>
+
+        <rect x="331" y="296" width="24" height="24" rx="4" ry="4" fill="url(#alpha-skirt)" />
+        <rect x="331" y="294" width="24" height="23" rx="3.5" ry="3.5" fill="url(#alpha-face)" stroke="rgba(255, 255, 255, 0.38)" stroke-width="0.8" />
+        <text x="343" y="309" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="9" fill="#1c1e1d" text-anchor="middle">/?</text>
+
+        <!-- Right Shift (Charcoal: X=357 to X=402) -->
+        <rect x="357" y="296" width="45" height="24" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="357" y="294" width="45" height="23" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="379.5" y="309.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8.5" fill="#f1f3f7" text-anchor="middle">↑ Shift</text>
+
+        <!-- Up Arrow ▲ (Charcoal) -->
+        <rect x="409" y="298" width="22" height="22" rx="3.5" ry="3.5" fill="url(#mod-skirt)" />
+        <rect x="409" y="296" width="22" height="21" rx="3" ry="3" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="420" y="309.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8.5" fill="#f1f3f7" text-anchor="middle">▲</text>
+
+        <!-- End (Charcoal: Directly Under PgDn) -->
+        <rect x="438" y="296" width="24" height="24" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="438" y="294" width="24" height="23" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="450" y="309" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="7.5" fill="#f1f3f7" text-anchor="middle">End</text>
+      </g>
+
+      <!-- ================= ROW 6: BOTTOM ROW (Y=327, H=24) ================= -->
+      <g id="row-bottom">
+        <rect x="36" y="329" width="28" height="23" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="36" y="327" width="28" height="22" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="50" y="342" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#f1f3f7" text-anchor="middle">Ctrl</text>
+
+        <rect x="67" y="329" width="28" height="23" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="67" y="327" width="28" height="22" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="81" y="342" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#f1f3f7" text-anchor="middle">Win</text>
+
+        <rect x="98" y="329" width="28" height="23" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="98" y="327" width="28" height="22" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="112" y="342" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#f1f3f7" text-anchor="middle">Alt</text>
+
+        <!-- SPACEBAR (Mustard Yellow Accent with Dark Center Groove Slit: X=129 to X=285) -->
+        <g id="key-spacebar">
+          <rect x="129" y="329" width="156" height="23" rx="4" ry="4" fill="url(#mustard-skirt)" />
+          <rect x="129" y="327" width="156" height="22" rx="3.5" ry="3.5" fill="url(#mustard-face)" stroke="rgba(255, 255, 255, 0.42)" stroke-width="0.8" />
+          <path d="M 134 328.2 L 280 328.2" stroke="rgba(255, 255, 255, 0.5)" stroke-width="0.6" stroke-linecap="round" />
+          <ellipse cx="207" cy="331" rx="46" ry="2.5" fill="rgba(255, 255, 255, 0.25)" />
+          <!-- Spacebar Center Dark Groove Slit -->
+          <rect x="180" y="336.5" width="54" height="2" rx="1" ry="1" fill="#242111" opacity="0.88" />
+          <path d="M 181 338.8 L 233 338.8" stroke="rgba(255, 255, 255, 0.26)" stroke-width="0.6" stroke-linecap="round" />
+        </g>
+
+        <rect x="288" y="329" width="24" height="23" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="288" y="327" width="24" height="22" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="300" y="342" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#f1f3f7" text-anchor="middle">Alt</text>
+
+        <rect x="315" y="329" width="24" height="23" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="315" y="327" width="24" height="22" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="327" y="342" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#f1f3f7" text-anchor="middle">Fn</text>
+
+        <rect x="342" y="329" width="24" height="23" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="342" y="327" width="24" height="22" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="354" y="342" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8" fill="#f1f3f7" text-anchor="middle">Ctrl</text>
+
+        <!-- Arrow Keys: ◄ ▼ ► (Charcoal) -->
+        <rect x="383" y="331" width="22" height="21" rx="3.5" ry="3.5" fill="url(#mod-skirt)" />
+        <rect x="383" y="329" width="22" height="20" rx="3" ry="3" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="394" y="342.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8.5" fill="#f1f3f7" text-anchor="middle">◄</text>
+
+        <rect x="410" y="331" width="22" height="21" rx="3.5" ry="3.5" fill="url(#mod-skirt)" />
+        <rect x="410" y="329" width="22" height="20" rx="3" ry="3" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="421" y="342.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8.5" fill="#f1f3f7" text-anchor="middle">▼</text>
+
+        <rect x="438" y="329" width="24" height="23" rx="4" ry="4" fill="url(#mod-skirt)" />
+        <rect x="438" y="327" width="24" height="22" rx="3.5" ry="3.5" fill="url(#mod-face)" stroke="rgba(255, 255, 255, 0.22)" stroke-width="0.8" />
+        <text x="450" y="342.5" font-family="system-ui, -apple-system, sans-serif" font-weight="700" font-size="8.5" fill="#f1f3f7" text-anchor="middle">►</text>
+      </g>
+
+    </g>
+
+  </g>
+</svg>

@@ -2,6 +2,8 @@
 # Local IDE and AI assistant directories
 /.claude/
 /.impeccable/
+/.agents/
+/skills-lock.json
 .vscode/
 .idea/
 

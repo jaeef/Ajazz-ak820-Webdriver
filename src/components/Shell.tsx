@@ -43,7 +43,7 @@ export function Sidebar({ active, onNavigate, info, isConnected, exploring, webH
         <span>Unofficial · runs in your browser</span>
       </div>
       <div className={`device${isConnected ? ' device--on' : ''}`}>
-        <img src="/wired-keyboard.png" alt="" className="device__img" />
+        <img src="/favicon.svg" alt="" className="device__img" />
         <div className="device__text">
           <strong>{info?.productName || 'AJAZZ AK820'}</strong>
           <span><i className="dot" aria-hidden />{isConnected ? 'Connected' : exploring ? 'Demo mode' : 'Not connected'}</span>
