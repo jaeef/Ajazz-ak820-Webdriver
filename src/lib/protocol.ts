@@ -37,6 +37,7 @@ const CMD_END = 0x02
 const CMD_SYNC = 0x03 // `03 22`: device-info read (AA 55 block); vendor issues it before keymap/macro writes
 const CMD_WRITE_LIGHTING = 0x06 // 29-byte lighting block at offset 0
 const CMD_WRITE_KEYMAP = 0x09 // 128 × [type, modifier, usage] at offset 0
+const CMD_READ_KEYMAP = 0x07 // same layout as 0x09
 const CMD_WRITE_PERKEY = 0x0b // 128 × [R, G, B] at offset 0x400
 const CMD_WRITE_MACROS = 0x15 // macro table, see buildMacroPackets
 
@@ -401,10 +402,43 @@ export function textToMacro(text: string, delay = 20): MacroEvent[] {
     .flatMap(u => [{ usage: u, down: true, delay }, { usage: u, down: false, delay }])
 }
 
-export function buildKeymapPackets(map: readonly KeyAssignment[]): Uint8Array[] {
-  const data = new Uint8Array(KEYMAP_SLOTS * 3)
+export const KEYMAP_BYTES = KEYMAP_SLOTS * 3
+
+export function buildKeymapReadPackets(): Uint8Array[] {
+  const out: Uint8Array[] = []
+  for (let off = 0; off < KEYMAP_BYTES; off += WRITE_CHUNK) {
+    out.push(buildReadPacket(CMD_READ_KEYMAP, Math.min(WRITE_CHUNK, KEYMAP_BYTES - off), off))
+  }
+  return out
+}
+
+export function parseKeymap(bytes: Uint8Array): KeyAssignment[] | null {
+  if (bytes.length < KEYMAP_BYTES) return null
+  const out: KeyAssignment[] = []
+  for (let i = 0; i < KEYMAP_SLOTS; i++) out.push([bytes[i * 3], bytes[i * 3 + 1], bytes[i * 3 + 2]])
+  return out
+}
+
+// With `base` (the table the keyboard holds) only windows that differ are sent,
+// so a one-key remap can never zero a slot the app does not model.
+export function buildKeymapPackets(map: readonly KeyAssignment[], base?: readonly KeyAssignment[]): Uint8Array[] {
+  const data = new Uint8Array(KEYMAP_BYTES)
   map.forEach((a, i) => data.set(a, i * 3))
-  return [buildSyncPacket(), ...buildChunkedWrite(CMD_WRITE_KEYMAP, data)]
+  const before = new Uint8Array(KEYMAP_BYTES)
+  if (base) base.forEach((a, i) => before.set(a, i * 3))
+
+  const pkts = [buildBeginPacket()]
+  let wrote = false
+  for (let off = 0; off < KEYMAP_BYTES; off += WRITE_CHUNK) {
+    const end = Math.min(off + WRITE_CHUNK, KEYMAP_BYTES)
+    const chunk = data.subarray(off, end)
+    if (base && chunk.every((b, i) => b === before[off + i])) continue
+    pkts.push(buildWritePacket(CMD_WRITE_KEYMAP, chunk, off))
+    wrote = true
+  }
+  if (!wrote) return []
+  pkts.push(buildEndPacket())
+  return [buildSyncPacket(), ...pkts]
 }
 
 // =====================================================================

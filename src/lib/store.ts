@@ -1,5 +1,5 @@
 import type { Profile, Settings } from './types'
-import { VID_DEFAULT, PID_DEFAULT, DEFAULT_MODES, type KeyAssignment } from './protocol'
+import { VID_DEFAULT, PID_DEFAULT, DEFAULT_MODES, KEYMAP_SLOTS, type KeyAssignment } from './protocol'
 
 // v4: corrected from the official driver RE — real VID/PID (0x0C45/0x1007) and
 // the firmware mode table (default_light.json). Must bump the key so cached v3
@@ -87,6 +87,7 @@ export const settingsStore = {
       localStorage.removeItem(PROFILES_KEY)
       localStorage.removeItem(SETTINGS_KEY)
       localStorage.removeItem(CALIBRATION_KEY)
+      localStorage.removeItem(KEYMAP_KEY)
     } catch {
       // ignore
     }
@@ -100,7 +101,10 @@ const KEYMAP_KEY = 'ak820_keymap_v1'
 
 export const keymapStore = {
   load(): KeyAssignment[] | null {
-    return safeRead<KeyAssignment[] | null>(KEYMAP_KEY, null)
+    const raw = safeRead<unknown>(KEYMAP_KEY, null)
+    if (!Array.isArray(raw) || raw.length !== KEYMAP_SLOTS) return null
+    const ok = raw.every(e => Array.isArray(e) && e.length === 3 && e.every(n => Number.isInteger(n) && n >= 0 && n <= 255))
+    return ok ? (raw as KeyAssignment[]) : null
   },
   save(map: readonly KeyAssignment[]): void {
     safeWrite(KEYMAP_KEY, map)

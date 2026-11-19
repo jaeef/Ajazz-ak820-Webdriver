@@ -7,6 +7,7 @@ import { defaultSettings } from './store'
 import {
   DEFAULT_LIGHTING, buildApplyPackets, buildCustomModePacket, buildReadPacket, resolveSend,
   CMD_READ_LIGHTING, LIGHTING_BLOCK_LEN,
+  buildKeymapReadPackets, parseKeymap, KEYMAP_BYTES, type KeyAssignment,
 } from './protocol'
 import type { ReportIdMode } from './types'
 
@@ -81,6 +82,21 @@ async function readReply(
 // The keyboard's current 29-byte lighting block (CMD 0x05), or null.
 export function readLightingBlock(controller: DeviceController, reportIdMode: ReportIdMode, family: ProtocolFamilyResolved) {
   return readReply(controller, reportIdMode, family, buildReadPacket(CMD_READ_LIGHTING, LIGHTING_BLOCK_LEN), LIGHTING_BLOCK_LEN)
+}
+
+// The keyboard's live 384-byte keymap, or null. One reply cannot carry it, so
+// it is read window by window at the same offsets the write uses.
+export async function readKeymap(
+  controller: DeviceController, reportIdMode: ReportIdMode, family: ProtocolFamilyResolved,
+): Promise<KeyAssignment[] | null> {
+  const out = new Uint8Array(KEYMAP_BYTES)
+  for (const req of buildKeymapReadPackets()) {
+    const off = req[5] | (req[6] << 8)
+    const chunk = await readReply(controller, reportIdMode, family, req, req[4], 400)
+    if (!chunk) return null
+    out.set(chunk.subarray(0, req[4]), off)
+  }
+  return parseKeymap(out)
 }
 
 // =====================================================================

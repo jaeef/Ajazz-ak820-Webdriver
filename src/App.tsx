@@ -18,7 +18,7 @@ import {
 } from './lib/protocol'
 import {
   useDevice, useSettings, useProfiles, useLightingState, useStatus, useActiveTab,
-  readLightingBlock,
+  readLightingBlock, readKeymap,
 } from './lib/hooks'
 
 function describeLighting(p: Profile, modes: string[]): string {
@@ -166,9 +166,14 @@ function App() {
 
   // --- Key remap: send the keymap built by KeyRemapPanel ---
   const handleSendKeymap = useCallback((packets: Uint8Array[], what: string) => {
-    sendPackets(packets).then(() => ok(`${device.isConnected ? 'Saved to keyboard' : 'Recorded (demo)'}\n${what[0].toUpperCase()}${what.slice(1)}`))
-                        .catch(e => err('Couldn’t save the keymap\n' + (e as Error).message))
+    return sendPackets(packets).then(() => ok(`${device.isConnected ? 'Sent to keyboard' : 'Recorded (demo)'}\n${what[0].toUpperCase()}${what.slice(1)}`))
+                              .catch(e => err('Couldn’t save the keymap\n' + (e as Error).message))
   }, [sendPackets, device.isConnected, ok, err])
+
+  const handleReadKeymap = useCallback(
+    () => readKeymap(device.controller, settings.reportIdMode, family),
+    [device.controller, settings.reportIdMode, family],
+  )
 
   // --- Profile save / load / delete / import ---
   const handleSaveProfile = useCallback((profile: Profile) => {
@@ -296,7 +301,7 @@ function App() {
         )}
 
         {ready && page === 'keys' && (
-          <KeyRemapPanel isLive={device.isConnected} onSend={handleSendKeymap}
+          <KeyRemapPanel isLive={device.isConnected} onSend={handleSendKeymap} onRead={handleReadKeymap}
             aside={<KeyboardOptionsPanel isLive={device.isConnected} onRead={handleReadOptions} onWrite={handleWriteOptions} />} />
         )}
 
@@ -311,7 +316,7 @@ function App() {
         )}
 
         {ready && page === 'settings' && (
-          <div className="page">
+          <div className="page page--settings">
             <section className="panel" aria-label="Settings">
               <SettingsPanel settings={settings} onChange={handleSettingsChange} onReset={() => setConfirmReset(true)} />
             </section>

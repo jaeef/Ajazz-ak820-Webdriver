@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from 'react'
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { RotateCcw, Send, Keyboard as KeyboardIcon, TextCursorInput } from 'lucide-react'
 import { KEY_LAYOUT } from '../lib/keymap'
 import {
@@ -29,29 +29,50 @@ const targetLabel = (a: KeyAssignment) =>
 
 interface Props {
   isLive: boolean
-  onSend: (packets: Uint8Array[], what: string) => void
+  onRead: () => Promise<KeyAssignment[] | null>
+  onSend: (packets: Uint8Array[], what: string) => Promise<void>
   aside?: ReactNode
 }
 
-export function KeyRemapPanel({ isLive, onSend, aside }: Props) {
+export function KeyRemapPanel({ isLive, onRead, onSend, aside }: Props) {
   const [map, setMap] = useState<KeyAssignment[]>(() => keymapStore.load() ?? DEFAULTS)
+  const [device, setDevice] = useState<KeyAssignment[] | null>(null)
+  const [read, setRead] = useState<'reading' | 'failed' | null>(null)
   const [selected, setSelected] = useState<number>(KEY_LAYOUT[0].id)
   const [macroText, setMacroText] = useState('')
   const macroEvents = useMemo(() => textToMacro(macroText), [macroText])
   const changed = useMemo(() => KEY_LAYOUT.filter(k => !same(map[k.id], DEFAULTS[k.id])), [map])
+  const matches = useMemo(() => (device ? map.every((a, i) => same(a, device[i])) : null), [map, device])
   const sel = KEY_LAYOUT.find(k => k.id === selected)!
 
-  const assign = (a: KeyAssignment) => setMap(m => m.map((x, i) => (i === selected ? a : x)))
-  const send = (next: KeyAssignment[], what: string) => {
+  const assign = (a: KeyAssignment) => setMap(m => m.map((x, i) => {
+    if (i === selected) return a
+    return same(a, MACRO_KEY) && same(x, MACRO_KEY) ? DEFAULTS[i] : x
+  }))
+
+  useEffect(() => {
+    if (!isLive) { setDevice(null); setRead(null); return }
+    let alive = true
+    setRead('reading')
+    onRead().then(back => {
+      if (!alive) return
+      if (back) { setDevice(back); setMap(back); setRead(null) } else setRead('failed')
+    })
+    return () => { alive = false }
+  }, [isLive, onRead])
+
+  const send = async (next: KeyAssignment[], what: string, extra: Uint8Array[] = []) => {
     keymapStore.save(next)
-    onSend(buildKeymapPackets(next), what)
+    const packets = [...extra, ...buildKeymapPackets(next, device ?? undefined)]
+    if (!packets.length) { setMap(next); return }
+    try { await onSend(packets, what) } catch { return }
+    const back = await onRead()
+    if (back) { setDevice(back); setMap(back); setRead(null) } else { setMap(next); setDevice(null); setRead('failed') }
   }
-  // One macro slot: assigning it to a key moves it off any other key first.
   const sendMacro = () => {
     const next = map.map((x, i) => (i === selected ? MACRO_KEY : same(x, MACRO_KEY) ? DEFAULTS[i] : x))
     setMap(next)
-    keymapStore.save(next)
-    onSend([...buildMacroPackets(macroEvents), ...buildKeymapPackets(next)], `macro "${macroText}" on ${sel.label}`)
+    void send(next, `macro "${macroText}" on ${sel.label}`, buildMacroPackets(macroEvents))
   }
 
   const current = TARGETS.findIndex(t => same(t.a, map[selected]))
@@ -75,6 +96,13 @@ export function KeyRemapPanel({ isLive, onSend, aside }: Props) {
             </div>
           </div>
           <p className="muted">
+            {device
+              ? (matches ? 'The keyboard already holds this table.' : 'Not on the keyboard yet: apply to send it.')
+              : !isLive ? 'Connect the keyboard to read its current table.'
+                : read === 'failed' ? 'Couldn’t read the keyboard’s table; apply writes all 128 slots.'
+                  : 'Reading the keyboard’s table…'}
+          </p>
+          <p className="muted">
             {changed.length
               ? <>Remapped: {changed.map(k => `${k.label} → ${targetLabel(map[k.id])}`).join(', ')}</>
               : 'No keys remapped. Click a key on the board to change it.'}
@@ -90,10 +118,10 @@ export function KeyRemapPanel({ isLive, onSend, aside }: Props) {
             <span className="muted">{macroText.length} / {MACRO_MAX} characters. One macro at a time; assigning it moves it off any other key.</span>
           </div>
           <div className="actions">
-            <button className="btn btn--primary" onClick={() => send(map, `keymap (${changed.length} remapped)`)}>
+            <button className="btn btn--primary" onClick={() => void send(map, `keymap (${changed.length} remapped)`)}>
               <Send aria-hidden /> {isLive ? 'Apply keymap' : 'Apply keymap (demo)'}
             </button>
-            <button className="btn btn--ghost" onClick={() => { setMap(DEFAULTS); send(DEFAULTS, 'default keymap') }}>
+            <button className="btn btn--ghost" onClick={() => void send(DEFAULTS, 'default keymap')}>
               Restore defaults
             </button>
           </div>
