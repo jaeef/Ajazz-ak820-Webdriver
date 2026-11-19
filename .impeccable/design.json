@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "generatedAt": "2026-11-19T12:00:00Z",
+  "generatedAt": "2026-11-19T18:00:00Z",
   "title": "Design System: AK820 Web Driver",
   "extensions": {
     "colorMeta": {
@@ -228,21 +228,6 @@
           "#fbe9e8",
           "#fdf4f3"
         ]
-      },
-      "toast-error": {
-        "role": "status",
-        "displayName": "Oxblood",
-        "canonical": "#4a1210"
-      },
-      "toast-ok-icon": {
-        "role": "status",
-        "displayName": "Toast Green",
-        "canonical": "#6fdc9b"
-      },
-      "toast-error-icon": {
-        "role": "status",
-        "displayName": "Toast Coral",
-        "canonical": "#ff8a80"
       }
     },
     "typographyMeta": {
@@ -256,30 +241,34 @@
       },
       "body": {
         "displayName": "Body",
-        "purpose": "All UI text; buttons, tiles and active nav at 600."
+        "purpose": "All UI text; buttons and active nav at 600."
       },
       "label": {
         "displayName": "Label",
-        "purpose": "Field labels, pills, table headers, section labels, tile mode numbers."
+        "purpose": "Field labels, chip-row label, pills, table headers, section labels."
       },
       "mono": {
         "displayName": "Mono",
-        "purpose": "Hex values, packet tables, code and kbd only."
+        "purpose": "Hex values, picker readout, packet tables, code and kbd; 11px for tile mode numbers."
       },
       "body-sm": {
         "displayName": "Body small",
-        "purpose": "Secondary lines in list and setting rows, table body, small buttons, apply state."
+        "purpose": "Effect tiles, profile chips, picker trigger, secondary lines in list and setting rows, table body, small buttons, apply state, toast detail."
       },
       "label-sm": {
         "displayName": "Label small",
-        "purpose": "kbd hints, RGB channel letters, sidebar group label (uppercase, 0.06em)."
+        "purpose": "kbd hints, picker field labels, sidebar group label (uppercase, 0.06em)."
+      },
+      "brand": {
+        "displayName": "Brand",
+        "purpose": "Sidebar app name over a 12px Graphite subline."
       }
     },
     "shadows": [
       {
         "name": "panel",
         "value": "0 1px 2px rgba(24,25,27,.06), 0 8px 24px -12px rgba(24,25,27,.18)",
-        "purpose": "Panels at rest; tiles on hover."
+        "purpose": "Panels at rest."
       },
       {
         "name": "dialog",
@@ -302,14 +291,44 @@
         "purpose": "Mustard bloom on primary hover."
       },
       {
-        "name": "toast",
-        "value": "0 14px 34px -14px rgba(0,0,0,.55)",
-        "purpose": "Floating toast."
-      },
-      {
         "name": "segment-chip",
         "value": "0 1px 2px rgba(0,0,0,.1), 0 0 0 1px #e2e2de",
         "purpose": "Raised selected segment."
+      },
+      {
+        "name": "tile-hover",
+        "value": "0 2px 6px -3px rgba(24,25,27,.25)",
+        "purpose": "Compact effect tile under the pointer."
+      },
+      {
+        "name": "popover",
+        "value": "0 18px 40px -16px rgba(24,25,27,.45)",
+        "purpose": "Colour popover."
+      },
+      {
+        "name": "toast",
+        "value": "0 18px 40px -18px rgba(24,25,27,.5)",
+        "purpose": "Floating white toast."
+      },
+      {
+        "name": "picker-thumb",
+        "value": "0 0 0 1px rgba(0,0,0,.3), 0 2px 6px rgba(0,0,0,.35)",
+        "purpose": "SV and hue thumbs, legible on any colour (with a 2px white border on the SV thumb)."
+      },
+      {
+        "name": "selected-ring",
+        "value": "inset 0 0 0 1px rgba(0,0,0,.14), 0 0 0 2px #ffffff, 0 0 0 4px #18191b",
+        "purpose": "Selected swatch and checked colour dot."
+      },
+      {
+        "name": "colour-edge",
+        "value": "inset 0 0 0 1px rgba(0,0,0,.14)",
+        "purpose": "Swatches, colour dots and chip dots, so pale colours read on white (.15 on list and chip dots)."
+      },
+      {
+        "name": "connected-halo",
+        "value": "0 0 0 3px rgba(31,138,76,.15)",
+        "purpose": "Connected status dot."
       }
     ],
     "motion": [
@@ -334,11 +353,6 @@
         "purpose": "Breath, wave (staggered by key x) and rainbow (6s) previews."
       },
       {
-        "name": "toast-in",
-        "value": ".45s",
-        "purpose": "Toast rises 12px in."
-      },
-      {
         "name": "dialog-in",
         "value": ".35s",
         "purpose": "Dialog rises 10px from 0.98 scale."
@@ -347,6 +361,31 @@
         "name": "reduced-motion",
         "value": "durations .01ms",
         "purpose": "All animation and transitions collapse."
+      },
+      {
+        "name": "toast-in",
+        "value": ".4s",
+        "purpose": "Toast rises 10px from 0.98 scale."
+      },
+      {
+        "name": "toast-timer",
+        "value": "5s linear",
+        "purpose": "Mustard countdown bar; errors have none and persist."
+      },
+      {
+        "name": "pop-in",
+        "value": ".22s",
+        "purpose": "Colour popover rises 4px from 0.98 scale."
+      },
+      {
+        "name": "icon-pop",
+        "value": ".5s",
+        "purpose": "Selected tile icon pops once (1.3, -8deg)."
+      },
+      {
+        "name": "fieldset-dim",
+        "value": "opacity .25s to .45",
+        "purpose": "Motion fields dim in place for solid colour."
       }
     ],
     "breakpoints": [
@@ -357,6 +396,35 @@
       {
         "name": "mobile",
         "value": "760px"
+      }
+    ],
+    "gradients": [
+      {
+        "name": "picker-area",
+        "value": "linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent) over hsl(h 100% 50%)",
+        "purpose": "Saturation and brightness area of the colour popover."
+      },
+      {
+        "name": "hue-track",
+        "value": "linear-gradient(to right, red, yellow, lime, cyan, blue, magenta, red)",
+        "purpose": "Hue slider track."
+      },
+      {
+        "name": "custom-swatch",
+        "value": "conic-gradient(red, yellow, lime, cyan, blue, magenta, red)",
+        "purpose": "Custom colour swatch on Per-key RGB."
+      }
+    ],
+    "layout": [
+      {
+        "name": "board-fit",
+        "value": "max-width: max(520px, calc((100vh - 452px) * 2.436))",
+        "purpose": "Board shrinks with viewport height on fit pages; 2.436 is the 492:202 aspect."
+      },
+      {
+        "name": "page-fill",
+        "value": "min-height: calc(100vh - 32px); grid-template-rows: auto minmax(0, 1fr)",
+        "purpose": "Lighting and Profiles: board row plus a work row filling the rest; off below 1180px."
       }
     ]
   },
@@ -370,28 +438,12 @@
       "css": ".ds-btn { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid transparent; font: 600 14px/1.45 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; cursor: pointer; transition: background .2s, border-color .2s, transform .15s cubic-bezier(.16,1,.3,1), box-shadow .25s cubic-bezier(.16,1,.3,1); } .ds-btn svg { width: 16px; height: 16px; } .ds-btn-primary { background: #e3b419; color: #18191b; border-color: #c99d0f; box-shadow: inset 0 -2px 0 rgba(0,0,0,.12); } .ds-btn-primary:hover { background: #ecc232; box-shadow: inset 0 -2px 0 rgba(0,0,0,.12), 0 6px 16px -8px rgba(201,157,15,.8); } .ds-btn-primary:active { transform: scale(.98); } .ds-btn:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; } .ds-kbd { font: 600 11px 'Cascadia Mono',Consolas,monospace; padding: 1px 6px; border-radius: 5px; background: rgba(0,0,0,.1); }"
     },
     {
-      "name": "Outline Button",
-      "kind": "button",
-      "refersTo": "button-outline",
-      "description": "Secondary action beside the primary.",
-      "html": "<button class=\"ds-btn-outline\">Explore without a keyboard</button>",
-      "css": ".ds-btn-outline { display: inline-flex; align-items: center; height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid #d1d1cc; background: #fff; color: #18191b; font: 600 14px/1.45 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; cursor: pointer; transition: border-color .2s, transform .15s cubic-bezier(.16,1,.3,1); } .ds-btn-outline:hover { border-color: #6b6e73; } .ds-btn-outline:active { transform: scale(.98); } .ds-btn-outline:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; }"
-    },
-    {
       "name": "Danger Button",
       "kind": "button",
       "refersTo": "button-danger",
       "description": "Clear, delete and reset actions; red wash, never a full red fill.",
       "html": "<button class=\"ds-btn-danger\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M3 6h18\"/><path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\"/><path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\"/></svg>Clear log</button>",
       "css": ".ds-btn-danger { display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid #f0c3c0; background: #fbe9e8; color: #8f1f1b; font: 600 14px/1.45 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; cursor: pointer; transition: background .2s, transform .15s cubic-bezier(.16,1,.3,1); } .ds-btn-danger svg { width: 16px; height: 16px; } .ds-btn-danger:hover { background: #f8dcda; } .ds-btn-danger:active { transform: scale(.98); } .ds-btn-danger:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; }"
-    },
-    {
-      "name": "Text Input",
-      "kind": "input",
-      "refersTo": "input",
-      "description": "Hex and numeric fields; tabular numerals, mustard focus halo.",
-      "html": "<input class=\"ds-input\" value=\"#FF0000\" aria-label=\"Hex colour\">",
-      "css": ".ds-input { height: 36px; padding: 0 10px; border-radius: 9px; border: 1px solid #d1d1cc; background: #fff; color: #18191b; font: 600 14px 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; font-variant-numeric: tabular-nums; text-transform: uppercase; transition: border-color .2s, box-shadow .2s; } .ds-input:focus, .ds-input:focus-visible { outline: none; border-color: #18191b; box-shadow: 0 0 0 3px #f8e9b4; }"
     },
     {
       "name": "Sidebar Nav",
@@ -402,20 +454,28 @@
       "css": ".ds-nav { display: grid; gap: 2px; width: 220px; } .ds-nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 9px; border: 0; background: none; color: #5b5e63; font: 500 14px 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; text-align: left; cursor: pointer; transition: background .2s, color .2s; } .ds-nav-item svg { width: 16px; height: 16px; } .ds-nav-item:hover { background: #f7f7f5; color: #18191b; } .ds-nav-item:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; } .ds-nav-on { background: #f8e9b4; color: #18191b; font-weight: 600; } .ds-nav-on svg { color: #7a5b00; }"
     },
     {
-      "name": "Status Pill",
+      "name": "Pills and Profile Chips",
       "kind": "chip",
       "refersTo": "pill",
-      "description": "Non-interactive status above the board.",
-      "html": "<span class=\"ds-pill ds-pill-ok\">Connected</span> <span class=\"ds-pill ds-pill-demo\">Demo mode · nothing is sent</span> <span class=\"ds-pill\">Solid colour · #FF0000</span>",
-      "css": ".ds-pill { display: inline-block; font: 600 12px 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; padding: 3px 10px; border-radius: 999px; background: #fff; border: 1px solid #e2e2de; color: #5b5e63; } .ds-pill-demo { background: #f8e9b4; border-color: #ecd68a; color: #7a5b00; } .ds-pill-ok { background: #e4f4ea; border-color: #c4e6d1; color: #146b39; }"
+      "description": "Status pills above the board (not interactive) and the profile chip row under the effect tiles.",
+      "html": "<div class=\"ds-row\"><span class=\"ds-pill ds-pill-ok\">Connected</span> <span class=\"ds-pill ds-pill-demo\">Demo mode · nothing is sent</span> <span class=\"ds-pill\">Solid colour · #FF0000</span></div><div class=\"ds-chips\"><span class=\"ds-chips-label\">Profiles</span><button class=\"ds-chip\"><i style=\"background:#ff0000\"></i>Red desk</button><button class=\"ds-chip\"><i style=\"background:#3153ff\"></i>Night</button><button class=\"ds-chip ds-chip-add\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v6\"/><path d=\"M15 9h6\"/><path d=\"M18 6v6\"/></svg>Save current</button></div>",
+      "css": ".ds-row { display: flex; gap: 6px; margin-bottom: 14px; } .ds-pill { display: inline-block; font: 600 12px 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; padding: 3px 10px; border-radius: 999px; background: #fff; border: 1px solid #e2e2de; color: #5b5e63; } .ds-pill-demo { background: #f8e9b4; border-color: #ecd68a; color: #7a5b00; } .ds-pill-ok { background: #e4f4ea; border-color: #c4e6d1; color: #146b39; } .ds-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 12px; border-top: 1px solid #e2e2de; } .ds-chips-label { font: 600 12px 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; color: #5b5e63; margin-right: 4px; } .ds-chip { display: inline-flex; align-items: center; gap: 7px; height: 30px; padding: 0 12px 0 8px; border-radius: 999px; border: 1px solid #e2e2de; background: #f7f7f5; color: #18191b; font: 500 13px 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; cursor: pointer; transition: border-color .2s, background .2s, transform .15s cubic-bezier(.16,1,.3,1); } .ds-chip:hover { border-color: #d1d1cc; background: #fff; } .ds-chip:active { transform: scale(.97); } .ds-chip:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; } .ds-chip i { width: 14px; height: 14px; border-radius: 50%; box-shadow: inset 0 0 0 1px rgba(0,0,0,.15); } .ds-chip-add { padding-left: 10px; color: #5b5e63; border-style: dashed; background: none; } .ds-chip-add svg { width: 14px; height: 14px; }"
     },
     {
       "name": "Effect Tile",
       "kind": "custom",
       "refersTo": "tile",
-      "description": "Lighting mode picker: icon, name, mode number; animates on hover and selection.",
-      "html": "<div class=\"ds-tiles\"><button class=\"ds-tile ds-tile-on\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\"/><path d=\"M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\"/><path d=\"M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\"/></svg><span class=\"ds-tile-name\">Wave</span><span class=\"ds-tile-num\">Mode 1</span></button><button class=\"ds-tile\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9Z\"/></svg><span class=\"ds-tile-name\">Breath</span><span class=\"ds-tile-num\">Mode 2</span></button></div>",
-      "css": ".ds-tiles { display: grid; grid-template-columns: repeat(2, 124px); gap: 8px; } .ds-tile { display: grid; gap: 2px; justify-items: start; padding: 12px; border-radius: 12px; border: 1px solid #e2e2de; background: #f7f7f5; color: #18191b; font: 14px/1.45 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; text-align: left; cursor: pointer; transition: transform .25s cubic-bezier(.16,1,.3,1), border-color .2s, background .2s, box-shadow .25s cubic-bezier(.16,1,.3,1); } .ds-tile svg { width: 22px; height: 22px; margin-bottom: 8px; color: #5b5e63; transition: transform .45s cubic-bezier(.16,1,.3,1), color .2s; } .ds-tile:hover { transform: translateY(-2px); border-color: #d1d1cc; background: #fff; box-shadow: 0 1px 2px rgba(24,25,27,.06), 0 8px 24px -12px rgba(24,25,27,.18); } .ds-tile:hover svg { transform: scale(1.12) rotate(-6deg); color: #18191b; } .ds-tile:active { transform: translateY(0) scale(.98); } .ds-tile:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; } .ds-tile-name { font-weight: 600; } .ds-tile-num { font-size: 12px; color: #5b5e63; font-variant-numeric: tabular-nums; } .ds-tile-on { background: #f8e9b4; border-color: #d9b440; box-shadow: 0 0 0 1px #d9b440; } .ds-tile-on svg { color: #7a5b00; }"
+      "description": "Compact one-line lighting mode row: icon, name, two-digit mode number; Solid colour leads.",
+      "html": "<div class=\"ds-tiles\"><button class=\"ds-tile ds-tile-on\" role=\"radio\" aria-checked=\"true\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"4\"/><path d=\"M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M6.3 17.7l-1.4 1.4M19.1 4.9l-1.4 1.4\"/></svg><span class=\"ds-tile-name\">Solid colour</span><span class=\"ds-tile-num\">06</span></button><button class=\"ds-tile\" role=\"radio\" aria-checked=\"false\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M2 6c.6.5 1.2 1 2.5 1C7 7 7 5 9.5 5c2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\"/><path d=\"M2 12c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\"/><path d=\"M2 18c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1\"/></svg><span class=\"ds-tile-name\">Wave</span><span class=\"ds-tile-num\">01</span></button><button class=\"ds-tile\" role=\"radio\" aria-checked=\"false\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M17.5 19H9a7 7 0 1 1 6.7-9h1.8a4.5 4.5 0 1 1 0 9Z\"/></svg><span class=\"ds-tile-name\">Breath</span><span class=\"ds-tile-num\">02</span></button></div>",
+      "css": ".ds-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); grid-auto-rows: 40px; gap: 6px; width: 480px; } .ds-tile { display: grid; grid-template-columns: 18px 1fr auto; align-items: center; gap: 8px; padding: 0 10px; border-radius: 9px; border: 1px solid #e2e2de; background: #f7f7f5; color: #18191b; font: 13px/1.45 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; text-align: left; cursor: pointer; min-width: 0; transition: transform .2s cubic-bezier(.16,1,.3,1), border-color .2s, background .2s, box-shadow .2s cubic-bezier(.16,1,.3,1); } .ds-tile svg { width: 18px; height: 18px; color: #5b5e63; transition: transform .45s cubic-bezier(.16,1,.3,1), color .2s; } .ds-tile:hover { border-color: #d1d1cc; background: #fff; box-shadow: 0 2px 6px -3px rgba(24,25,27,.25); } .ds-tile:hover svg { transform: scale(1.15) rotate(-8deg); color: #18191b; } .ds-tile:active { transform: scale(.98); } .ds-tile:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; } .ds-tile-name { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .ds-tile-num { font: 11px 'Cascadia Mono',Consolas,monospace; color: #6b6e73; font-variant-numeric: tabular-nums; } .ds-tile-on { background: #f8e9b4; border-color: #d9b440; box-shadow: inset 0 0 0 1px #d9b440; } .ds-tile-on svg, .ds-tile-on .ds-tile-num { color: #7a5b00; }"
+    },
+    {
+      "name": "Colour Picker",
+      "kind": "input",
+      "refersTo": "picker-trigger",
+      "description": "Swatch trigger with inline preset dots; popover (opens upward) with SV area, hue slider, Hex/R/G/B fields and all presets.",
+      "html": "<div class=\"ds-picker\"><div class=\"ds-pop\" role=\"dialog\" aria-label=\"Choose colour\"><div class=\"ds-area\" style=\"background:hsl(0 100% 50%)\"><span class=\"ds-thumb\" role=\"slider\" tabindex=\"0\" aria-label=\"Saturation and brightness\" style=\"left:100%;top:0;background:#ff0000\"></span></div><input class=\"ds-hue\" type=\"range\" min=\"0\" max=\"359\" value=\"0\" aria-label=\"Hue\"><div class=\"ds-fields\"><label>Hex<input class=\"ds-in\" value=\"#FF0000\"></label><label>R<input class=\"ds-in\" value=\"255\"></label><label>G<input class=\"ds-in\" value=\"0\"></label><label>B<input class=\"ds-in\" value=\"0\"></label></div></div><button class=\"ds-trigger\" aria-expanded=\"true\"><i style=\"background:#ff0000\"></i><span class=\"ds-mono\">#FF0000</span><span class=\"ds-rgb\">255 0 0</span></button><div class=\"ds-presets\" role=\"radiogroup\" aria-label=\"Preset colours\"><button class=\"ds-dot\" role=\"radio\" aria-checked=\"true\" aria-label=\"#FF0000\" style=\"background:#ff0000\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"3\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M20 6 9 17l-5-5\"/></svg></button><button class=\"ds-dot\" role=\"radio\" aria-checked=\"false\" aria-label=\"#FF7200\" style=\"background:#ff7200\"></button><button class=\"ds-dot\" role=\"radio\" aria-checked=\"false\" aria-label=\"#FFF005\" style=\"background:#fff005\"></button><button class=\"ds-dot\" role=\"radio\" aria-checked=\"false\" aria-label=\"#00D70F\" style=\"background:#00d70f\"></button><button class=\"ds-dot\" role=\"radio\" aria-checked=\"false\" aria-label=\"#0099FF\" style=\"background:#0099ff\"></button><button class=\"ds-dot\" role=\"radio\" aria-checked=\"false\" aria-label=\"#3153FF\" style=\"background:#3153ff\"></button></div></div>",
+      "css": ".ds-picker { display: grid; gap: 8px; width: 288px; font: 13px 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; color: #18191b; } .ds-pop { display: grid; gap: 12px; padding: 12px; background: #fff; border: 1px solid #e2e2de; border-radius: 12px; box-shadow: 0 18px 40px -16px rgba(24,25,27,.45); } .ds-area { position: relative; height: 150px; border-radius: 8px; cursor: crosshair; } .ds-area::before { content: ''; position: absolute; inset: 0; border-radius: inherit; background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent); } .ds-thumb { position: absolute; width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.3), 0 2px 6px rgba(0,0,0,.35); } .ds-thumb:focus-visible { outline: 2px solid #18191b; outline-offset: 3px; } .ds-hue { -webkit-appearance: none; appearance: none; width: 100%; height: 12px; border-radius: 999px; background: linear-gradient(to right, red, yellow, lime, cyan, blue, magenta, red); cursor: pointer; } .ds-hue::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.3), 0 2px 5px rgba(0,0,0,.3); } .ds-fields { display: grid; grid-template-columns: 1.6fr repeat(3, 1fr); gap: 6px; } .ds-fields label { display: grid; gap: 3px; font-size: 11px; font-weight: 600; color: #5b5e63; } .ds-in { height: 32px; padding: 0 6px; width: 100%; box-sizing: border-box; border-radius: 9px; border: 1px solid #d1d1cc; font: 12px 'Cascadia Mono',Consolas,monospace; color: #18191b; } .ds-in:focus { outline: none; border-color: #18191b; box-shadow: 0 0 0 3px #f8e9b4; } .ds-trigger { display: grid; grid-template-columns: 28px auto 1fr; align-items: center; gap: 10px; height: 40px; padding: 0 10px 0 6px; border: 1px solid #d1d1cc; border-radius: 10px; background: #fff; color: #18191b; font: inherit; cursor: pointer; text-align: left; transition: border-color .2s, box-shadow .2s; } .ds-trigger:hover { border-color: #6b6e73; } .ds-trigger[aria-expanded='true'] { border-color: #18191b; box-shadow: 0 0 0 3px #f8e9b4; } .ds-trigger i { width: 28px; height: 28px; border-radius: 7px; box-shadow: inset 0 0 0 1px rgba(0,0,0,.14); } .ds-mono, .ds-rgb { font-family: 'Cascadia Mono',Consolas,monospace; } .ds-rgb { justify-self: end; font-size: 12px; color: #5b5e63; } .ds-presets { display: flex; justify-content: space-between; } .ds-dot { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; border: 0; color: #fff; cursor: pointer; box-shadow: inset 0 0 0 1px rgba(0,0,0,.14); transition: transform .2s cubic-bezier(.16,1,.3,1), box-shadow .2s; } .ds-dot:hover { transform: scale(1.15); } .ds-dot:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; } .ds-dot[aria-checked='true'] { box-shadow: inset 0 0 0 1px rgba(0,0,0,.14), 0 0 0 2px #fff, 0 0 0 4px #18191b; } .ds-dot svg { width: 13px; height: 13px; filter: drop-shadow(0 0 1px rgba(0,0,0,.6)); }"
     },
     {
       "name": "Packet Table",
@@ -429,9 +489,17 @@
       "name": "Dialog",
       "kind": "card",
       "refersTo": "dialog",
-      "description": "Native modal dialog: title row with close, scrolling body, Soft Ash action bar with one primary.",
-      "html": "<div class=\"ds-dialog\" role=\"dialog\" aria-label=\"Rename modes\"><div class=\"ds-dialog-head\"><h2>Rename modes</h2><button class=\"ds-icon-btn\" aria-label=\"Close\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></button></div><div class=\"ds-dialog-body\">Give each effect a name you will recognise.</div><div class=\"ds-dialog-actions\"><button class=\"ds-dbtn\">Cancel</button><button class=\"ds-dbtn ds-dbtn-primary\">Save names</button></div></div>",
-      "css": ".ds-dialog { width: 420px; border: 1px solid #e2e2de; border-radius: 16px; background: #fff; color: #18191b; overflow: hidden; box-shadow: 0 30px 60px -20px rgba(24,25,27,.45); font: 14px/1.45 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; } .ds-dialog-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 6px 20px; } .ds-dialog-head h2 { margin: 0; font-size: 15px; font-weight: 650; } .ds-dialog-body { padding: 6px 20px 16px; color: #5b5e63; } .ds-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid #e2e2de; background: #f7f7f5; } .ds-icon-btn { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid #d1d1cc; background: #fff; color: #18191b; cursor: pointer; transition: background .2s, transform .2s cubic-bezier(.16,1,.3,1); } .ds-icon-btn svg { width: 16px; height: 16px; } .ds-icon-btn:hover { background: #f8e9b4; } .ds-icon-btn:active { transform: scale(.94); } .ds-icon-btn:focus-visible, .ds-dbtn:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; } .ds-dbtn { height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid #d1d1cc; background: #fff; color: #18191b; font: 600 14px 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; cursor: pointer; } .ds-dbtn:hover { border-color: #6b6e73; } .ds-dbtn-primary { background: #e3b419; border-color: #c99d0f; box-shadow: inset 0 -2px 0 rgba(0,0,0,.12); } .ds-dbtn-primary:hover { background: #ecc232; border-color: #c99d0f; }"
+      "description": "Native modal dialog; shown as the destructive confirmation: outline keep option and a danger action, no mustard.",
+      "html": "<div class=\"ds-dialog\" role=\"dialog\" aria-label=\"Clear everything?\"><div class=\"ds-dialog-head\"><h2>Clear everything?</h2><button class=\"ds-icon-btn\" aria-label=\"Close\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></button></div><div class=\"ds-dialog-body\">This removes 3 profiles, your settings, mode names and tested modes from this browser. The keyboard itself keeps its settings. This can’t be undone.</div><div class=\"ds-dialog-actions\"><button class=\"ds-dbtn\">Keep my data</button><button class=\"ds-dbtn ds-dbtn-danger\">Clear all</button></div></div>",
+      "css": ".ds-dialog { width: 420px; border: 1px solid #e2e2de; border-radius: 16px; background: #fff; color: #18191b; overflow: hidden; box-shadow: 0 30px 60px -20px rgba(24,25,27,.45); font: 14px/1.45 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; } .ds-dialog-head { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 6px 20px; } .ds-dialog-head h2 { margin: 0; font-size: 15px; font-weight: 650; } .ds-dialog-body { padding: 6px 20px 16px; color: #5b5e63; } .ds-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 14px 20px; border-top: 1px solid #e2e2de; background: #f7f7f5; } .ds-icon-btn { display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; border: 1px solid #d1d1cc; background: #fff; color: #18191b; cursor: pointer; transition: background .2s, transform .2s cubic-bezier(.16,1,.3,1); } .ds-icon-btn svg { width: 16px; height: 16px; } .ds-icon-btn:hover { background: #f8e9b4; } .ds-icon-btn:active { transform: scale(.94); } .ds-icon-btn:focus-visible, .ds-dbtn:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; } .ds-dbtn { height: 38px; padding: 0 16px; border-radius: 10px; border: 1px solid #d1d1cc; background: #fff; color: #18191b; font: 600 14px 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; cursor: pointer; } .ds-dbtn:hover { border-color: #6b6e73; } .ds-dbtn-primary { background: #e3b419; border-color: #c99d0f; box-shadow: inset 0 -2px 0 rgba(0,0,0,.12); } .ds-dbtn-primary:hover { background: #ecc232; border-color: #c99d0f; } .ds-dbtn-danger { background: #fbe9e8; color: #8f1f1b; border-color: #f0c3c0; } .ds-dbtn-danger:hover { background: #f8dcda; border-color: #f0c3c0; }"
+    },
+    {
+      "name": "Toast",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Bottom-right white card: icon, bold title, detail line, close; mustard 5s countdown bar; errors take a red edge and persist.",
+      "html": "<div class=\"ds-toasts\"><div class=\"ds-toast ds-toast-ok\" role=\"status\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><circle cx=\"12\" cy=\"12\" r=\"10\"/><path d=\"m9 12 2 2 4-4\"/></svg><span class=\"ds-t-title\">Sent to keyboard</span><button class=\"ds-t-close\" aria-label=\"Dismiss\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></button><span class=\"ds-t-detail\">Solid colour · #FF0000 at brightness 4.</span><i class=\"ds-t-timer\"></i></div><div class=\"ds-toast ds-toast-err\" role=\"status\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg><span class=\"ds-t-title\">Couldn’t reach the keyboard</span><button class=\"ds-t-close\" aria-label=\"Dismiss\"><svg viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.9\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><path d=\"M18 6 6 18\"/><path d=\"m6 6 12 12\"/></svg></button><span class=\"ds-t-detail\">Unplug it, plug it back in, then press Connect.</span></div></div>",
+      "css": ".ds-toasts { display: grid; gap: 12px; } .ds-toast { position: relative; overflow: hidden; width: 380px; display: grid; grid-template-columns: 20px 1fr auto; gap: 2px 10px; align-items: start; padding: 12px 10px 14px 14px; border-radius: 12px; background: #fff; color: #18191b; border: 1px solid #e2e2de; box-shadow: 0 18px 40px -18px rgba(24,25,27,.5); font: 14px/1.45 'Segoe UI Variable Text','Segoe UI',system-ui,sans-serif; } .ds-toast > svg { width: 20px; height: 20px; grid-row: span 2; } .ds-toast-ok > svg { color: #1f8a4c; } .ds-toast-err { border-color: #f0c3c0; } .ds-toast-err > svg { color: #8f1f1b; } .ds-t-title { font-weight: 650; } .ds-t-detail { grid-column: 2; font-size: 13px; color: #5b5e63; } .ds-t-close { grid-row: 1; grid-column: 3; display: grid; padding: 2px; border: 0; border-radius: 6px; background: none; color: #6b6e73; cursor: pointer; } .ds-t-close svg { width: 16px; height: 16px; } .ds-t-close:hover { color: #18191b; background: #f7f7f5; } .ds-t-close:focus-visible { outline: 2px solid #18191b; outline-offset: 2px; } .ds-t-timer { position: absolute; left: 0; bottom: 0; height: 3px; width: 100%; background: #e3b419; transform-origin: left; animation: ds-timer 5s linear infinite; } @keyframes ds-timer { to { transform: scaleX(0); } }"
     },
     {
       "name": "Keycaps",
@@ -443,19 +511,20 @@
   ],
   "narrative": {
     "northStar": "The Board Is the Interface",
-    "overview": "The AK820 itself carries the screen. Its own colorway (black case, light-ash alphas, dark-ash modifiers, mustard Esc, Enter and Space) is drawn large and central, and the rest of the app is a quiet light-ash workroom around it: white panels on an ash ground, ink type, one stroke of Lucide line icons. The interface borrows its only accent from the yellow keycaps, and spends it where the keycaps would: on what is selected and on the one action that sends changes to the keyboard.\n\nDensity is that of a settings tool, not a dashboard: a 248px sidebar, a stage with the board and its status row, then effect tiles and a controls panel. The developer surfaces (capture log, wire-format inspector, settings, calibration and mode-name dialogs) speak the same language at a denser grain: soft-ash tables with sticky headers and mono cells, list rows, setting rows, and native modal dialogs. Depth is soft and ambient; the only dramatic shadow belongs to the physical board. Motion is purposeful: the board's legends and underglow take the current lighting colour and cross-fade when it changes, and the board lights up once when you connect or explore. The system refuses the dark gamer dashboard and the wall of flat tabs.",
+    "overview": "The AK820 itself carries the screen. Its own colorway (black case, light-ash alphas, dark-ash modifiers, mustard Esc, Enter and Space) is drawn large and central, and the rest of the app is a quiet light-ash workroom around it: white panels on an ash ground, ink type, one stroke of Lucide line icons. The interface borrows its only accent from the yellow keycaps, and spends it where the keycaps would: on what is selected and on the one action that sends changes to the keyboard.\n\nDensity is that of a settings tool, not a dashboard, and the main pages fit one window: a 248px sidebar, a stage with the board and its status row, then compact one-line effect tiles with a row of profile chips beneath them, beside a 320px controls panel. Nothing on Lighting or Profiles scrolls the page at 1440 by 900 or 1366 by 768; the board shrinks with the viewport height instead. The developer surfaces (capture log, wire-format inspector, settings, calibration and mode-name dialogs) speak the same language at a denser grain: soft-ash tables with sticky headers and mono cells, list rows, setting rows, and native modal dialogs. Depth is soft and ambient; the only dramatic shadow belongs to the physical board. Motion is purposeful: the board's legends and underglow take the current lighting colour and cross-fade when it changes, and the board lights up once when you connect or explore. The system refuses the dark gamer dashboard and the wall of flat tabs.",
     "keyCharacteristics": [
       "The rendered keyboard is the hero on every lighting and key surface.",
       "Ash neutrals, ink text, mustard as the single accent; green and red appear only as status washes.",
-      "System UI face; mono only for hex, packets, capture data and shortcuts.",
+      "System UI face; mono only for hex, packets, capture data, mode numbers and shortcuts.",
       "Lucide line icons at one stroke weight (1.9).",
       "Soft, keycap-like radii stepping from 4px chips to 16px panels; soft ambient shadows.",
-      "Explicit Apply: changes are staged, the status row says so, mustard sends them."
+      "Explicit Apply: changes are staged, the status row says so, mustard sends them.",
+      "One window: Lighting and Profiles fit the viewport without page scroll."
     ],
     "rules": [
       {
         "name": "The Keycap Rule",
-        "body": "Mustard is used the way the yellow caps are: on the selected thing and the one primary action. A screen or dialog carries one mustard-filled button.",
+        "body": "Mustard is used the way the yellow caps are: on the selected thing and the one primary action. A screen or dialog carries one mustard-filled button; a destructive confirmation carries none.",
         "section": "colors"
       },
       {
@@ -465,17 +534,22 @@
       },
       {
         "name": "The Wash Rule",
-        "body": "Status colour never fills at full strength in chrome: green and red appear as a pale wash with a darker edge and dark ink; full-strength green is reserved for dots and direction markers.",
+        "body": "Status colour never fills at full strength in chrome: green and red appear as a pale wash with a darker edge and dark ink; full-strength green is reserved for dots, icons and direction markers.",
         "section": "colors"
       },
       {
         "name": "The Native Face Rule",
-        "body": "No display face. Hierarchy comes from weight (400 / 600 / 650) and size, not from a second family.",
+        "body": "No display face. Hierarchy comes from weight (400 / 500 / 600 / 650 / 700) and size, not from a second family.",
         "section": "typography"
       },
       {
+        "name": "The One Window Rule",
+        "body": "On desktop sizes (1366 by 768 and up) Lighting and Profiles never scroll the page. When space runs short, the board shrinks and lists scroll inside their panels.",
+        "section": "layout"
+      },
+      {
         "name": "The One Object Rule",
-        "body": "Only the keyboard casts a deep shadow on the page. UI surfaces stay at the panel shadow or flat; a modal dialog lifts above a dimmed backdrop, never alongside the board's shadow on the same plane.",
+        "body": "Only the keyboard casts a deep shadow on the page. UI surfaces stay at the panel shadow or flat; floating layers and modal dialogs lift above the page, never alongside the board's shadow on the same plane.",
         "section": "elevation"
       }
     ],
@@ -483,17 +557,22 @@
       "Do keep the keyboard render visible and central on lighting and key surfaces.",
       "Do spend mustard only on selection and the single primary action (The Keycap Rule).",
       "Do stage changes and state them (\"Not sent yet\") until the user presses Apply; keep Apply in the status row above the board.",
-      "Do use Lucide line icons at the shared 1.9 stroke, 16px in chrome, 22px on tiles, 12 to 14px inside pills, markers and status cells.",
+      "Do fit Lighting and Profiles in one window; shrink the board and scroll inside panels before the page ever scrolls (The One Window Rule).",
+      "Do use Lucide line icons at the shared 1.9 stroke, 16px in chrome, 18px on tiles, 20px in toasts, 12 to 14px inside pills, chips, markers and status cells.",
       "Do show status as a pale wash with dark ink (The Wash Rule).",
-      "Do use the native dialog for modal tasks, with one primary action in its action bar.",
+      "Do keep inapplicable controls in place, dimmed in a disabled fieldset with a reason, rather than hiding them.",
+      "Do use the native dialog for modal tasks and confirmations, with one primary action in its action bar.",
+      "Do write toast messages as a short title and a detail line.",
       "Do ease every state change with cubic-bezier(.16, 1, .3, 1) and honour reduced-motion.",
-      "Do use mono only for hex, packets and shortcuts."
+      "Do use mono only for hex, packets, mode numbers and shortcuts."
     ],
     "donts": [
       "Don't turn the app into a dark gamer dashboard or a wall of flat tabs.",
       "Don't add a second accent hue; status colours report state and are never decoration.",
       "Don't give UI surfaces the board's deep shadow or Case Black fill.",
-      "Don't apply lighting changes live; Apply is explicit."
+      "Don't apply lighting changes live; Apply is explicit.",
+      "Don't use window.confirm or alert; confirm in the app's own dialog.",
+      "Don't use spectrum gradients outside the colour instruments."
     ]
   }
 }
