@@ -15,7 +15,7 @@ The vendor app is Windows-only. This driver talks to the keyboard directly over 
 - **Keyboard options:** Windows-key lock, WASD ↔ arrow swap, and USB report rate (1000, 500, 250 or 125 Hz).
 - **Profiles:** save, load, export and import lighting setups. Profiles are kept in your browser.
 - **Demo mode:** the whole UI works without a keyboard. Packets are recorded instead of sent. Open `/?demo` to jump straight in.
-- **Developer tools:** a capture log, a wire-format hex inspector and protocol settings. These sit under *Advanced* in the sidebar.
+- **Key press and sound:** the on-screen board presses along as you type, with an optional switch sound.
 
 Settings are written to the keyboard and survive unplugging.
 

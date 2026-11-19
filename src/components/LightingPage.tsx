@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { Shuffle, FlaskConical, ArrowRight, ArrowLeft } from 'lucide-react'
+import { Shuffle, ArrowRight, ArrowLeft } from 'lucide-react'
 import type { LightingState } from '../lib/types'
 import { DEFAULT_MODE_ORDER, MAX_BRIGHTNESS, MAX_SPEED, MODE_STATIC, clampDirection } from '../lib/protocol'
 import { modeIcon } from './modeIcons'
@@ -9,13 +9,12 @@ interface Props {
   lighting: LightingState
   modes: string[]
   onChange: (next: LightingState) => void
-  onTestMode: () => void
   footer?: ReactNode
 }
 
 const range = (n: number) => Array.from({ length: n + 1 }, (_, i) => i)
 
-export function LightingPage({ lighting, modes, onChange, onTestMode, footer }: Props) {
+export function LightingPage({ lighting, modes, onChange, footer }: Props) {
   const set = (patch: Partial<LightingState>) => onChange({ ...lighting, ...patch })
   const isStatic = lighting.mode === MODE_STATIC
   // Solid colour (mode 06) leads; the rest in firmware order.
@@ -24,7 +23,7 @@ export function LightingPage({ lighting, modes, onChange, onTestMode, footer }: 
   return (
     <div className="lighting">
       <section className="panel lighting__modes" aria-labelledby="modes-h">
-        <div className="panel__head"><h2 id="modes-h">Effect</h2><span className="muted">{tiles.length} modes</span></div>
+        <div className="panel__head"><h2 id="modes-h">Effect</h2><span className="muted">{tiles.length} effects</span></div>
         <div className="tiles" role="radiogroup" aria-label="Effect">
           {tiles.map(m => {
             const Icon = modeIcon(m)
@@ -34,7 +33,6 @@ export function LightingPage({ lighting, modes, onChange, onTestMode, footer }: 
                 onClick={() => set(m === MODE_STATIC ? { mode: m, rainbow: false } : { mode: m })}>
                 <Icon className="tile__icon" aria-hidden />
                 <span className="tile__name">{m === MODE_STATIC ? 'Solid colour' : modes[m]}</span>
-                <span className="tile__num">{String(m).padStart(2, '0')}</span>
               </button>
             )
           })}
@@ -59,10 +57,10 @@ export function LightingPage({ lighting, modes, onChange, onTestMode, footer }: 
 
         <fieldset className="motion-fields" disabled={isStatic}>
           <div className="field">
-            <span className="field__label" title={isStatic ? 'Not used by solid colour' : '0 is fastest'}>Speed <em>{isStatic ? 'not used by solid colour' : '0 is fastest'}</em></span>
-            <div className="seg" role="radiogroup" aria-label="Speed">
-              {range(MAX_SPEED).map(v => (
-                <button key={v} role="radio" aria-checked={lighting.speed === v} onClick={() => set({ speed: v })}>{v}</button>
+            <span className="field__label" title={isStatic ? 'Not used by solid colour' : '1 is slowest, 5 is fastest'}>Speed</span>
+            <div className="seg" role="radiogroup" aria-label="Speed, 1 slowest to 5 fastest">
+              {range(MAX_SPEED).map(n => MAX_SPEED - n).map(v => (
+                <button key={v} role="radio" aria-checked={lighting.speed === v} onClick={() => set({ speed: v })}>{MAX_SPEED - v + 1}</button>
               ))}
             </div>
           </div>
@@ -79,10 +77,6 @@ export function LightingPage({ lighting, modes, onChange, onTestMode, footer }: 
             </label>
           </div>
         </fieldset>
-
-        <button className="btn btn--ghost btn--sm lighting__test" onClick={onTestMode}>
-          <FlaskConical aria-hidden /> Test &amp; approve this mode
-        </button>
       </section>
     </div>
   )

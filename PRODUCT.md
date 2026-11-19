@@ -29,7 +29,7 @@ Runs entirely in the browser over WebHID: no download, no admin rights, works wh
 - Tabs today: Solid Color (incl. per-key paint), Effects, Keys (keyboard options, remap, macro), Profiles, Capture, Settings.
 - One macro slot (typed text, a–z / 0–9 / space, up to 20 characters).
 - Remap targets are standard keys only (no media/mouse/Fn yet).
-- Developer tools stay but move out of the way: Capture log, wire-format hex inspector, Report ID / protocol-family settings, calibration test flow.
+- Developer tools (capture log, hex inspector, protocol overrides, mode test-and-approve, mode renaming) were removed for release (user decision 2026-11-19); protocol work happens in scripts/check-protocol.ts.
 - Two hardware families exist under the AK820 name; the EVision (`0x320F`/`0x505B`) one is the verified target, Sonix (AK820 Pro) is best-effort.
 
 ## Brand Commitments

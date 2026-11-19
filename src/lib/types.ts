@@ -52,7 +52,7 @@ export interface StatusMessage {
   type: '' | 'success' | 'error' | 'info'
 }
 
-export type TabId = 'lighting' | 'perkey' | 'keys' | 'profiles' | 'capture' | 'settings'
+export type TabId = 'lighting' | 'perkey' | 'keys' | 'profiles' | 'settings'
 
 export interface SentPacket {
   reportId: number
@@ -79,38 +79,3 @@ export interface PacketLogEntry {
   timestamp: number
 }
 
-// =====================================================================
-// Mode calibration
-//
-// Empirical per-mode verification. When the user clicks "Test & Approve"
-// the app applies the current mode+color to the keyboard, snapshots the
-// exact packets that went on the wire, then asks the user two questions:
-//   1. Did the mode take effect at all?        (works: boolean)
-//   2. Can you change the color in this mode? (colorWorks: boolean)
-// The answer + the captured packets + timestamp are persisted as a
-// CalibrationResult. The collection of all results forms the "stable modes"
-// table — a known-good mapping of which firmware modes this specific keyboard
-// actually supports and which honor the picked RGB.
-// =====================================================================
-export type TriState = 'yes' | 'no' | 'unknown'
-
-export interface PacketSnapshot {
-  dir: PacketDirection
-  transport: PacketTransport
-  reportId: number
-  hex: string
-  bytes: number[]
-  timestamp: number
-}
-
-export interface CalibrationResult {
-  mode: number
-  modeName: string
-  works: TriState
-  colorWorks: TriState
-  notes: string
-  testedAt: number
-  family: ProtocolFamilyResolved
-  lighting: LightingState
-  packets: PacketSnapshot[]
-}

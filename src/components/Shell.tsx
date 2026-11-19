@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react'
 import {
-  Lightbulb, Paintbrush, Keyboard, Layers, Activity, Settings, Cable, MousePointerClick,
+  Lightbulb, Paintbrush, Keyboard, Layers, Settings, Cable, MousePointerClick,
   Plug, Unplug, CircleCheck, CircleAlert, Info, ChevronDown, X, type LucideIcon,
 } from 'lucide-react'
 import type { DeviceInfo, Settings as AppSettings, StatusMessage, TabId } from '../lib/types'
 import { BoardRender } from './BoardRender'
-
-const hex4 = (n: number) => n.toString(16).toUpperCase().padStart(4, '0')
 
 const NAV: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: 'lighting', label: 'Lighting', icon: Lightbulb },
@@ -14,10 +12,7 @@ const NAV: { id: TabId; label: string; icon: LucideIcon }[] = [
   { id: 'keys', label: 'Keys & macro', icon: Keyboard },
   { id: 'profiles', label: 'Profiles', icon: Layers },
 ]
-const ADVANCED: { id: TabId; label: string; icon: LucideIcon }[] = [
-  { id: 'capture', label: 'Capture log', icon: Activity },
-  { id: 'settings', label: 'Settings', icon: Settings },
-]
+const SETTINGS = { id: 'settings' as TabId, label: 'Settings', icon: Settings }
 
 interface SidebarProps {
   active: TabId | null
@@ -51,7 +46,7 @@ export function Sidebar({ active, onNavigate, info, isConnected, exploring, webH
         <img src="/wired-keyboard.png" alt="" className="device__img" />
         <div className="device__text">
           <strong>{info?.productName || 'AJAZZ AK820'}</strong>
-          <span><i className="dot" aria-hidden />{isConnected ? `Connected · ${hex4(info!.vendorId)}:${hex4(info!.productId)}` : exploring ? 'Demo mode' : 'Not connected'}</span>
+          <span><i className="dot" aria-hidden />{isConnected ? 'Connected' : exploring ? 'Demo mode' : 'Not connected'}</span>
         </div>
         {isConnected
           ? <button className="icon-btn" onClick={onDisconnect} aria-label="Disconnect" title="Disconnect"><Unplug aria-hidden /></button>
@@ -59,8 +54,8 @@ export function Sidebar({ active, onNavigate, info, isConnected, exploring, webH
       </div>
       <nav className="nav" aria-label="Sections">
         {NAV.map(item)}
-        <span className="nav__group">Advanced</span>
-        {ADVANCED.map(item)}
+        <span className="nav__sep" aria-hidden />
+        {item(SETTINGS)}
       </nav>
       <p className="sidebar__foot">Not affiliated with AJAZZ</p>
     </aside>
@@ -72,10 +67,9 @@ interface ConnectProps {
   settings: AppSettings
   onConnect: () => void
   onExplore: () => void
-  onListGranted: () => void
 }
 
-export function ConnectScreen({ webHIDSupported, settings, onConnect, onExplore, onListGranted }: ConnectProps) {
+export function ConnectScreen({ webHIDSupported, settings, onConnect, onExplore }: ConnectProps) {
   return (
     <div className="connect">
       <BoardRender ariaLabel="AK820, not connected" dim />
@@ -94,10 +88,11 @@ export function ConnectScreen({ webHIDSupported, settings, onConnect, onExplore,
       <details className="trouble">
         <summary>Not in the list? <ChevronDown aria-hidden /></summary>
         <ul>
-          <li>Use the USB-C cable and the wired position of the switch.</li>
-          <li>“Show all HID devices” is {settings.showAllDevices ? 'on' : 'off'} in Settings. {settings.showAllDevices ? 'Every device is listed.' : `Only VID 0x${hex4(settings.vid)}${settings.pid ? ` / PID 0x${hex4(settings.pid)}` : ''} is listed; turn it on to see everything.`}</li>
-          <li>Connected before? <button className="link" onClick={onListGranted}>Show devices this browser remembers</button>.</li>
-          <li>Find the real USB IDs in Device Manager → Keyboards → Properties → Details → Hardware IDs (Windows) or with <code>lsusb</code> (Linux), then set them in Settings.</li>
+          <li>Use the USB-C cable and the wired position of the switch, or try another USB port.</li>
+          <li>{settings.showAllDevices
+            ? 'Every USB device is listed. The AK820 may show up under its chip name rather than “AK820”.'
+            : 'Turn on “Show all HID devices” in Settings to list every USB device.'}</li>
+          <li>On Linux, your user may need a udev rule to reach the keyboard.</li>
         </ul>
       </details>
     </div>

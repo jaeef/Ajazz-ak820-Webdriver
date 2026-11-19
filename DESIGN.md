@@ -271,7 +271,7 @@ components:
 
 The AK820 itself carries the screen. Its own colorway (black case, light-ash alphas, dark-ash modifiers, mustard Esc, Enter and Space) is drawn large and central, and the rest of the app is a quiet light-ash workroom around it: white panels on an ash ground, ink type, one stroke of Lucide line icons. The interface borrows its only accent from the yellow keycaps, and spends it where the keycaps would: on what is selected and on the one action that sends changes to the keyboard.
 
-Density is that of a settings tool, not a dashboard, and the main pages fit one window: a 248px sidebar, a stage with the board and its status row, then compact one-line effect tiles with a row of profile chips beneath them, beside a 320px controls panel. Nothing on Lighting or Profiles scrolls the page at 1440 by 900 or 1366 by 768; the board shrinks with the viewport height instead. The developer surfaces (capture log, wire-format inspector, settings, calibration and mode-name dialogs) speak the same language at a denser grain: soft-ash tables with sticky headers and mono cells, list rows, setting rows, and native modal dialogs. Depth is soft and ambient; the only dramatic shadow belongs to the physical board. Motion is purposeful: the board's legends and underglow take the current lighting colour and cross-fade when it changes, and the board lights up once when you connect or explore. The system refuses the dark gamer dashboard and the wall of flat tabs.
+Density is that of a settings tool, not a dashboard, and the main pages fit one window: a 248px sidebar, a stage with the board and its status row, then compact one-line effect tiles with a row of profile chips beneath them, beside a 320px controls panel. Nothing on Lighting or Profiles scrolls the page at 1440 by 900 or 1366 by 768; the board shrinks with the viewport height instead. Settings and dialogs speak the same language at a denser grain: setting rows and native modal dialogs. Depth is soft and ambient; the only dramatic shadow belongs to the physical board. Motion is purposeful: the board's legends and underglow take the current lighting colour and cross-fade when it changes, and the board lights up once when you connect or explore. The system refuses the dark gamer dashboard and the wall of flat tabs.
 
 **Key Characteristics:**
 - The rendered keyboard is the hero on every lighting and key surface.
@@ -429,7 +429,7 @@ A swatch trigger with inline presets, and a popover for exact colour.
 ### Navigation
 - **Style:** sidebar of 14px / 500 items with a 16px Lucide icon, 9px radius, Graphite text.
 - **States:** hover Soft Ash; active Mustard Wash, Ink text at 600, Mustard Ink icon; disabled 45% opacity.
-- **Groups:** an "Advanced" group label separates developer tools.
+- **Groups:** a hairline separates Settings from the task pages.
 - **Device card:** product photo, name, status dot (green halo when connected) and a connect / disconnect icon button.
 - **Mobile:** collapses to a horizontal scrolling row under the device card.
 
