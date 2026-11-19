@@ -1,0 +1,316 @@
+{
+  "generated": "2026-11-18",
+  "purpose": "Structured findings and artifact manifest for the fresh reverse-engineering pass on the AJAZZ AK820 vendor driver.",
+  "targets": {
+    "installer": {
+      "path": "E:\\Ajazz Web driver\\AJAZZ AK820 ╙╨╧▀RGB Keyboard.exe",
+      "sha256": "ab398b4abf7e231c3cf4bdd055d0f876d01d4c8045b7bc00e1ab4cca4b97e548",
+      "bytes": 44508432,
+      "format": "pe32",
+      "kind": "nsis-installer",
+      "archive": {
+        "detected_by": "7-Zip 7za.exe",
+        "method": "LZMA2:24 BCJ",
+        "solid": true,
+        "blocks": 6,
+        "offset": 731555,
+        "physical_size": 42630881,
+        "tail_size": 1145996
+      }
+    },
+    "driver": {
+      "path": "E:\\Tools\\ajazz-rea\\target.exe",
+      "original_member_name": "AJAZZ AK820 有线RGB Keyboard.exe",
+      "sha256": "93316d45e62776bf1099c8c57ecb326fd8eadbde4fefa9a13ad491fc203e3b5b",
+      "bytes": 3678792,
+      "format": "pe32",
+      "architecture": "x86",
+      "image_base": "0x400000",
+      "imports": 1118,
+      "imported_dlls": 21,
+      "key_imports": ["HID.DLL::HidD_SetOutputReport", "HID.DLL::HidD_GetAttributes", "SETUPAPI.dll::SetupDiGetClassDevsW", "WINHTTP.dll (16 imports)"],
+      "pdb_path_string": "E:\\xk\\...\\Output\\NeoUsb.pdb"
+    }
+  },
+  "toolchain": {
+    "rea": "6.9.0",
+    "ghidra": "12.2",
+    "ghidra_path": "E:\\Tools\\ghidra_12.2_PUBLIC",
+    "jdk": "Temurin 25.0.5 LTS",
+    "jdk_path": "C:\\Program Files\\Eclipse Adoptium\\jdk-25.0.5.8-hotspot",
+    "ghidra_project": "E:\\Tools\\ghidra-dist\\project\\ak820",
+    "rea_snapshot": "E:\\Tools\\ghidra-dist\\ak820-main.reasnap",
+    "note": "Current REA MCP process predates GHIDRA_INSTALL_DIR; CLI used with REA_GHIDRA_STARTUP_TIMEOUT_MS=900000."
+  },
+  "evidence_ids": [
+    "ev_8ba717a4a2f1b4eff4610e491406657b0355eb3e8332dae184ff33cc0499ec3b",
+    "ev_108f836a0a76ad4768e1ff3d1048f9bd6dc1975c4d335892d431521fb5d66a48",
+    "ev_c29f98e8781c44e202f7393a739cd928469733272368f7efb72153be0007ea36",
+    "ev_0037a67e5ac0adeeea4ed8fd68835d0f845b329b553a5855676e0b4447cf629c",
+    "ev_77fe7ab11f9282a864b78b794e3e6674f0b6f79cec9d824508f788e3d4fd2a05",
+    "ev_eb9ed46c75e86098d626af2e025a623a590a85fe68783b36de459f0a146ff35f",
+    "ev_74b4f8c45c375a47e5ec8f895753f712d61575f4e2897865058d36738afa400c"
+  ],
+  "analysis": {
+    "procedures": 17511,
+    "strings": 6857,
+    "sections": {
+      ".text": ["0x401000", "0x639000"],
+      ".rdata": ["0x639000", "0x6c4000"],
+      ".data": ["0x6c4000", "0x6da000"]
+    }
+  },
+  "hid_send_routine": {
+    "name": "FUN_00486f50",
+    "start": "0x486f50",
+    "end": "0x4876ea",
+    "bytes": 1947,
+    "hid_output_report_calls": 12,
+    "report_length": 17,
+    "command_markers": ["0xaa22", "0xad22", "0xaa44", "0xad44", "0xab22", "0xae22", "0xab44", "0xae44", "0xac22", "0xaf22", "0xac44", "0xaf44"],
+    "data_copy_offset": "0x0d",
+    "data_copy_length": 7,
+    "clamp": "0xf7",
+    "callees": ["HID.DLL::HidD_SetOutputReport", "FUN_00417fc0", "FUN_00449e80", "FUN_004839d0", "FUN_004b46c0", "__security_check_cookie"],
+    "unresolved_call": "0x486ff0"
+  },
+  "pointer_table": {
+    "region": ["0x6949dc", "0x694aa4"],
+    "entry": "0x694a00",
+    "value": "0x00486f50",
+    "raw_file_offset": "0x293c00",
+    "meta_ptr_after_table": {"address": "0x694aa8", "value": "0x6a06b4"},
+    "inferred_slot_index": 9,
+    "confidence": "inferred-from-dump-boundary"
+  },
+  "capture": {
+    "path": "E:\\Ajazz Web driver\\ak820-capture-1784532299305.json",
+    "records": 500,
+    "report_id_4_out": 139,
+    "report_id_4_in": 139,
+    "report_id_3_in": 222,
+    "command_shaped_out": 46,
+    "command_shaped_length": 63,
+    "echoed_exactly": 46,
+    "fixed_bytes_2_to_7": "06 15 00 00 00 03",
+    "notes": "Bytes 0-1 trend upward over time; bytes 8-15 vary by command. 17-byte HID reports from the binary must not be conflated with these 63-byte records."
+  },
+  "data_files": {
+    "summary_output": "E:\\Tools\\ghidra-dist\\data-files-summary.txt",
+    "lighting_modes": {
+      "source": "DefaultData/default_light.json",
+      "entries": 59,
+      "value_range": [-1, 30],
+      "note": "Values 6 and 21 coincide with capture envelope bytes 0x06/0x15; likely coincidental."
+    },
+    "function_type_ids": {
+      "source": "Skin/XML/CustomControlXML/KeySetControl.xml",
+      "values": {
+        "0": "default",
+        "1": "mouse_base",
+        "2": "mouse_swing",
+        "3": "mouse_wheel",
+        "4": "dpi",
+        "5": "fire_key",
+        "6": "standard_keyboard",
+        "7": "multimedia",
+        "8": "system",
+        "9": "macro",
+        "10": "cursor",
+        "11": "combo_office"
+      }
+    },
+    "key_list": {
+      "source": "DefaultData/Keyboard.json",
+      "entries": 126,
+      "assignment_high16_groups": {"0x20": 118, "0xA0": 3, "0xD0": 5},
+      "distinct_low16": 114,
+      "interpretation": "Assignment = category<<16 | usage; categories observed 0x20 keyboard, 0xA0 mouse, 0xD0 macro."
+    },
+    "device": {"vid": "0x0C45", "pid": "0x1007", "chip": "VS11K34A"},
+    "cross_check": "No lighting value or function-type ID directly equals command markers 0xAA..0xAF, 0x22 or 0x44."
+  },
+  "runtime_attempt": {
+    "approved_by_user": true,
+    "method": "proxy HookDLL.dll patching HidD_SetOutputReport IAT at RVA 0x239940",
+    "hook_sources": ["E:\\Tools\\ghidra-dist\\hook.c", "E:\\Tools\\ghidra-dist\\hook.def"],
+    "log": "E:\\Tools\\ghidra-dist\\hid-hook.log",
+    "result": "HOOK_ATTACH confirmed; no HidD_SetOutputReport calls; VID_0C45&PID_1007 device not present",
+    "blocker": "physical keyboard required for runtime marker mapping"
+  },
+  "capture_checksum": {
+    "verified": true,
+    "formula": "bytes[0] | bytes[1]<<8 == sum(bytes[2:]) & 0xFFFF",
+    "matches": "46/46",
+    "rejected": ["crc16_ccitt", "crc16_arc", "xor16", "id-derived"],
+    "script": "E:\\Tools\\ghidra-dist\\capture_crypto.py",
+    "output": "E:\\Tools\\ghidra-dist\\capture-crypto.txt",
+    "echo_confirmed": "46/46",
+    "byte9_distribution": {"2": 34, "3": 9, "4": 2, "1": 1},
+    "tail_clusters": {"25-148-25-3": 20, "255-0-138-3": 22}
+  },
+  "static_dispatch_tracing": {
+    "output": "E:\\Tools\\ghidra-dist\\callees-decomp.txt",
+    "helpers": {
+      "0x417fc0": "array lookup: FUN_0040fcd0(base) + index*4",
+      "0x449e80": "element count: (Bx() - FUN_0040fcd0()) >> 2",
+      "0x4839d0": "writes device fields +0xc78, +0xc7c, +0xc80",
+      "0x4b46c0": "reads device field +0x1898"
+    },
+    "stranded_call": "0x486ff0 is an indirect virtual call through vtable slot +0x114",
+    "hid_handle": "param_1 + 0x8b4",
+    "table_owner": "unresolved; reference-manager scan of 0x6949dc-0x694aa4 returned 0 references"
+  },
+  "live_capture": {
+    "approved": true,
+    "method": "proxy HookDLL.dll patching WriteFile IAT at RVA 0x239B7C",
+    "log": "E:\\Tools\\ghidra-dist\\io-hook.log",
+    "analysis": "E:\\Tools\\ghidra-dist\\live-hid-analysis.txt",
+    "hid_writes": 36,
+    "checksum_verified": "36/36",
+    "transport": "WriteFile of 64 bytes with leading report ID 0x04, not HidD_SetOutputReport",
+    "color_command": {
+      "bytes_0_1": "checksum",
+      "byte_2": "0x06",
+      "byte_3": "0x1d",
+      "bytes_8_10": "02 03 04",
+      "bytes_13_15": "RGB, observed",
+      "byte_27": "0xff",
+      "byte_32": "0x02"
+    },
+    "verified_clicks": {
+      "red": "ff 00 00",
+      "green": "00 d7 0f",
+      "blue": "31 53 ff",
+      "light_blue": "00 99 ff"
+    },
+    "note": "Saved capture uses byte3 0x15 and varying bytes 8-10; it covers different operations."
+  },
+  "mode_apply_analysis": {
+    "output": "E:\\Tools\\ghidra-dist\\mode-apply-analysis.txt",
+    "selection_emits_nothing": true,
+    "apply_icon_emits": true,
+    "byte2": "0x06",
+    "byte3": "0x1d",
+    "observed_byte8_9": ["08 04", "08 03", "05 03"],
+    "byte10": "0x04",
+    "bytes_13_15": "RGB",
+    "byte3_0x15_not_reproduced": true
+  },
+  "button_settings_probe": {
+    "analysis": "E:\\Tools\\ghidra-dist\\button-settings-analysis.txt",
+    "screenshot": "E:\\Tools\\ghidra-dist\\button-settings.png",
+    "commands": 6,
+    "byte2": "0x06",
+    "byte3": "0x1d",
+    "observed_bytes_8_10": ["01 03 04", "01 01 04", "01 02 04", "01 02 03"],
+    "result": "no key-remap protocol observed; key click re-sent lighting config"
+  },
+  "implementation": {
+    "protocol_spec": "docs/rea-protocol.md",
+    "reference_module": "src/reaFrame.ts",
+    "wired_into_app": false,
+    "lint": "npm run lint passed"
+  },
+  "full_cleanup": {
+    "date": "2026-11-19",
+    "second_pass_freed_mb": 1752.4,
+    "total_freed_mb": 2427.4,
+    "deleted": [
+      "E:\\Tools\\ghidra_12.2_PUBLIC (866.5 MB)",
+      "E:\\Tools\\ghidra-dist (180.8 MB) — logs/project/scripts",
+      "E:\\Tools\\ajazz-rea (72.5 MB)",
+      "npm _npx af752b90495482d7 (316.2 MB)",
+      "npm _npx 1919570b910cc3db (316.2 MB)",
+      "REA skill reverse-engineer-anything (0.2 MB)",
+      "REA MCP registration removed from opencode.jsonc",
+      "GHIDRA_INSTALL_DIR and JAVA_HOME user env vars cleared"
+    ],
+    "verified_removed_on_recheck": [
+      "C:\\Program Files\\Eclipse Adoptium\\jdk-25.0.5.8-hotspot (290 MB) — uninstall completed asynchronously after initial exit 1603; winget no longer lists Temurin 25"
+    ],
+    "note": "All E:\\Tools REA paths and Ghidra artifacts referenced elsewhere in this manifest are historical; toolchain was removed on user request. Recheck confirmed every REA path, env var, config entry, skill and cache is gone."
+  },
+  "bounded_negatives": [
+    "per-mode coordinate/keyboard UI automation was unreliable; mode-name to byte8/9 mapping unresolved",
+    "xrefs to 0x694a00 returned empty",
+    "raw little-endian 0x00694a00 scan found 0 hits",
+    "instruction operand scan for 0x694a00 found 0 hits",
+    "instruction operand scan for 0x486f50 found 0 hits",
+    "instruction operand scan for 0x6949dc found 0 hits",
+    "virtual-call scan found 13 CALL [reg+0x24] sites, none confirmed to this table",
+    "decompilation of all 12 unique functions containing those vcall sites found no references to FUN_00486f50, HidD_*, CEevisionKeyboardDevice, or 0x6949xx"
+  ],
+  "vcall_decompilation": {
+    "output": "E:\\Tools\\ghidra-dist\\vcall-decomp.txt",
+    "unique_functions": 12,
+    "output_lines": 1582,
+    "result": "no keyboard/HID references found; sites appear to be ATL/DuiLib UI code"
+  },
+  "artifacts": [
+    "docs/re-fresh-findings.md",
+    "docs/re-fresh-data.json",
+    "E:\\Tools\\ajazz-rea\\target.exe",
+    "E:\\Tools\\ghidra-dist\\ak820-main.reasnap",
+    "E:\\Tools\\ghidra-dist\\project\\ak820",
+    "E:\\Tools\\ghidra-dist\\scripts\\FindAddr.java",
+    "E:\\Tools\\ghidra-dist\\scripts\\FindRange.java",
+    "E:\\Tools\\ghidra-dist\\scripts\\DumpDecomp.java",
+    "E:\\Tools\\ghidra-dist\\scripts\\FindSymbol.java",
+    "E:\\Tools\\ghidra-dist\\scripts\\FindSymbolContains.java",
+    "E:\\Tools\\ghidra-dist\\scripts\\ListSymbolsInRange.java",
+    "E:\\Tools\\ghidra-dist\\scripts\\DumpWords.java",
+    "E:\\Tools\\ghidra-dist\\scripts\\FindVCall.java",
+    "E:\\Tools\\ghidra-dist\\decomp-candidates.txt",
+    "E:\\Tools\\ghidra-dist\\vcall-scan.txt",
+    "E:\\Tools\\ghidra-dist\\vcall-decomp.txt",
+    "E:\\Tools\\ghidra-dist\\data-files-summary.txt",
+    "E:\\Tools\\ghidra-dist\\hook.c",
+    "E:\\Tools\\ghidra-dist\\hook.def",
+    "E:\\Tools\\ghidra-dist\\hid-hook.log",
+    "E:\\Tools\\ajazz-rea\\HookDLL_orig.dll",
+    "E:\\Tools\\ghidra-dist\\capture_crypto.py",
+    "E:\\Tools\\ghidra-dist\\capture-crypto.txt",
+    "E:\\Tools\\ghidra-dist\\callees-decomp.txt",
+    "E:\\Tools\\ghidra-dist\\scripts\\FindTableRefs.java",
+    "E:\\Tools\\ghidra-dist\\hook2.c",
+    "E:\\Tools\\ghidra-dist\\io-hook.log",
+    "E:\\Tools\\ghidra-dist\\live-hid-analysis.txt",
+    "E:\\Tools\\ghidra-dist\\app-ui.png",
+    "E:\\Tools\\ghidra-dist\\mode-combo.png",
+    "E:\\Tools\\ghidra-dist\\mode-selected.png",
+    "E:\\Tools\\ghidra-dist\\mode-apply-analysis.txt",
+    "E:\\Tools\\ghidra-dist\\button-settings-analysis.txt",
+    "E:\\Tools\\ghidra-dist\\button-settings.png",
+    "docs/rea-protocol.md",
+    "docs/RE-HANDOFF.md",
+    "src/reaFrame.ts",
+    "C:\\Users\\Jaeef\\AppData\\Local\\Temp\\opencode\\ajazz-rea\\rea-fresh-investigation.json (DELETED 2026-11-19 during space cleanup)"
+  ],
+  "cleanup": {
+    "date": "2026-11-19",
+    "freed_mb": 675,
+    "deleted": [
+      "E:\\Tools\\ghidra-dist\\ghidra_12.2_PUBLIC_20261016.zip (543.3 MB)",
+      "C:\\Users\\Jaeef\\AppData\\Local\\ghidra (30.8 MB)",
+      "C:\\Users\\Jaeef\\AppData\\Roaming\\ghidra (1.9 MB)",
+      "C:\\Users\\Jaeef\\AppData\\Local\\Temp\\rea-ghidra-* (98.3 MB)",
+      "C:\\Users\\Jaeef\\.config\\opencode\\opencode.jsonc.rea.backup (<0.1 MB)",
+      "C:\\Users\\Jaeef\\AppData\\Local\\Temp\\opencode\\ajazz-rea (0.7 MB)"
+    ],
+    "kept": [
+      "E:\\Tools\\ghidra_12.2_PUBLIC (866.5 MB) — needed for Ghidra",
+      "E:\\Tools\\ghidra-dist (180.8 MB) — logs, project, scripts",
+      "E:\\Tools\\ajazz-rea (72.5 MB) — extracted payload",
+      "Temurin JDK 25 (290 MB) — required by Ghidra",
+      "REA npx caches af752b/1919570 (316.2 MB each) — one in use by MCP",
+      "REA skill and opencode.jsonc registration"
+    ]
+  },
+  "unknowns": [
+    "Exact caller/dispatch path for the HID send routine",
+    "Owning class of the 0x6949dc function-pointer table",
+    "Meaning of bytes 8-11 and the tail clusters in the 63-byte capture records",
+    "Exact 17-byte report field layout"
+  ]
+}
