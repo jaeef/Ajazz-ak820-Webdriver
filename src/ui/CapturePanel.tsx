@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import type { PacketLogEntry, PacketDirection, CalibrationResult, TriState } from '../types'
+import { Check, X, CircleHelp } from 'lucide-react'
 import { hexDump } from '../protocol'
 
 interface Props {
@@ -79,7 +80,7 @@ export function CapturePanel({ log, version, paused, setPaused, onClear, isLive,
     download(`ak820-capture-${Date.now()}.txt`, lines.join('\n'), 'text/plain')
   }
 
-  const triIcon = (v: TriState) => v === 'yes' ? '✓' : v === 'no' ? '✗' : '?'
+  const triIcon = (v: TriState) => v === 'yes' ? <Check aria-label="yes" /> : v === 'no' ? <X aria-label="no" /> : <CircleHelp aria-label="unknown" />
   const triClass = (v: TriState) => v === 'yes' ? 'calib-yes' : v === 'no' ? 'calib-no' : 'calib-unknown'
 
   const exportCalibration = () => {
@@ -206,7 +207,7 @@ export function CapturePanel({ log, version, paused, setPaused, onClear, isLive,
               <span className="calib-date">{new Date(r.testedAt).toLocaleDateString()} {new Date(r.testedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
               <span className="calib-pkts">{r.packets.length}</span>
               <span className="calib-del">
-                <button className="danger small" onClick={() => onRemoveCalibration(r.mode)} title="Remove this calibration entry">×</button>
+                <button className="danger small" onClick={() => onRemoveCalibration(r.mode)} title="Remove this calibration entry" aria-label="Remove this calibration entry"><X aria-hidden /></button>
               </span>
             </div>
           ))}

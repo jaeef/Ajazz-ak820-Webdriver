@@ -1,13 +1,9 @@
-import { useCallback, useMemo, useRef, useState } from 'react'
+import { useCallback, useState } from 'react'
+import { PaintBucket, Eraser, Pipette, Send } from 'lucide-react'
 import { KEY_LAYOUT, type KeyDef } from '../keymap'
 import { LED_COUNT, buildCustomColorPackets, hexToRgb, rgbToHex, DEFAULT_PALETTE } from '../protocol'
 import type { LightingState, ProtocolFamilyResolved } from '../types'
-
-// Scale factor: the official skin coords span ~100..575 x and ~17..202 y.
-// We scale to fit the container width and compute proportional positions.
-const SKIN_OFFSET_X = 100
-const SKIN_OFFSET_Y = 15
-const SKIN_SCALE = 0.72
+import { BoardRender } from './BoardRender'
 
 interface Props {
   lighting: LightingState
@@ -16,149 +12,58 @@ interface Props {
   onApplyPerKey: (packets: Uint8Array[]) => void
 }
 
-function scaleKey(k: KeyDef) {
-  return {
-    left: (k.x - SKIN_OFFSET_X) * SKIN_SCALE,
-    top: (k.y - SKIN_OFFSET_Y) * SKIN_SCALE,
-    width: k.w * SKIN_SCALE,
-    height: k.h * SKIN_SCALE,
-  }
-}
-
+// Per-key RGB: paint keys on the board, then send all 128 LEDs (CMD 0x0B) and
+// switch to Custom mode. Colours are indexed by firmware slot (KeyDef.id).
 export function KeyboardView({ lighting, isLive, family, onApplyPerKey }: Props) {
-  // Per-key color state: one entry per firmware slot, each a hex color string. Default to the
-  // current lighting color so the first render matches what the user picked.
-  const [keyColors, setKeyColors] = useState<string[]>(() => {
-    const c = rgbToHex(lighting.r, lighting.g, lighting.b)
-    return Array.from({ length: LED_COUNT }, () => c)
-  })
-  const [selectedKey, setSelectedKey] = useState<number | null>(null)
-  const [paintColor, setPaintColor] = useState<string>(() => rgbToHex(lighting.r, lighting.g, lighting.b))
-  const containerRef = useRef<HTMLDivElement>(null)
+  const [keyColors, setKeyColors] = useState<string[]>(() =>
+    Array.from({ length: LED_COUNT }, () => rgbToHex(lighting.r, lighting.g, lighting.b)))
+  const [selected, setSelected] = useState<number | null>(null)
+  const [paint, setPaint] = useState(() => rgbToHex(lighting.r, lighting.g, lighting.b))
 
-  const isSonix = family === 'sonix'
+  const paintKey = useCallback((k: KeyDef) => {
+    setSelected(k.id)
+    setKeyColors(prev => prev.map((c, i) => (i === k.id ? paint : c)))
+  }, [paint])
+  const fill = (hex: string) => setKeyColors(Array.from({ length: LED_COUNT }, () => hex))
 
-  const handleKeyClick = useCallback((keyDef: KeyDef) => {
-    setSelectedKey(keyDef.id)
-    setKeyColors(prev => {
-      const next = [...prev]
-      next[keyDef.id] = paintColor
-      return next
-    })
-  }, [paintColor])
-
-  const fillAll = useCallback((hex: string) => {
-    setKeyColors(Array.from({ length: LED_COUNT }, () => hex))
-  }, [])
-
-  const buildPackets = useCallback((): Uint8Array[] => {
+  const apply = () => {
     const buf = new Uint8Array(LED_COUNT * 3)
-    for (let i = 0; i < LED_COUNT; i++) {
-      const hex = keyColors[i] ?? '#000000'
-      const { r, g, b } = hexToRgb(hex)
-      buf[i * 3] = r
-      buf[i * 3 + 1] = g
-      buf[i * 3 + 2] = b
-    }
-    // Colors only; the caller appends Custom mode on top of the device's block.
-    return buildCustomColorPackets(buf)
-  }, [keyColors])
-
-  const handleApply = useCallback(() => {
-    onApplyPerKey(buildPackets())
-  }, [buildPackets, onApplyPerKey])
-
-  const layout = useMemo(() => KEY_LAYOUT.map(k => ({ k, pos: scaleKey(k) })), [])
-
-  const selectedHex = selectedKey !== null ? keyColors[selectedKey] ?? '#000000' : paintColor
+    keyColors.forEach((hex, i) => { const { r, g, b } = hexToRgb(hex); buf.set([r, g, b], i * 3) })
+    onApplyPerKey(buildCustomColorPackets(buf))
+  }
+  const sel = KEY_LAYOUT.find(k => k.id === selected)
 
   return (
-    <div className="keyboard-view">
-      <div className="row" style={{ fontWeight: 600 }}>
-        Per-Key RGB (Custom mode)
+    <div className="page">
+      <div className="stage">
+        <BoardRender ariaLabel="Keyboard, click a key to paint it" overlay={k => ({ led: keyColors[k.id] })}
+          selected={selected} onKeyClick={paintKey} dim={lighting.brightness === 0} />
       </div>
-      <div className="help" style={{ marginTop: -2, marginBottom: 8 }}>
-        Click any key to paint it with the selected color. Then click <strong>Apply per-key</strong> to
-        send the full color map to the keyboard: {LED_COUNT} LEDs × RGB via CMD 0x0B, then Custom mode
-        (firmware mode 20).
-        {isSonix && ' ⚠ Sonix family: per-key Custom is not fully RE\u2019d; this may not work on your unit.'}
-      </div>
-
-      {/* Color picker for painting keys */}
-      <div className="row" style={{ alignItems: 'center', flexWrap: 'wrap' }}>
-        <label style={{ minWidth: 'auto' }}>Paint color:</label>
-        <div className="palette" style={{ gap: 4 }}>
-          {DEFAULT_PALETTE.map(hex => (
-            <div
-              key={hex}
-              className={`swatch ${paintColor.toLowerCase() === hex ? 'selected' : ''}`}
-              style={{ background: hex, width: 22, height: 22 }}
-              onClick={() => setPaintColor(hex)}
-            />
-          ))}
-        </div>
-        <input
-          type="color"
-          value={paintColor}
-          onChange={e => setPaintColor(e.target.value)}
-          style={{ width: 32, height: 28, padding: 2, cursor: 'pointer' }}
-        />
-        <input
-          type="text"
-          value={paintColor.toUpperCase()}
-          onChange={e => {
-            const v = e.target.value.trim()
-            if (/^#[0-9a-fA-F]{6}$/.test(v)) setPaintColor(v)
-          }}
-          style={{ width: 80 }}
-        />
-      </div>
-
-      {/* Quick fill buttons */}
-      <div className="row" style={{ gap: 8 }}>
-        <button className="small secondary" onClick={() => fillAll(paintColor)}>Fill all</button>
-        <button className="small secondary" onClick={() => fillAll('#000000')}>Clear all</button>
-        <button className="small secondary" onClick={() => {
-          const c = rgbToHex(lighting.r, lighting.g, lighting.b)
-          fillAll(c)
-        }}>Use lighting color</button>
-      </div>
-
-      {/* Visual keyboard */}
-      <div className="kb-container" ref={containerRef}>
-        {layout.map(({ k, pos }) => (
-          <div
-            key={k.id}
-            className={`kb-key ${selectedKey === k.id ? 'kb-key-selected' : ''}`}
-            style={{
-              left: pos.left,
-              top: pos.top,
-              width: pos.width,
-              height: pos.height,
-              background: keyColors[k.id] ?? '#000000',
-              boxShadow: selectedKey === k.id ? '0 0 0 2px var(--accent)' : undefined,
-            }}
-            onClick={() => handleKeyClick(k)}
-            title={`${k.label} (LED ${k.id})`}
-          >
-            <span className="kb-key-label">{k.label}</span>
+      <section className="panel toolbar" aria-label="Paint tools">
+        <div className="field field--inline">
+          <span className="field__label">Paint colour</span>
+          <div className="swatches">
+            {DEFAULT_PALETTE.map(c => (
+              <button key={c} className={`swatch${c === paint ? ' swatch--on' : ''}`} style={{ background: c }}
+                onClick={() => setPaint(c)} aria-label={`Paint colour ${c.toUpperCase()}`} />
+            ))}
+            <label className="swatch swatch--custom" title="Any colour">
+              <Pipette aria-hidden />
+              <input type="color" value={paint} onChange={e => setPaint(e.target.value)} aria-label="Pick any paint colour" />
+            </label>
           </div>
-        ))}
-      </div>
-
-      {/* Selected key info */}
-      <div className="row" style={{ fontSize: 12, color: 'var(--fg-2)' }}>
-        {selectedKey !== null
-          ? <>Selected: <strong>{KEY_LAYOUT.find(k => k.id === selectedKey)?.label}</strong> (LED {selectedKey}) — {selectedHex.toUpperCase()}</>
-          : 'Click a key to paint it'}
-      </div>
-
-      <div className="row" style={{ marginTop: 8 }}>
-        <button onClick={handleApply}>
-          {isLive ? 'Apply per-key colors' : 'Apply per-key colors (idle)'}
-        </button>
-        <span className="pill">{buildPackets().length + 3} packets</span>
-      </div>
+        </div>
+        <div className="toolbar__actions">
+          <button className="btn btn--outline" onClick={() => fill(paint)}><PaintBucket aria-hidden /> Fill all</button>
+          <button className="btn btn--outline" onClick={() => fill('#000000')}><Eraser aria-hidden /> Clear all</button>
+          <button className="btn btn--primary" onClick={apply}><Send aria-hidden /> {isLive ? 'Apply per-key colours' : 'Apply (demo)'}</button>
+        </div>
+        <p className="muted toolbar__note">
+          {sel ? <>Painted <strong>{sel.label}</strong> {keyColors[sel.id].toUpperCase()}. </> : 'Click any key to paint it. '}
+          Sends all {LED_COUNT} LEDs, then switches the board to Custom mode.
+          {family === 'sonix' && ' Per-key colour is not verified on the Sonix AK820 Pro.'}
+        </p>
+      </section>
     </div>
   )
 }

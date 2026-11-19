@@ -1,36 +1,28 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { BookmarkPlus, Send } from 'lucide-react'
 import type { LightingState, Profile, TabId, PacketSnapshot, CalibrationResult } from './types'
 
-import { Header } from './ui/Header'
-import { ConnectionPanel } from './ui/ConnectionPanel'
-import { SolidColorPanel } from './ui/SolidColorPanel'
-import { EffectsPanel } from './ui/EffectsPanel'
+import { Sidebar, ConnectScreen, Toast } from './ui/Shell'
+import { LightingPage } from './ui/LightingPage'
+import { BoardRender, motionFor } from './ui/BoardRender'
+import { KeyboardView } from './ui/KeyboardView'
+import { WireFormatInspector } from './ui/WireFormatInspector'
 import { ProfilesPanel } from './ui/ProfilesPanel'
 import { SettingsPanel } from './ui/SettingsPanel'
 import { CapturePanel } from './ui/CapturePanel'
 import { KeyRemapPanel } from './ui/KeyRemapPanel'
 import { KeyboardOptionsPanel } from './ui/KeyboardOptionsPanel'
 import { CalibrationModal } from './ui/CalibrationModal'
-import { StatusBar } from './ui/StatusBar'
 import { ModeEditModal } from './ui/ModeEditModal'
 
 import {
-  modeName, MODE_STATIC, resolveProtocolFamily, hexToRgb, hexDump,
+  modeName, resolveProtocolFamily, hexDump, rgbToHex, buildApplyPackets, MODE_STATIC,
   readKeyboardOptions, buildKeyboardOptionsPackets, type KeyboardOptions,
 } from './protocol'
 import {
   useDevice, useSettings, useProfiles, useLightingState, useStatus, useActiveTab, useCaptureLog, useCalibration,
   readLightingBlock,
 } from './hooks'
-
-const TABS: { id: TabId; label: string }[] = [
-  { id: 'lighting', label: 'Solid Color' },
-  { id: 'effects', label: 'Effects' },
-  { id: 'keys', label: 'Keys' },
-  { id: 'profiles', label: 'Profiles' },
-  { id: 'capture', label: 'Capture' },
-  { id: 'settings', label: 'Settings' },
-]
 
 function describeLighting(p: Profile, modes: string[]): string {
   return `${p.name} (${modeName(p.mode, modes)}, rgb(${p.r},${p.g},${p.b}), brightness ${p.brightness})`
@@ -43,6 +35,8 @@ function App() {
   const { status, setStatus, ok, err, info } = useStatus()
   const [activeTab, setActiveTab] = useActiveTab('lighting')
   const [showModeModal, setShowModeModal] = useState(false)
+  // ?demo opens straight into demo mode (shareable link, screenshots).
+  const [exploring, setExploring] = useState(() => new URLSearchParams(location.search).has('demo'))
 
   // Resolve the wire protocol ONCE per connection/settings change. Disambiguate
   // by VID + PID: the bundled AK820 is 0x0C45/0x1007 = EVision; the AK820 Pro
@@ -54,6 +48,21 @@ function App() {
 
   const { lighting, setLighting, apply, sendPackets, applyPerKey } = useLightingState(device.controller, settings, family)
   const capture = useCaptureLog(device.controller)
+
+  // What the keyboard last received, so the Apply panel can say what is unsent.
+  const [lastApplied, setLastApplied] = useState<LightingState | null>(null)
+  const unsent = useMemo(() => {
+    const a = lastApplied
+    if (!a) return ['everything']
+    const out: string[] = []
+    if (a.mode !== lighting.mode) out.push('effect')
+    if (a.r !== lighting.r || a.g !== lighting.g || a.b !== lighting.b) out.push('colour')
+    if (a.brightness !== lighting.brightness) out.push('brightness')
+    if (a.speed !== lighting.speed) out.push('speed')
+    if (a.direction !== lighting.direction) out.push('direction')
+    if (a.rainbow !== lighting.rainbow) out.push('random colours')
+    return out
+  }, [lastApplied, lighting])
   const calibration = useCalibration()
 
   // Build a quick lookup map mode→{works,colorWorks} so the LightingPanel
@@ -74,11 +83,12 @@ function App() {
     info('Opening device picker…')
     try {
       const di = await device.connect(settings.vid, settings.pid, settings.showAllDevices)
+      setExploring(false)
       const base = `Connected to ${di.productName} (VID 0x${di.vendorId.toString(16).toUpperCase().padStart(4,'0')} / PID 0x${di.productId.toString(16).toUpperCase().padStart(4,'0')}).`
       if (di.matchedVendorInterface) {
         ok(base + ' Ready to send lighting.')
       } else {
-        err(base + ' ⚠ This entry can’t receive lighting commands. Reconnect and pick the AK820 (wired) device — or turn on “Show all HID devices” in Settings and try another entry.')
+        err(base + ' This entry can’t receive lighting commands. Reconnect and pick the AK820 (wired) device — or turn on “Show all HID devices” in Settings and try another entry.')
       }
     } catch (e) {
       const errObj = e as DOMException
@@ -123,28 +133,13 @@ function App() {
   const handleApply = useCallback(async () => {
     try {
       await apply()
-      const tag = device.isConnected ? 'Sent' : 'Recorded (idle)'
+      setLastApplied(lighting)
+      const tag = device.isConnected ? 'Sent' : 'Recorded (demo)'
       ok(`${tag}: ${modeName(lighting.mode, settings.modes)}, rgb(${lighting.r},${lighting.g},${lighting.b}), brightness ${lighting.brightness}, speed ${lighting.speed}${lighting.rainbow ? ', rainbow' : ''}`)
     } catch (e) {
       err('Apply failed: ' + (e as Error).message)
     }
   }, [apply, device.isConnected, lighting, settings.modes, ok, err])
-
-  // --- Solid color: pick a full-RGB color and light the whole keyboard in it.
-  // Forces Static mode (firmware 0x06) and persists it — when the user applies
-  // a solid color, the mode IS Static. The per-key color data in the packet
-  // sequence overwrites whatever the previous effect left in the LED buffer.
-  const handleSolidColor = useCallback((hex: string) => {
-    const { r, g, b } = hexToRgb(hex)
-    setLighting({ ...lighting, mode: MODE_STATIC, rainbow: false, r, g, b })
-  }, [setLighting, lighting])
-
-  const handleApplySolid = useCallback(() => {
-    const next: LightingState = { ...lighting, mode: MODE_STATIC, rainbow: false }
-    setLighting(next)
-    apply(next).then(() => ok(`${device.isConnected ? 'Sent' : 'Recorded (idle)'} solid color: rgb(${next.r},${next.g},${next.b}), brightness ${next.brightness}`))
-                .catch(e => err('Apply failed: ' + (e as Error).message))
-  }, [setLighting, apply, lighting, device.isConnected, ok, err])
 
   // --- Test & Approve: apply the current mode+color, snapshot the exact
   // packets that went on the wire, then open the approval modal. The user
@@ -222,7 +217,7 @@ function App() {
     setLighting(next)
     // Pass `next` explicitly so the packet reflects the just-loaded state,
     // not the stale value captured by `apply`'s closure.
-    apply(next).then(() => ok(`Loaded profile "${describeLighting(profile, settings.modes)}"`))
+    apply(next).then(() => { setLastApplied(next); ok(`Loaded profile "${describeLighting(profile, settings.modes)}"`) })
                .catch(e => err('Apply failed: ' + (e as Error).message))
   }, [setLighting, apply, settings.modes, ok, err])
 
@@ -273,129 +268,120 @@ function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [handleApply])
 
-  return (
-    <>
-      <Header isLive={device.isConnected} />
+  const applyPackets = useMemo(() => buildApplyPackets(lighting, family), [lighting, family])
+  const glow = rgbToHex(lighting.r, lighting.g, lighting.b)
+  const ready = device.isConnected || exploring
+  const page = ready ? activeTab : 'lighting'
 
-      <div className="container">
-        <ConnectionPanel
-          info={device.info}
-          isConnected={device.isConnected}
-          isMock={device.controller.isMock}
-          webHIDSupported={device.webHIDSupported}
-          settings={settings}
-          onConnect={handleConnect}
-          onDisconnect={handleDisconnect}
-          onListGranted={handleListGranted}
-        />
-
-        <div className="panel">
-          <div className="tabs">
-            {TABS.map(t => (
-              <button
-                key={t.id}
-                className={`tab ${activeTab === t.id ? 'active' : ''}`}
-                onClick={() => setActiveTab(t.id)}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
-
-          {activeTab === 'lighting' && (
-            <SolidColorPanel
-              lighting={lighting}
-              onChange={setLighting}
-              onSolidColor={handleSolidColor}
-              onApplySolid={handleApplySolid}
-              onTestMode={handleTestMode}
-              isLive={device.isConnected}
-              family={family}
-              calibrated={calibrationMap}
-            />
-          )}
-
-          {activeTab === 'effects' && (
-            <EffectsPanel
-              lighting={lighting}
-              modes={settings.modes}
-              onChange={setLighting}
-              onApply={handleApply}
-              onApplyPerKey={handleApplyPerKey}
-              onTestMode={handleTestMode}
-              isLive={device.isConnected}
-              family={family}
-              calibrated={calibrationMap}
-            />
-          )}
-
-          {activeTab === 'keys' && (
-            <>
-              <KeyboardOptionsPanel isLive={device.isConnected} onRead={handleReadOptions} onWrite={handleWriteOptions} />
-              <KeyRemapPanel isLive={device.isConnected} onSend={handleSendKeymap} />
-            </>
-          )}
-
-          {activeTab === 'profiles' && (
-            <ProfilesPanel
-              profiles={profiles}
-              modes={settings.modes}
-              currentLighting={lighting}
-              onSave={handleSaveProfile}
-              onDelete={handleDeleteProfile}
-              onLoad={handleLoadProfile}
-              onImport={handleImportProfiles}
-            />
-          )}
-
-          {activeTab === 'capture' && (
-            <CapturePanel
-              log={capture.log}
-              version={capture.version}
-              paused={capture.paused}
-              setPaused={capture.setPaused}
-              onClear={capture.clear}
-              isLive={device.isConnected}
-              calibration={calibration.results}
-              onRemoveCalibration={calibration.removeResult}
-              onClearCalibration={calibration.clearAll}
-            />
-          )}
-
-          {activeTab === 'settings' && (
-            <SettingsPanel
-              settings={settings}
-              onChange={handleSettingsChange}
-              onEditModes={() => setShowModeModal(true)}
-              onReset={handleReset}
-            />
+  const stage = (withApply: boolean) => (
+    <div className="stage stage--split">
+      <div className="stage__board">
+        <div className="pills" aria-live="polite">
+          <span className={`pill${device.isConnected ? ' pill--ok' : ' pill--demo'}`}>{device.isConnected ? 'Connected' : 'Demo mode · nothing is sent'}</span>
+          <span className="pill">{lighting.mode === MODE_STATIC ? 'Solid colour' : modeName(lighting.mode, settings.modes)} · {glow.toUpperCase()}</span>
+          {withApply && (
+            <div className="applybar">
+              <span className={`apply__state${unsent.length ? ' apply__state--pending' : ''}`} aria-live="polite">
+                {unsent.length ? <>Not sent yet: {unsent.join(', ')}</> : 'Keyboard matches'}
+              </span>
+              <button className="btn btn--primary" onClick={handleApply}><Send aria-hidden /> Apply to keyboard <kbd>Ctrl Enter</kbd></button>
+            </div>
           )}
         </div>
+        <BoardRender ariaLabel={`Keyboard preview: ${modeName(lighting.mode, settings.modes)}, colour ${glow}`}
+          glow={glow} rainbow={lighting.rainbow} dim={lighting.brightness === 0} level={lighting.brightness}
+          motion={motionFor(lighting.mode)} speed={lighting.speed} wake />
       </div>
+      <section className="panel quick" aria-labelledby="quick-h">
+        <h2 id="quick-h">Profiles</h2>
+        {profiles.length === 0 && <p className="muted">No profiles yet. Save the current lighting to switch back in one click.</p>}
+        <ul>
+          {profiles.slice(0, 5).map(p => (
+            <li key={p.name}>
+              <button className="quick__item" onClick={() => handleLoadProfile(p)}>
+                <i style={{ background: rgbToHex(p.r, p.g, p.b) }} aria-hidden />
+                <span>{p.name}</span><em>{modeName(p.mode, settings.modes)}</em>
+              </button>
+            </li>
+          ))}
+        </ul>
+        <button className="btn btn--ghost btn--block" onClick={() => setActiveTab('profiles')}><BookmarkPlus aria-hidden /> Save current</button>
+      </section>
+    </div>
+  )
 
-      <StatusBar status={status} />
+  return (
+    <div className="app">
+      <Sidebar active={ready ? page : null} onNavigate={setActiveTab} info={device.info} isConnected={device.isConnected}
+        exploring={exploring} webHIDSupported={device.webHIDSupported}
+        onConnect={handleConnect} onDisconnect={handleDisconnect} />
+
+      <main className="main" key={ready ? page : 'connect'}>
+        {!ready && (
+          <ConnectScreen webHIDSupported={device.webHIDSupported} settings={settings} onConnect={handleConnect}
+            onExplore={() => { setExploring(true); info('Demo mode: changes are recorded in the Capture log, nothing is sent.') }}
+            onListGranted={handleListGranted} />
+        )}
+
+        {ready && page === 'lighting' && (
+          <div className="page">
+            {stage(true)}
+            <LightingPage lighting={lighting} modes={settings.modes} onChange={setLighting} onTestMode={handleTestMode} />
+          </div>
+        )}
+
+        {ready && page === 'perkey' && (
+          <KeyboardView lighting={lighting} isLive={device.isConnected} family={family} onApplyPerKey={handleApplyPerKey} />
+        )}
+
+        {ready && page === 'keys' && (
+          <KeyRemapPanel isLive={device.isConnected} onSend={handleSendKeymap}
+            aside={<KeyboardOptionsPanel isLive={device.isConnected} onRead={handleReadOptions} onWrite={handleWriteOptions} />} />
+        )}
+
+        {ready && page === 'profiles' && (
+          <div className="page">
+            {stage(false)}
+            <section className="panel" aria-label="Profiles">
+              <ProfilesPanel profiles={profiles} modes={settings.modes} currentLighting={lighting}
+                onSave={handleSaveProfile} onDelete={handleDeleteProfile} onLoad={handleLoadProfile} onImport={handleImportProfiles} />
+            </section>
+          </div>
+        )}
+
+        {ready && page === 'capture' && (
+          <div className="page">
+            <section className="panel" aria-label="What the next Apply sends">
+              <WireFormatInspector packets={applyPackets} family={family} />
+            </section>
+            <section className="panel" aria-label="Capture log">
+              <CapturePanel log={capture.log} version={capture.version} paused={capture.paused} setPaused={capture.setPaused}
+                onClear={capture.clear} isLive={device.isConnected} calibration={calibration.results}
+                onRemoveCalibration={calibration.removeResult} onClearCalibration={calibration.clearAll} />
+            </section>
+          </div>
+        )}
+
+        {ready && page === 'settings' && (
+          <div className="page">
+            <section className="panel" aria-label="Settings">
+              <SettingsPanel settings={settings} onChange={handleSettingsChange} onEditModes={() => setShowModeModal(true)} onReset={handleReset} />
+            </section>
+          </div>
+        )}
+      </main>
+
+      <Toast status={status} />
 
       {showModeModal && (
-        <ModeEditModal
-          modes={settings.modes}
-          onClose={() => setShowModeModal(false)}
-          onSave={handleSaveModes}
-        />
+        <ModeEditModal modes={settings.modes} onClose={() => setShowModeModal(false)} onSave={handleSaveModes} />
       )}
 
       {pendingTest && (
-        <CalibrationModal
-          mode={lighting.mode}
-          modeNames={settings.modes}
-          lighting={lighting}
-          family={family}
-          packets={pendingTest.packets}
-          isLive={device.isConnected}
-          onSave={handleSaveCalibration}
-          onClose={() => setPendingTest(null)}
-        />
+        <CalibrationModal mode={lighting.mode} modeNames={settings.modes} lighting={lighting} family={family}
+          packets={pendingTest.packets} isLive={device.isConnected} onSave={handleSaveCalibration} onClose={() => setPendingTest(null)} />
       )}
-    </>
+    </div>
   )
 }
 

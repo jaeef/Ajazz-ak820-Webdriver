@@ -219,7 +219,7 @@ export function useLightingState(controller: DeviceController, settings: Setting
 // =====================================================================
 export function useStatus() {
   const [status, setStatus] = useState<StatusMessage>({
-    message: 'Ready. Idle — no hardware needed. Click Connect when your keyboard is plugged in.',
+    message: '',
     type: '',
   })
 
