@@ -1,5 +1,6 @@
 import type { Profile, Settings } from './types'
-import { VID_DEFAULT, PID_DEFAULT, DEFAULT_MODES, KEYMAP_SLOTS, type KeyAssignment } from './protocol'
+import { VID_DEFAULT, PID_DEFAULT, DEFAULT_MODES, KEYMAP_SLOTS, cleanProfiles, num, type KeyAssignment } from './protocol'
+export { cleanProfiles }
 
 // v4: corrected from the official driver RE — real VID/PID (0x0C45/0x1007) and
 // the firmware mode table (default_light.json). Must bump the key so cached v3
@@ -31,7 +32,7 @@ function safeWrite(key: string, value: unknown): void {
 // =====================================================================
 export const profileStore = {
   load(): Profile[] {
-    return safeRead<Profile[]>(PROFILES_KEY, [])
+    return cleanProfiles(safeRead<unknown>(PROFILES_KEY, []))
   },
 
   save(profiles: Profile[]): void {
@@ -74,8 +75,17 @@ export function defaultSettings(): Settings {
 
 export const settingsStore = {
   load(): Settings {
-    const raw = safeRead<Partial<Settings>>(SETTINGS_KEY, {})
-    return { ...defaultSettings(), ...raw, modes: raw.modes ?? [...DEFAULT_MODES] }
+    const stored = safeRead<unknown>(SETTINGS_KEY, {})
+    const raw = (stored && typeof stored === 'object' && !Array.isArray(stored) ? stored : {}) as Partial<Settings>
+    const d = defaultSettings()
+    return {
+      vid: num(raw.vid, 0, 0xffff, d.vid),
+      pid: num(raw.pid, 0, 0xffff, d.pid),
+      reportIdMode: ['auto', 'native', 'payload'].includes(raw.reportIdMode as string) ? raw.reportIdMode! : d.reportIdMode,
+      protocolFamily: ['auto', 'evision', 'sonix'].includes(raw.protocolFamily as string) ? raw.protocolFamily! : d.protocolFamily,
+      modes: Array.isArray(raw.modes) && raw.modes.length === DEFAULT_MODES.length && raw.modes.every(m => typeof m === 'string') ? raw.modes : [...DEFAULT_MODES],
+      showAllDevices: typeof raw.showAllDevices === 'boolean' ? raw.showAllDevices : d.showAllDevices,
+    }
   },
 
   save(s: Settings): void {

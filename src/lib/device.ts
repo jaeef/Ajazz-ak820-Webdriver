@@ -218,7 +218,9 @@ export class WebHIDController implements DeviceController {
   // Null when none is remembered.
   async reconnect(vid: number, pid: number): Promise<DeviceInfo | null> {
     if (!('hid' in navigator)) return null
-    const last = JSON.parse(localStorage.getItem(LAST_DEVICE_KEY) ?? 'null') as { vid: number; pid: number } | null
+    let last: { vid: number; pid: number } | null = null
+    try { last = JSON.parse(localStorage.getItem(LAST_DEVICE_KEY) ?? 'null') } catch { /* blocked or corrupt */ }
+    if (!last || typeof last.vid !== 'number' || typeof last.pid !== 'number') last = null
     if (last) { vid = last.vid; pid = last.pid }
     const granted = await navigator.hid.getDevices()
     const pool = granted.filter(d => d.vendorId === vid && (!pid || d.productId === pid))
@@ -268,7 +270,7 @@ export class WebHIDController implements DeviceController {
       matchedVendorInterface: matched,
     }
     this.info = info
-    localStorage.setItem(LAST_DEVICE_KEY, JSON.stringify({ vid: info.vendorId, pid: info.productId }))
+    try { localStorage.setItem(LAST_DEVICE_KEY, JSON.stringify({ vid: info.vendorId, pid: info.productId })) } catch { /* storage blocked */ }
     return info
   }
 
@@ -283,7 +285,7 @@ export class WebHIDController implements DeviceController {
           await this.device.close()
         }
         // Drop the permission too, so a manual Disconnect isn't undone by auto-reconnect.
-        localStorage.removeItem(LAST_DEVICE_KEY)
+        try { localStorage.removeItem(LAST_DEVICE_KEY) } catch { /* storage blocked */ }
         await this.device.forget?.()
       } catch {
         // ignore close errors

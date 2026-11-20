@@ -41,7 +41,7 @@ export function ProfilesPanel({ profiles, modes, currentLighting, onSave, onDele
     const reader = new FileReader()
     reader.onload = () => {
       try { onImport(JSON.parse(String(reader.result))); setImportError(null) }
-      catch (err) { setImportError((err as Error).message) }
+      catch (err) { setImportError(err instanceof SyntaxError ? 'This file isn’t a profiles file exported from this app.' : (err as Error).message) }
     }
     reader.readAsText(f)
     e.target.value = ''

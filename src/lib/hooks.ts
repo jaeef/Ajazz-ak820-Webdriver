@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import type { DeviceInfo, LightingState, Profile, Settings, StatusMessage, TabId, ProtocolFamilyResolved } from './types'
 import type { DeviceController } from './device'
 import { MockController, WebHIDController } from './device'
-import { profileStore, settingsStore } from './store'
+import { profileStore, settingsStore, cleanProfiles } from './store'
 import { defaultSettings } from './store'
 import {
   DEFAULT_LIGHTING, buildApplyPackets, buildCustomModePacket, buildReadPacket, resolveSend,
@@ -10,6 +10,29 @@ import {
   buildKeymapReadPackets, parseKeymap, KEYMAP_BYTES, type KeyAssignment,
 } from './protocol'
 import type { ReportIdMode } from './types'
+
+// One USB conversation at a time. A second Apply (double click, held Ctrl+Enter,
+// a profile click mid-write) waits for the first instead of interleaving its
+// BEGIN/WRITE/END packets with it.
+let usbQueue: Promise<unknown> = Promise.resolve()
+export function exclusive<T>(fn: () => Promise<T>): Promise<T> {
+  const run = usbQueue.then(fn, fn)
+  usbQueue = run.catch(() => undefined)
+  return run
+}
+
+// Browser USB errors in words a keyboard owner can act on.
+export function friendlyError(e: unknown): string {
+  const name = (e as DOMException | undefined)?.name ?? ''
+  const msg = String((e as Error | undefined)?.message ?? e ?? '')
+  if (/failed to open/i.test(msg) || name === 'InvalidStateError')
+    return 'The keyboard is busy. Close the AJAZZ app or any other tab using it, then reconnect.'
+  if (/not connected|not opened|failed to (write|send|receive)|disconnected/i.test(msg) || name === 'NetworkError' || name === 'NotFoundError')
+    return 'The keyboard stopped answering. Check the cable and the wired switch, then reconnect.'
+  if (name === 'SecurityError' || name === 'NotAllowedError')
+    return 'The browser blocked USB access. Open the https:// address in Chrome or Edge and try again.'
+  return msg || 'Something went wrong. Try again.'
+}
 
 // Send one fully-built 64-byte packet, choosing transport (OUTPUT vs feature)
 // and report-ID split from the device's declared reports.
@@ -191,10 +214,16 @@ export function useProfiles() {
     setProfiles(profileStore.remove(name))
   }, [])
 
+  // Merge by name; anything malformed in the file is dropped, not trusted.
   const importProfiles = useCallback((data: unknown) => {
-    if (!Array.isArray(data)) throw new Error('Imported file is not a profile array')
-    profileStore.save(data as Profile[])
-    setProfiles(data as Profile[])
+    const incoming = cleanProfiles(data)
+    if (incoming.length === 0) throw new Error('No profiles found in this file.')
+    const byName = new Map(profileStore.load().map(p => [p.name, p]))
+    incoming.forEach(p => byName.set(p.name, p))
+    const merged = [...byName.values()]
+    profileStore.save(merged)
+    setProfiles(merged)
+    return incoming.length
   }, [])
 
   return { profiles, addProfile, removeProfile, importProfiles, refresh }
@@ -210,7 +239,7 @@ export function useLightingState(controller: DeviceController, settings: Setting
     setLightingState(prev => (typeof updater === 'function' ? updater(prev) : updater))
   }, [])
 
-  const apply = useCallback(async (override?: LightingState) => {
+  const apply = useCallback((override?: LightingState) => exclusive(async () => {
     const l = override ?? lighting
     // Read-modify-write like the vendor app: keep the firmware-owned bytes and
     // keyboard options (Win lock, WASD swap, polling rate) the device reports.
@@ -220,23 +249,24 @@ export function useLightingState(controller: DeviceController, settings: Setting
       if (i > 0) await delay(PACKET_GAP_MS)
       await sendPacket(controller, settings.reportIdMode, packets[i], family)
     }
-  }, [controller, lighting, settings.reportIdMode, family])
+  }), [controller, lighting, settings.reportIdMode, family])
 
   // Send pre-built raw packets (used by the per-key KeyboardView, which
   // builds its own BEGIN + CMD_WRITE_CONFIG color chunks + END sequence).
   // Same transport + pacing as apply() so the firmware gets the same cadence.
-  const sendPackets = useCallback(async (packets: Uint8Array[]) => {
+  const sendRaw = useCallback(async (packets: Uint8Array[]) => {
     for (let i = 0; i < packets.length; i++) {
       if (i > 0) await delay(PACKET_GAP_MS)
       await sendPacket(controller, settings.reportIdMode, packets[i], family)
     }
   }, [controller, settings.reportIdMode, family])
+  const sendPackets = useCallback((packets: Uint8Array[]) => exclusive(() => sendRaw(packets)), [sendRaw])
 
   // Per-key: color chunks first, then Custom mode on top of the device's block.
-  const applyPerKey = useCallback(async (colorPackets: Uint8Array[]) => {
+  const applyPerKey = useCallback((colorPackets: Uint8Array[]) => exclusive(async () => {
     const base = await readLightingBlock(controller, settings.reportIdMode, family)
-    await sendPackets([...colorPackets, ...buildCustomModePacket(lighting, base ?? undefined)])
-  }, [controller, settings.reportIdMode, family, lighting, sendPackets])
+    await sendRaw([...colorPackets, ...buildCustomModePacket(lighting, base ?? undefined)])
+  }), [controller, settings.reportIdMode, family, lighting, sendRaw])
 
   return { lighting, setLighting, apply, sendPackets, applyPerKey }
 }
