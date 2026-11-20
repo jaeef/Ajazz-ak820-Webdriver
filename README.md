@@ -4,19 +4,13 @@
 
 Configure the **AJAZZ AK820** mechanical keyboard from the browser.
 
-**[Open the app → ak820-web.vercel.app](https://ak820-web.vercel.app)**
-
 <a href="LICENSE"><img alt="license: MIT" src="https://img.shields.io/badge/license-MIT-e3b419"></a>
-<a href="CHANGELOG.md"><img alt="version 0.4.1" src="https://img.shields.io/badge/version-0.4.1-5c5f63"></a>
+<a href="package.json"><img alt="version 0.3.0" src="https://img.shields.io/badge/version-0.3.0-5c5f63"></a>
 <a href="https://developer.mozilla.org/docs/Web/API/WebHID_API"><img alt="WebHID API" src="https://img.shields.io/badge/WebHID-API-10b981?logo=googlechrome&logoColor=white"></a>
 <a href="https://react.dev"><img alt="React 18" src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black"></a>
 <a href="https://www.typescriptlang.org"><img alt="TypeScript 5.6" src="https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white"></a>
 <a href="https://vite.dev"><img alt="Vite 5" src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white"></a>
 <a href="https://nodejs.org"><img alt="Node 18 or newer" src="https://img.shields.io/badge/Node-%E2%89%A518-339933?logo=nodedotjs&logoColor=white"></a>
-
-<br>
-
-<img src="public/og.png" alt="AK820 Web Driver: the AJAZZ AK820 keyboard beside the app name" width="720">
 
 </div>
 
@@ -36,8 +30,6 @@ The vendor app is Windows-only. This driver talks to the keyboard directly over 
 - **Profiles:** save, load, export and import lighting setups. Profiles stay in your browser.
 - **Demo mode:** the whole UI works without a keyboard. Packets are recorded instead of sent. Open `/?demo` to jump straight in.
 - **Key press and sound:** the on-screen board presses along as you type, with an optional switch sound.
-- **Status lights:** the board's C / W lights follow Caps Lock and the Windows-key lock.
-- **Phones:** phones can't reach a USB keyboard, so they get a short overview with *Send link to my computer*, *Copy link* and the demo.
 
 Settings are written to the keyboard and survive unplugging.
 
@@ -45,7 +37,7 @@ Settings are written to the keyboard and survive unplugging.
 
 | | |
 |---|---|
-| Browser | Chrome or Edge 89+ on a computer, or another Chromium browser. Firefox, Safari and all phone browsers can't connect. |
+| Browser | Chrome or Edge 89+, or another Chromium browser. Firefox and Safari don't support WebHID. |
 | Connection | USB-C cable, keyboard switched to **wired** mode |
 | Page origin | HTTPS or `http://localhost` (WebHID needs a secure context) |
 | Keyboard | AK820, EVision family (VID `0x320F`, PID `0x505B`), which is verified. The Sonix family (AK820 Pro) is best-effort. |
@@ -56,16 +48,7 @@ Settings are written to the keyboard and survive unplugging.
 2. Open the app and click **Connect keyboard**, then pick the AK820 in the browser's device chooser.
 3. Choose an effect and colour, then click **Apply to keyboard** (or press `Ctrl` + `Enter`).
 
-Nothing is sent until you click Apply. The line next to the button lists what hasn't been sent yet.
-
-Each page has its own link (`#perkey`, `#keys`, `#profiles`, `#settings`), so a refresh keeps you where you were.
-
-### Where your settings live
-
-- **On the keyboard:** whatever you Apply (lighting, per-key colours, remap, macro, options). It survives unplugging and works on any computer.
-- **In your browser:** profiles and app settings, in `localStorage`. They never leave your browser; use *Export* / *Import* on the Profiles page to move them.
-
-There's no server, account or tracking.
+Nothing is sent until you click Apply. The bar next to the button lists what hasn't been sent yet.
 
 ## Development
 
@@ -73,7 +56,7 @@ Requires Node.js 18 or newer.
 
 ```bash
 npm install
-npm run dev       # dev server at http://localhost:5180
+npm run dev       # dev server at http://localhost:5173
 npm run build     # type-check + production build into dist/
 npm run preview   # serve the production build
 npm run lint      # type-check only
@@ -82,17 +65,11 @@ npm run check     # protocol self-check against vendor captures
 
 `npm run check` uses Node's built-in TypeScript type stripping, so it needs Node 22.6+ (or 23+).
 
-Release notes live in [`CHANGELOG.md`](CHANGELOG.md). The version shown in the app comes from `package.json`.
+Release notes live in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Deploying to Vercel
 
-Import the repository in Vercel and keep the detected settings. [`vercel.json`](vercel.json) sets:
-
-- the Vite build (`npm run build` into `dist/`);
-- the security headers: Content-Security-Policy, `Permissions-Policy: hid=(self)` and no framing;
-- year-long caching for the fingerprinted files in `/assets`.
-
-Vercel serves over HTTPS, which WebHID needs. The link preview (`og:image`) points at `https://ak820-web.vercel.app`; update it in `index.html` if you use another domain.
+Import the repository in Vercel. [`vercel.json`](vercel.json) sets the Vite build (`npm run build` into `dist/`) and the security headers, including `Permissions-Policy: hid=(self)`. Vercel serves over HTTPS, which WebHID needs.
 
 Any other static host works too: serve `dist/` over HTTPS with the same headers.
 
@@ -100,7 +77,7 @@ Any other static host works too: serve `dist/` over HTTPS with the same headers.
 
 ```
 ├── index.html               Vite entry
-├── public/                  logo (favicon.svg, PNG icons) and the link preview (og.png)
+├── public/                  static assets (keyboard photo, favicon)
 ├── src/
 │   ├── main.tsx             React entry
 │   ├── App.tsx              app state, pages and apply flow
@@ -118,8 +95,7 @@ Any other static host works too: serve `dist/` over HTTPS with the same headers.
 ├── docs/
 │   ├── protocol.md          the AK820 protocol, as verified on hardware
 │   └── legacy-protocol-notes.md  earlier notes, including the Sonix family
-├── PRODUCT.md               product brief
-├── CHANGELOG.md             release notes
+├── DESIGN.md / PRODUCT.md   design system and product brief
 └── vercel.json              deploy config and headers
 ```
 
@@ -160,9 +136,6 @@ The full spec is in [`docs/protocol.md`](docs/protocol.md).
 | The device chooser is empty | Check the cable and wired mode, or try another port. On Linux you may need a udev rule that gives your user access to the hidraw device. |
 | `SecurityError` on connect | The page isn't a secure context. Use HTTPS or `localhost`. |
 | Your unit has a different VID/PID | Turn on *Show all HID devices* in Settings and pick it by hand. |
-| "The keyboard is busy" | Close the AJAZZ app, or any other tab using the keyboard, then connect again. |
-| "That device isn't an AK820 keyboard" | Another USB device was picked. Nothing was sent to it; pick the AK820 instead. |
-| A phone shows "open on a computer" | Expected: phones can't connect to USB keyboards. Use the demo, or send the link to a computer. |
 
 ## Credits
 
