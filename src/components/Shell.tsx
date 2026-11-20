@@ -108,12 +108,6 @@ function OpenOnComputer({ onExplore }: { onExplore: () => void }) {
       <BoardRender ariaLabel="AJAZZ AK820" glow="#e3b419" motion="wave" speed={1} level={4} wake />
       <h1>Set up your AK820 right in the browser</h1>
       <p className="pitch__lede">No install, no account. Works on Windows, macOS and Linux, where the official app doesn’t.</p>
-      <ul className="pitch__features">
-        <li><Lightbulb aria-hidden /><div><b>Lighting</b><span>18 effects, colour, brightness and speed</span></div></li>
-        <li><Paintbrush aria-hidden /><div><b>Per-key colour</b><span>Paint each key its own colour</span></div></li>
-        <li><Keyboard aria-hidden /><div><b>Remap and macro</b><span>Move keys around, type text with one key</span></div></li>
-        <li><Layers aria-hidden /><div><b>Profiles</b><span>Save setups and switch in one click</span></div></li>
-      </ul>
       <section className="pitch__desk" aria-label="Open on a computer">
         <p><Laptop aria-hidden /><span>The keyboard connects over USB, which this browser can’t do. Open this page on a computer in <b>Chrome</b> or <b>Edge</b>.</span></p>
         <div className="pitch__actions">
@@ -122,7 +116,13 @@ function OpenOnComputer({ onExplore }: { onExplore: () => void }) {
         </div>
         <p className="pitch__note" aria-live="polite">{note}</p>
       </section>
-      <button className="btn btn--ghost pitch__demo" onClick={onExplore}><Play aria-hidden /> Look around in demo mode</button>
+      <button className="btn pitch__demo" onClick={onExplore}><Play aria-hidden /> Try the demo, no keyboard needed</button>
+      <ul className="pitch__features">
+        <li><Lightbulb aria-hidden /><div><b>Lighting</b><span>18 effects, colour, brightness and speed</span></div></li>
+        <li><Paintbrush aria-hidden /><div><b>Per-key colour</b><span>Paint each key its own colour</span></div></li>
+        <li><Keyboard aria-hidden /><div><b>Remap and macro</b><span>Move keys around, type text with one key</span></div></li>
+        <li><Layers aria-hidden /><div><b>Profiles</b><span>Save setups and switch in one click</span></div></li>
+      </ul>
     </div>
   )
 }

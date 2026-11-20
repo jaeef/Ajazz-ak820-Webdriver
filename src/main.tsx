@@ -1,5 +1,6 @@
 import { Component, StrictMode, type ReactNode } from 'react'
 import { createRoot } from 'react-dom/client'
+import { Analytics } from '@vercel/analytics/react'
 import App from './App'
 import './styles.css'
 
@@ -31,5 +32,7 @@ createRoot(document.getElementById('root')!).render(
     <CrashScreen>
       <App />
     </CrashScreen>
+    {/* Anonymous visit counts on Vercel only (no cookies); does nothing on localhost. */}
+    <Analytics />
   </StrictMode>,
 )

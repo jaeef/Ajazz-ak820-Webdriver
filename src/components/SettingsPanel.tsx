@@ -35,7 +35,7 @@ export function SettingsPanel({ settings, onChange, onReset }: Props) {
       <div className="setting">
         <div className="setting__text">
           <strong>AK820 Web Driver {__APP_VERSION__}</strong>
-          <span className="muted">Runs entirely in your browser: no install, no account, no network.</span>
+          <span className="muted">Runs in your browser: no install, no account. The site counts anonymous visits; your keyboard and settings never leave this computer.</span>
         </div>
         <a className="btn btn--outline" href="https://github.com/jaeef/Ajazz-ak820-Webdriver/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">What’s new</a>
       </div>
