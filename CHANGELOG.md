@@ -4,7 +4,27 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.4.1] - 2026-11-20
+
+### Fixed
+
+- Chrome on phones showed the Connect screen; phones are now detected and always get the
+  open-on-a-computer screen.
+- The "Link copied" note on the phone screen showed one or two letters per line.
+- The phone share sheet showed the old keyboard photo; it now uses the AK820 logo.
+- `npm run dev` crashed with `__APP_VERSION__ is not defined` because of a stale compiled
+  `vite.config.js`.
+
+### Added
+
+- A link-preview image, so shared links show the app name and the keyboard.
+- Anonymous visit counts with Vercel Web Analytics (no cookies). Keyboard data and settings
+  stay on your computer.
+
+### Changed
+
+- On the phone screen, the demo button sits right under the share buttons, highlighted with a
+  gentle pulse (still when the system asks for reduced motion).
 
 ## [0.4.0] - 2026-11-20
 
