@@ -597,9 +597,11 @@ export function clampDirection(n: number): Direction {
 // load is checked and clamped so a bad value can't crash the page.
 export const num = (v: unknown, lo: number, hi: number, d: number) =>
   typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, Math.round(v))) : d
+export const MAX_PROFILES = 200
 export function cleanProfiles(data: unknown): Profile[] {
   if (!Array.isArray(data)) return []
   return data
+    .slice(0, MAX_PROFILES)
     .filter((p): p is Record<string, unknown> => !!p && typeof p === 'object' && typeof (p as { name?: unknown }).name === 'string' && (p as { name: string }).name.trim() !== '')
     .map(p => ({
       name: String(p.name).trim().slice(0, 40),

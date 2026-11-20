@@ -181,13 +181,10 @@ export class WebHIDController implements DeviceController {
     if (!('hid' in navigator)) {
       throw new Error('WebHID not available in this browser (use Chrome or Edge)')
     }
-    let filters: HIDDeviceFilter[]
-    if (showAll) {
-      filters = []
-    } else {
-      filters = [{ vendorId: vid }]
-      if (pid) filters[0].productId = pid
-    }
+    // Without "Show all", list only the AK820 families (EVision 0x320F, Sonix 0x0C45)
+    // plus the VID in Settings, so other USB gadgets aren't offered at all.
+    const filters: HIDDeviceFilter[] = showAll ? []
+      : [...new Set([vid, 0x320f, 0x0c45])].map(vendorId => ({ vendorId }))
     const requested = await navigator.hid.requestDevice({ filters })
     if (!requested || requested.length === 0) {
       throw new Error('No device selected')
@@ -237,6 +234,11 @@ export class WebHIDController implements DeviceController {
 
   private async open(pool: HIDDevice[]): Promise<DeviceInfo> {
     const { device, collection, matched } = pickVendorDevice(pool)
+    // A device without the AK820's vendor lighting interface is refused before it is
+    // opened: AK820 packets must never reach another USB gadget picked by mistake.
+    if (!matched) {
+      throw new Error('That device isn’t an AK820 keyboard, so nothing was sent to it. Pick the AK820 (wired) in the list.')
+    }
     this.device = device
     if (!this.device.opened) {
       await this.device.open()
