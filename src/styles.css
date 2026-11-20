@@ -808,3 +808,5 @@ button.cap:hover { transform: translateY(-.11cqi); z-index: 10; }
 .debug__report { width: 100%; min-height: 280px; resize: vertical; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px;
   background: var(--surface-2); color: var(--ink); font: 12px/1.5 "Cascadia Mono", Consolas, ui-monospace, monospace; white-space: pre; }
 .remap__micro-hint kbd, .debug__steps kbd { font-size: 11px; padding: 0 4px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface-2); }
+.pill--debug { background: #eef3ff; border-color: #c9d6f5; color: #23418a; text-decoration: none; cursor: pointer; }
+.pill--debug:hover { border-color: #9fb5ea; }

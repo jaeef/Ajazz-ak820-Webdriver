@@ -269,6 +269,7 @@ function App() {
             <div className="pills" aria-live="polite">
               <span className={`pill${device.isConnected ? ' pill--ok' : ' pill--demo'}`}>{device.isConnected ? 'Connected' : 'Demo mode · nothing is sent'}</span>
               <span className="pill">{lighting.mode === MODE_STATIC ? 'Solid colour' : modeName(lighting.mode, settings.modes)} · {glow.toUpperCase()}</span>
+              {debug && <a className="pill pill--debug" href="#settings" onClick={() => setActiveTab('settings')}>Debug mode · report in Settings</a>}
             </div>
             <KeySoundToggle />
           </div>
