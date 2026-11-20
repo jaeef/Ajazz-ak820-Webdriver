@@ -786,3 +786,19 @@ button.cap:hover { transform: translateY(-.11cqi); z-index: 10; }
   .device__img { width: 56px; height: 27px; }
 }
 .profiles__form { max-width: 560px; }
+
+/* Demo on the phone screen: the one thing a phone visitor can do right now, so it is
+   highlighted with a slow pulse and a nudge on its play icon. */
+.pitch__demo {
+  background: var(--mustard-2); border: 1px solid #ecd68a; color: var(--mustard-ink);
+  animation: demo-pulse 2.6s var(--ease) infinite;
+}
+.pitch__demo:hover { background: #f5df92; }
+.pitch__demo svg { animation: demo-nudge 2.6s var(--ease) infinite; }
+@keyframes demo-pulse {
+  0% { box-shadow: 0 0 0 0 rgba(227, 180, 25, .5); }
+  70%, 100% { box-shadow: 0 0 0 12px rgba(227, 180, 25, 0); }
+}
+@keyframes demo-nudge { 0%, 55%, 100% { transform: none; } 25% { transform: translateX(3px); } }
+@media (prefers-reduced-motion: reduce) { .pitch__demo, .pitch__demo svg { animation: none; } }
+.pitch__note:empty { display: none; }

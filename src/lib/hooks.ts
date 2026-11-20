@@ -125,17 +125,23 @@ export async function readKeymap(
 // =====================================================================
 // useDevice — owns the controller + connection lifecycle
 // =====================================================================
+// Chrome on Android exposes navigator.hid but can't open a USB keyboard; Brave and
+// Firefox hide it. Either way a phone gets the open-on-a-computer screen.
+// ponytail: UA sniff as the fallback where userAgentData is missing (Safari, Firefox).
+function canUseUsbKeyboard(): boolean {
+  if (typeof navigator === 'undefined' || !('hid' in navigator)) return false
+  const ua = navigator as Navigator & { userAgentData?: { mobile?: boolean } }
+  const phone = ua.userAgentData?.mobile ?? /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)
+  return !phone
+}
+
 export function useDevice() {
   const [controller, setController] = useState<DeviceController>(new MockController())
   const [info, setInfo] = useState<DeviceInfo | null>(null)
   const [isConnected, setIsConnected] = useState(false)
-  const [webHIDSupported, setWebHIDSupported] = useState(true)
+  const [webHIDSupported] = useState(canUseUsbKeyboard)
   const controllerRef = useRef(controller)
   controllerRef.current = controller
-
-  useEffect(() => {
-    setWebHIDSupported(typeof navigator !== 'undefined' && 'hid' in navigator)
-  }, [])
 
   const connect = useCallback(async (vid: number, pid: number, showAll: boolean) => {
     const next = new WebHIDController()
