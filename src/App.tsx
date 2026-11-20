@@ -245,7 +245,7 @@ function App() {
   )
 
   return (
-    <div className="app">
+    <div className={`app${ready ? '' : ' app--connect'}`}>
       <Sidebar active={ready ? page : null} onNavigate={setActiveTab} info={device.info} isConnected={device.isConnected}
         exploring={exploring} webHIDSupported={device.webHIDSupported}
         onConnect={handleConnect} onDisconnect={handleDisconnect} />
@@ -301,7 +301,7 @@ function App() {
         )}
 
         {ready && page === 'profiles' && (
-          <div className="page page--fit page--fill">
+          <div className="page page--fit">
             {stage}
             <section className="panel" aria-label="Profiles">
               <ProfilesPanel profiles={profiles} modes={settings.modes} currentLighting={lighting}

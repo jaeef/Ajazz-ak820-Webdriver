@@ -55,7 +55,7 @@ export function ProfilesPanel({ profiles, modes, currentLighting, onSave, onDele
   return (
     <div className="stack">
       <div className="panel__head"><h2><Layers aria-hidden /> Profiles</h2></div>
-      <form className="field" onSubmit={e => { e.preventDefault(); handleSave() }}>
+      <form className="field profiles__form" onSubmit={e => { e.preventDefault(); handleSave() }}>
         <label className="field__label" htmlFor="profile-name">Save the current lighting as</label>
         <div className="field__row">
           <input id="profile-name" className="input" value={name} onChange={e => setName(e.target.value)} placeholder="Desk orange" />
