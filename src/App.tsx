@@ -11,6 +11,7 @@ import { SettingsPanel } from './components/SettingsPanel'
 import { KeyRemapPanel } from './components/KeyRemapPanel'
 import { KeyboardOptionsPanel } from './components/KeyboardOptionsPanel'
 import { Dialog } from './components/Dialog'
+import { DebugPanel } from './components/DebugPanel'
 
 import {
   modeName, resolveProtocolFamily, rgbToHex, MODE_STATIC, MAX_SPEED,
@@ -18,7 +19,7 @@ import {
 } from './lib/protocol'
 import {
   useDevice, useSettings, useProfiles, useLightingState, useStatus, useActiveTab,
-  readLightingBlock, readKeymap, exclusive, friendlyError,
+  readLightingBlock, readKeymap, readDeviceInfoBlock, exclusive, friendlyError,
 } from './lib/hooks'
 
 function describeLighting(p: Profile, modes: string[]): string {
@@ -165,6 +166,13 @@ function App() {
     return sendPackets(packets).then(() => ok(`${device.isConnected ? 'Sent to keyboard' : 'Recorded (demo)'}\n${what[0].toUpperCase()}${what.slice(1)}`))
                               .catch(e => err('Couldn’t save the keymap\n' + friendlyError(e)))
   }, [sendPackets, device.isConnected, ok, err])
+
+  const handleReadInfo = useCallback(
+    () => exclusive(() => readDeviceInfoBlock(device.controller, settings.reportIdMode, family)),
+    [device.controller, settings.reportIdMode, family],
+  )
+  // ?debug shows the diagnostics report on Settings (for bug reports from users).
+  const debug = useMemo(() => new URLSearchParams(location.search).has('debug'), [])
 
   const handleReadKeymap = useCallback(
     () => exclusive(() => readKeymap(device.controller, settings.reportIdMode, family)),
@@ -315,6 +323,12 @@ function App() {
             <section className="panel" aria-label="Settings">
               <SettingsPanel settings={settings} onChange={handleSettingsChange} onReset={() => setConfirmReset(true)} />
             </section>
+            {debug && (
+              <section className="panel" aria-label="Diagnostics">
+                <DebugPanel controller={device.controller} info={device.info} family={family}
+                  readInfo={handleReadInfo} readLighting={readBlock} readKeymap={handleReadKeymap} />
+              </section>
+            )}
           </div>
         )}
       </main>

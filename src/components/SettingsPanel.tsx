@@ -39,6 +39,13 @@ export function SettingsPanel({ settings, onChange, onReset }: Props) {
         </div>
         <a className="btn btn--outline" href="https://github.com/jaeef/Ajazz-ak820-Webdriver/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">What’s new</a>
       </div>
+      <div className="setting">
+        <div className="setting__text">
+          <strong>Something not working?</strong>
+          <span className="muted">Open the site with <code>?debug</code> at the end of the address to get a diagnostics report, then attach it to a new issue on GitHub.</span>
+        </div>
+        <a className="btn btn--outline" href="https://github.com/jaeef/Ajazz-ak820-Webdriver/issues/new?template=bug_report.md" target="_blank" rel="noopener noreferrer">Report a problem</a>
+      </div>
     </div>
   )
 }

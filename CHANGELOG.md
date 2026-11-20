@@ -4,6 +4,16 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.2] - 2026-11-20
+
+### Added
+
+- Diagnostics report for bug reports: open the site with `?debug`, reproduce the problem, then
+  Settings → Diagnostics → Read keyboard now → Copy report. It lists the keyboard's USB IDs, its
+  info and lighting blocks, every remapped key and the packets sent and received. Read-only.
+- *Report a problem* links to a GitHub issue template (Settings → About, and the diagnostics card).
+- Factory-reset hint (hold Fn + Space for 5–6 seconds) on Keys & macro and in the connect help.
+
 ## [0.4.1] - 2026-11-20
 
 ### Fixed
