@@ -806,3 +806,28 @@ button.cap:hover { transform: translateY(-.11cqi); z-index: 10; }
 .remap__micro-hint kbd { font-size: 11px; padding: 0 4px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface-2); }
 .setting__actions { display: grid; gap: 4px; justify-items: end; }
 .report__note { color: var(--ink); margin-top: 4px; }
+
+/* ---------- Your keyboard (Settings): a QC-sticker style spec card ---------- */
+.kbcard {
+  position: relative; display: grid; gap: 14px; padding: 16px 18px 14px 22px;
+  border: 1px dashed #d9cfa5; border-radius: 12px; background: linear-gradient(180deg, #fffdf4, #fbf6e3);
+  max-width: 560px;
+}
+.kbcard::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 6px; border-radius: 12px 0 0 12px; background: var(--mustard); }
+.kbcard--empty { display: flex; align-items: center; gap: 14px; color: var(--ink-2); font-size: 13px; }
+.kbcard__head { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 12px; }
+.kbcard__head strong { display: block; font-size: 15px; }
+.kbcard__img { width: 64px; height: 30px; object-fit: cover; object-view-box: inset(139px 14px 139px 14px); flex: none; }
+.kbcard__badge { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; font-size: 11.5px; font-weight: 600; color: #146b39; }
+.kbcard__badge svg { width: 14px; height: 14px; }
+.kbcard__badge--warn { color: var(--mustard-ink); }
+.kbcard__specs { display: grid; grid-template-columns: 112px 1fr; gap: 7px 12px; margin: 0; font-size: 13px; }
+.kbcard__specs dt { color: var(--ink-3); font-size: 11.5px; text-transform: uppercase; letter-spacing: .05em; align-self: center; }
+.kbcard__specs dd { margin: 0; display: flex; align-items: center; gap: 8px; min-width: 0; }
+.kbcard__swatch { width: 14px; height: 14px; border-radius: 4px; box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .15), 0 0 8px currentColor; flex: none; }
+.kbcard__barcode { display: flex; align-items: flex-end; gap: 2px; height: 30px; padding-top: 10px; border-top: 1px dashed #e3d9b4; }
+.kbcard__barcode i { display: block; height: 100%; background: var(--ink); border-radius: 1px; }
+.kbcard__barcode span { margin-left: 10px; font-size: 11px; color: var(--ink-3); letter-spacing: .14em; align-self: center; }
+.spin { animation: spin .9s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spin { animation: none; } }

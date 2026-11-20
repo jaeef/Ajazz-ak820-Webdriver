@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.4] - 2026-11-20
+
+### Added
+
+- A "Your keyboard" card at the top of Settings, styled like the QC sticker on the back: USB ID,
+  board code (handy for telling production batches apart), what the lighting is set to right now,
+  Win lock / WASD swap / report rate, and how many keys are remapped. Read from the keyboard,
+  with a button to read it again.
+
 ## [0.4.3] - 2026-11-20
 
 ### Changed
