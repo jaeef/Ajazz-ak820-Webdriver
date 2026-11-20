@@ -1,8 +1,10 @@
 <div align="center">
 
-# AK820 Web Driver
+<img src="public/icon.svg" alt="AJAZZ AK820 Vector Icon" width="150" />
 
-Configure the **AJAZZ AK820** mechanical keyboard from the browser.
+# AJAZZ AK820 Web Driver
+
+**Configure the AJAZZ AK820 mechanical keyboard directly in your browser with zero installs.**
 
 <a href="LICENSE"><img alt="license: MIT" src="https://img.shields.io/badge/license-MIT-e3b419"></a>
 <a href="package.json"><img alt="version 0.3.0" src="https://img.shields.io/badge/version-0.3.0-5c5f63"></a>
@@ -12,26 +14,39 @@ Configure the **AJAZZ AK820** mechanical keyboard from the browser.
 <a href="https://vite.dev"><img alt="Vite 5" src="https://img.shields.io/badge/Vite-5-646CFF?logo=vite&logoColor=white"></a>
 <a href="https://nodejs.org"><img alt="Node 18 or newer" src="https://img.shields.io/badge/Node-%E2%89%A518-339933?logo=nodedotjs&logoColor=white"></a>
 
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#quickstart">Quickstart</a> •
+  <a href="#protocol">Protocol</a> •
+  <a href="#development">Development</a> •
+  <a href="#troubleshooting">Troubleshooting</a>
+</p>
+
 </div>
 
-No install, no admin rights, and it runs on Windows, macOS and Linux wherever Chrome or Edge runs.
+---
 
-The vendor app is Windows-only. This driver talks to the keyboard directly over [WebHID](https://developer.mozilla.org/docs/Web/API/WebHID_API). Its protocol was reverse-engineered from the vendor app's USB traffic, every packet is checked byte for byte against captures, and every feature has been tested on real hardware.
+No installation, no background services, and no administrator privileges required. Works on **Windows**, **macOS**, and **Linux** in Google Chrome, Microsoft Edge, and any modern Chromium browser.
 
-> Independent and unofficial. Not affiliated with or endorsed by AJAZZ.
+While the official vendor suite is Windows-only, this driver communicates directly with the keyboard over the [WebHID API](https://developer.mozilla.org/docs/Web/API/WebHID_API). The packet framing is reverse-engineered directly from real USB traffic, verified byte-for-byte against hardware captures, and tested on physical AK820 devices.
+
+> **Disclaimer:** Independent open-source project. Not affiliated with or endorsed by AJAZZ.
+
+---
 
 ## Features
 
-- **Lighting:** solid colour plus 17 built-in effects. Brightness (off to 4), speed, direction and random colour.
-- **Per-key RGB:** click keys on the on-screen board to paint each one its own colour.
-- **Key remap:** point any key at any standard key, or disable it. One click restores the factory layout.
-- **Macro:** assign a typed-text macro (a–z, 0–9, space, up to 20 characters) to a key.
-- **Keyboard options:** Windows-key lock, WASD ↔ arrow swap, and USB report rate (1000, 500, 250 or 125 Hz).
-- **Profiles:** save, load, export and import lighting setups. Profiles stay in your browser.
-- **Demo mode:** the whole UI works without a keyboard. Packets are recorded instead of sent. Open `/?demo` to jump straight in.
-- **Key press and sound:** the on-screen board presses along as you type, with an optional switch sound.
+| Capability | Highlights |
+|---|---|
+| 💡 **Lighting & Effects** | Static colors plus **17 built-in hardware animations** (Wave, Cloud, Breath, Ripple, Spectrum, etc.). Adjustable brightness (0–4), speed (0–4), direction, and random color mode. |
+| 🎨 **Per-Key RGB Canvas** | Click individual keycaps on the interactive 75% on-screen keyboard to paint custom colors into the 128 LED matrix memory slots (`0x400`). |
+| ⌨️ **Key Remapping** | Remap any key slot to any standard HID keycode, or restore defaults with one click. Real-time visual keycap badge previews. |
+| ⚡ **Macro Engine** | Assign a hardware text sequence (alphanumeric + space, up to 20 characters) with customizable keystroke delays to any key. |
+| 🎛️ **Hardware Options** | Toggle Windows Key Lock, WASD ↔ Arrow Key Swap, and USB Report Polling Rate (1000 Hz, 500 Hz, 250 Hz, 125 Hz). |
+| 💾 **Profiles** | Save, load, export, and import lighting profiles in your browser (`localStorage`). Import includes defensive size and payload validation. |
+| 🧪 **Demo Mode** | Test the full interface without hardware connected. Keyboard keypresses simulate audio switch feedback and physical key travel. |
 
-Settings are written to the keyboard and survive unplugging.
+> All changes are written directly to keyboard EEPROM and persist across reboots and unplugging.
 
 ## Requirements
 
@@ -42,13 +57,13 @@ Settings are written to the keyboard and survive unplugging.
 | Page origin | HTTPS or `http://localhost` (WebHID needs a secure context) |
 | Keyboard | AK820, EVision family (VID `0x320F`, PID `0x505B`), which is verified. The Sonix family (AK820 Pro) is best-effort. |
 
-## Usage
+## Quickstart
 
-1. Plug in the keyboard and set it to wired mode.
-2. Open the app and click **Connect keyboard**, then pick the AK820 in the browser's device chooser.
-3. Choose an effect and colour, then click **Apply to keyboard** (or press `Ctrl` + `Enter`).
+1. Plug in the keyboard and set it to **wired** mode.
+2. Open the app and click **Connect keyboard**, then select the AK820 in the browser's device chooser.
+3. Choose an effect and color, then click **Apply to keyboard** (or press `Ctrl` + `Enter`).
 
-Nothing is sent until you click Apply. The bar next to the button lists what hasn't been sent yet.
+Nothing is sent until you click Apply. The status bar beside the button highlights pending changes.
 
 ## Development
 
@@ -76,27 +91,27 @@ Any other static host works too: serve `dist/` over HTTPS with the same headers.
 ## Project structure
 
 ```
-├── index.html               Vite entry
-├── public/                  static assets (keyboard photo, favicon)
+├── index.html               Vite HTML entry
+├── public/                  Static assets (AK820 vector icon, wired keyboard photo)
 ├── src/
-│   ├── main.tsx             React entry
-│   ├── App.tsx              app state, pages and apply flow
-│   ├── styles.css           all styles
-│   ├── components/          Shell, LightingPage, KeyboardView, BoardRender,
-│   │                        KeyRemapPanel, ProfilesPanel, SettingsPanel, dialogs
+│   ├── main.tsx             React application entry point
+│   ├── App.tsx              Root state orchestration, navigation and apply pipeline
+│   ├── styles.css           Design tokens and component styling
+│   ├── components/          UI components (BoardRender, KeyRemapPanel, KeyboardOptionsPanel,
+│   │                        LightingControls, ProfilesPanel, SettingsPanel, Shell)
 │   └── lib/
-│       ├── protocol.ts      packet builders, checksum, read-modify-write
-│       ├── device.ts        WebHID controller and the demo (mock) controller
-│       ├── keymap.ts        key layout and LED / keymap slot tables
-│       ├── store.ts         localStorage persistence
-│       ├── hooks.ts         React hooks
-│       └── types.ts         shared types
-├── scripts/check-protocol.ts  byte-exact protocol tests
+│       ├── protocol.ts      64-byte HID packet builders, checksum and bitmask encodings
+│       ├── device.ts        WebHIDController and MockController
+│       ├── keymap.ts        AK820 75% key matrix geometry and scancode definitions
+│       ├── store.ts         Defensive localStorage state persistence & validation
+│       ├── hooks.ts         Device hooks and I/O coordination
+│       └── types.ts         TypeScript domain interfaces
+├── scripts/check-protocol.ts  Hardware packet capture verification suite
 ├── docs/
-│   ├── protocol.md          the AK820 protocol, as verified on hardware
-│   └── legacy-protocol-notes.md  earlier notes, including the Sonix family
-├── DESIGN.md / PRODUCT.md   design system and product brief
-└── vercel.json              deploy config and headers
+│   ├── protocol.md          Reverse-engineered AK820 protocol specification
+│   ├── legacy-protocol-notes.md  Historical research notes on Sonix/Microdia
+│   └── RE-HANDOFF.md        Reverse-engineering analysis handoff
+└── vercel.json              Static deployment configuration and security headers
 ```
 
 ## Protocol
@@ -147,6 +162,11 @@ Earlier reverse-engineering work that helped:
 - [fpb/ajazz-ak820-pro](https://github.com/fpb/ajazz-ak820-pro)
 - [Beattrey/ajazz-ak820-config](https://github.com/Beattrey/ajazz-ak820-config)
 - [aar-rafi/aks075-linux](https://github.com/aar-rafi/aks075-linux)
+
+## Author
+
+Developed by **[Abu Saleh Mohammad Jaeef](https://github.com/jaeef)**  
+Portfolio: [jaeef-portfolio.vercel.app](https://jaeef-portfolio.vercel.app/)
 
 ## License
 
