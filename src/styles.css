@@ -802,3 +802,9 @@ button.cap:hover { transform: translateY(-.11cqi); z-index: 10; }
 @keyframes demo-nudge { 0%, 55%, 100% { transform: none; } 25% { transform: translateX(3px); } }
 @media (prefers-reduced-motion: reduce) { .pitch__demo, .pitch__demo svg { animation: none; } }
 .pitch__note:empty { display: none; }
+
+/* ---------- ?debug diagnostics ---------- */
+.debug__steps { margin: 0; padding-left: 20px; color: var(--ink-2); font-size: 13px; display: grid; gap: 4px; }
+.debug__report { width: 100%; min-height: 280px; resize: vertical; padding: 10px 12px; border: 1px solid var(--line); border-radius: 10px;
+  background: var(--surface-2); color: var(--ink); font: 12px/1.5 "Cascadia Mono", Consolas, ui-monospace, monospace; white-space: pre; }
+.remap__micro-hint kbd, .debug__steps kbd { font-size: 11px; padding: 0 4px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface-2); }

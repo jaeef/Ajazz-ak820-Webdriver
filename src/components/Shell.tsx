@@ -149,6 +149,7 @@ export function ConnectScreen({ webHIDSupported, settings, onConnect, onExplore 
             ? 'Every USB device is listed. The AK820 may show up under its chip name rather than “AK820”.'
             : 'Turn on “Show all HID devices” in Settings to list every USB device.'}</li>
           <li>On Linux, your user may need a udev rule to reach the keyboard.</li>
+          <li>Keyboard acting strangely? Unplug it and plug it back in. On most AK820s, holding Fn + Space for 5–6 seconds resets it to factory settings.</li>
         </ul>
       </details>
     </div>

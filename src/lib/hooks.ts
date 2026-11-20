@@ -7,7 +7,7 @@ import { defaultSettings } from './store'
 import {
   DEFAULT_LIGHTING, buildApplyPackets, buildCustomModePacket, buildReadPacket, resolveSend,
   CMD_READ_LIGHTING, LIGHTING_BLOCK_LEN,
-  buildKeymapReadPackets, parseKeymap, KEYMAP_BYTES, type KeyAssignment,
+  buildKeymapReadPackets, parseKeymap, KEYMAP_BYTES, buildSyncPacket, type KeyAssignment,
 } from './protocol'
 import type { ReportIdMode } from './types'
 
@@ -105,6 +105,11 @@ async function readReply(
 // The keyboard's current 29-byte lighting block (CMD 0x05), or null.
 export function readLightingBlock(controller: DeviceController, reportIdMode: ReportIdMode, family: ProtocolFamilyResolved) {
   return readReply(controller, reportIdMode, family, buildReadPacket(CMD_READ_LIGHTING, LIGHTING_BLOCK_LEN), LIGHTING_BLOCK_LEN)
+}
+
+// The 34-byte device-info block the vendor app reads (`03 22`), for diagnostics.
+export function readDeviceInfoBlock(controller: DeviceController, reportIdMode: ReportIdMode, family: ProtocolFamilyResolved) {
+  return readReply(controller, reportIdMode, family, buildSyncPacket(), 0x22)
 }
 
 // The keyboard's live 384-byte keymap, or null. One reply cannot carry it, so

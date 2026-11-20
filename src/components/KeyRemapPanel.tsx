@@ -151,6 +151,10 @@ export function KeyRemapPanel({ isLive, onRead, onSend, aside }: Props) {
               <p className="remap__micro-hint muted">
                 One macro at a time; assigning it moves it off any other key.
               </p>
+              <p className="remap__micro-hint muted">
+                Something stuck on the keyboard? On most AK820s, holding <kbd>Fn</kbd> + <kbd>Space</kbd> for
+                5–6 seconds resets it to factory settings (lighting, remaps and macros).
+              </p>
             </div>
           </div>
         </section>
