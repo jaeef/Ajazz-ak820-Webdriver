@@ -12,6 +12,7 @@ import { KeyRemapPanel } from './components/KeyRemapPanel'
 import { KeyboardOptionsPanel } from './components/KeyboardOptionsPanel'
 import { Dialog } from './components/Dialog'
 import { buildReport } from './lib/report'
+import { KeyboardCard } from './components/KeyboardCard'
 
 import {
   modeName, resolveProtocolFamily, rgbToHex, MODE_STATIC, MAX_SPEED,
@@ -172,12 +173,12 @@ function App() {
     [device.controller, settings.reportIdMode, family],
   )
 
-  const collectReport = useCallback(async () => {
-    const reads = device.isConnected
-      ? { infoBlock: await handleReadInfo(), lighting: await readBlock(), keymap: await exclusive(() => readKeymap(device.controller, settings.reportIdMode, family)) }
-      : null
-    return buildReport(device.controller, device.info, family, reads)
-  }, [device.isConnected, device.controller, device.info, family, settings.reportIdMode, handleReadInfo, readBlock])
+  // Everything the keyboard reports about itself; shared by the keyboard card and the problem report.
+  const readKeyboard = useCallback(async () => (device.isConnected
+    ? { infoBlock: await handleReadInfo(), lighting: await readBlock(), keymap: await exclusive(() => readKeymap(device.controller, settings.reportIdMode, family)) }
+    : null), [device.isConnected, device.controller, family, settings.reportIdMode, handleReadInfo, readBlock])
+  const collectReport = useCallback(async () => buildReport(device.controller, device.info, family, await readKeyboard()),
+    [device.controller, device.info, family, readKeyboard])
 
   const handleReadKeymap = useCallback(
     () => exclusive(() => readKeymap(device.controller, settings.reportIdMode, family)),
@@ -325,6 +326,9 @@ function App() {
 
         {ready && page === 'settings' && (
           <div className="page page--settings">
+            <section className="panel" aria-label="Your keyboard">
+              <KeyboardCard info={device.info} modes={settings.modes} readKeyboard={readKeyboard} />
+            </section>
             <section className="panel" aria-label="Settings">
               <SettingsPanel settings={settings} onChange={handleSettingsChange} onReset={() => setConfirmReset(true)} onReport={collectReport} />
             </section>
