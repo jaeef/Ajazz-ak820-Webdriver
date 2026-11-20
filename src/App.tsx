@@ -11,7 +11,7 @@ import { SettingsPanel } from './components/SettingsPanel'
 import { KeyRemapPanel } from './components/KeyRemapPanel'
 import { KeyboardOptionsPanel } from './components/KeyboardOptionsPanel'
 import { Dialog } from './components/Dialog'
-import { DebugPanel } from './components/DebugPanel'
+import { buildReport } from './lib/report'
 
 import {
   modeName, resolveProtocolFamily, rgbToHex, MODE_STATIC, MAX_SPEED,
@@ -171,8 +171,13 @@ function App() {
     () => exclusive(() => readDeviceInfoBlock(device.controller, settings.reportIdMode, family)),
     [device.controller, settings.reportIdMode, family],
   )
-  // ?debug shows the diagnostics report on Settings (for bug reports from users).
-  const debug = useMemo(() => new URLSearchParams(location.search).has('debug'), [])
+
+  const collectReport = useCallback(async () => {
+    const reads = device.isConnected
+      ? { infoBlock: await handleReadInfo(), lighting: await readBlock(), keymap: await exclusive(() => readKeymap(device.controller, settings.reportIdMode, family)) }
+      : null
+    return buildReport(device.controller, device.info, family, reads)
+  }, [device.isConnected, device.controller, device.info, family, settings.reportIdMode, handleReadInfo, readBlock])
 
   const handleReadKeymap = useCallback(
     () => exclusive(() => readKeymap(device.controller, settings.reportIdMode, family)),
@@ -269,7 +274,6 @@ function App() {
             <div className="pills" aria-live="polite">
               <span className={`pill${device.isConnected ? ' pill--ok' : ' pill--demo'}`}>{device.isConnected ? 'Connected' : 'Demo mode · nothing is sent'}</span>
               <span className="pill">{lighting.mode === MODE_STATIC ? 'Solid colour' : modeName(lighting.mode, settings.modes)} · {glow.toUpperCase()}</span>
-              {debug && <a className="pill pill--debug" href="#settings" onClick={() => setActiveTab('settings')}>Debug mode · report in Settings</a>}
             </div>
             <KeySoundToggle />
           </div>
@@ -322,14 +326,8 @@ function App() {
         {ready && page === 'settings' && (
           <div className="page page--settings">
             <section className="panel" aria-label="Settings">
-              <SettingsPanel settings={settings} onChange={handleSettingsChange} onReset={() => setConfirmReset(true)} />
+              <SettingsPanel settings={settings} onChange={handleSettingsChange} onReset={() => setConfirmReset(true)} onReport={collectReport} />
             </section>
-            {debug && (
-              <section className="panel" aria-label="Diagnostics">
-                <DebugPanel controller={device.controller} info={device.info} family={family}
-                  readInfo={handleReadInfo} readLighting={readBlock} readKeymap={handleReadKeymap} />
-              </section>
-            )}
           </div>
         )}
       </main>

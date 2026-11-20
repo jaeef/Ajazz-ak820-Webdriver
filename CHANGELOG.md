@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and the project uses
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.3] - 2026-11-20
+
+### Changed
+
+- Problem reports are one button: Settings → Report a problem reads the keyboard, copies the
+  report and opens a GitHub issue with the summary filled in. *Download report* is there for
+  people without a GitHub account. The `?debug` address, its pill and the separate
+  Diagnostics card are gone.
+
 ## [0.4.2] - 2026-11-20
 
 ### Added
