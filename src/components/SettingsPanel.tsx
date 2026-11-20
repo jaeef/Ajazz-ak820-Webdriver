@@ -1,13 +1,50 @@
-import { Settings as SettingsIcon, Trash2 } from 'lucide-react'
+import { useState } from 'react'
+import { Settings as SettingsIcon, Trash2, Bug, Download } from 'lucide-react'
 import type { Settings } from '../lib/types'
+
+const ISSUE_URL = 'https://github.com/jaeef/Ajazz-ak820-Webdriver/issues/new'
+type Report = { title: string; summary: string; full: string }
 
 interface Props {
   settings: Settings
   onChange: (next: Settings) => void
   onReset: () => void
+  onReport: () => Promise<Report>
 }
 
-export function SettingsPanel({ settings, onChange, onReset }: Props) {
+export function SettingsPanel({ settings, onChange, onReset, onReport }: Props) {
+  const [note, setNote] = useState('')
+  const [busy, setBusy] = useState(false)
+
+  // Read the keyboard, copy the full report, open a GitHub issue with the summary
+  // filled in. Copy happens before the new tab opens (a background tab can't write
+  // the clipboard). The full report is too long for the issue URL, so it's pasted.
+  const report = async () => {
+    setBusy(true)
+    setNote('Reading the keyboard…')
+    try {
+      const r = await onReport()
+      let copied = true
+      try { await navigator.clipboard.writeText(r.full) } catch { copied = false }
+      const body = ['**What happened**', '', '**Steps to reproduce**', '1. ', '', '**Keyboard serial** (sticker on the back): ', '',
+        '**Report**', '```', r.summary, '```', '',
+        copied ? '**Full report** (on your clipboard: paste it between the lines below)' : '**Full report**: attach the file from "Download report"',
+        '```', '', '```'].join('\n')
+      window.open(`${ISSUE_URL}?labels=bug&title=${encodeURIComponent(r.title)}&body=${encodeURIComponent(body)}`, '_blank', 'noopener')
+      setNote(copied ? 'Report copied. In the GitHub form, paste it (Ctrl + V) where it says, describe the problem, then Submit.'
+                     : 'Couldn’t copy. Use “Download report” and attach the file in the GitHub form.')
+    } finally { setBusy(false) }
+  }
+  const download = async () => {
+    const r = await onReport()
+    const url = URL.createObjectURL(new Blob([r.full], { type: 'text/plain' }))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `ak820-report-${Date.now()}.txt`
+    a.click()
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <div className="stack">
       <div className="panel__head"><h2><SettingsIcon aria-hidden /> Settings</h2></div>
@@ -42,9 +79,13 @@ export function SettingsPanel({ settings, onChange, onReset }: Props) {
       <div className="setting">
         <div className="setting__text">
           <strong>Something not working?</strong>
-          <span className="muted">Open the site with <code>?debug</code> at the end of the address to get a diagnostics report, then attach it to a new issue on GitHub.</span>
+          <span className="muted">With the keyboard connected, do the steps that go wrong, then press Report a problem. It reads the keyboard, copies a report and opens a GitHub issue. No GitHub account? Download the report and send the file instead.</span>
+          {note && <span className="muted report__note" aria-live="polite">{note}</span>}
         </div>
-        <a className="btn btn--outline" href="https://github.com/jaeef/Ajazz-ak820-Webdriver/issues/new?template=bug_report.md" target="_blank" rel="noopener noreferrer">Report a problem</a>
+        <div className="setting__actions">
+          <button className="btn btn--outline" onClick={report} disabled={busy}><Bug aria-hidden /> {busy ? 'Reading…' : 'Report a problem'}</button>
+          <button className="btn btn--ghost btn--sm" onClick={download}><Download aria-hidden /> Download report</button>
+        </div>
       </div>
     </div>
   )

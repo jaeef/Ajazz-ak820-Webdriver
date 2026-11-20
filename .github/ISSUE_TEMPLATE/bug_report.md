@@ -25,9 +25,9 @@ labels: bug
 - Browser (Chrome / Edge / other) and version:
 
 **Diagnostics report**
-Open https://ak820-web.vercel.app/?debug, connect the keyboard, reproduce the problem,
-then go to Settings → Diagnostics → Read keyboard now → Copy report, and paste it here
-(or attach the downloaded .txt).
+Connect the keyboard on https://ak820-web.vercel.app, reproduce the problem, then go to
+Settings → Report a problem. It copies the report; paste it here (or attach the file from
+"Download report").
 
 ```
 paste the report here
