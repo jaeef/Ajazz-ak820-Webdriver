@@ -1,4 +1,4 @@
-import type { LightingState, Direction, ReportIdMode, ProtocolFamily, ProtocolFamilyResolved } from './types'
+import type { LightingState, Profile, Direction, ReportIdMode, ProtocolFamily, ProtocolFamilyResolved } from './types'
 
 // =====================================================================
 // EVision keyboard protocol ("eevision" family)
@@ -591,4 +591,23 @@ export const DEFAULT_LIGHTING: LightingState = {
 export function clampDirection(n: number): Direction {
   const v = Math.max(0, Math.min(3, n | 0))
   return v as Direction
+}
+
+// Saved data can be from an older version, hand-edited or half-written; every
+// load is checked and clamped so a bad value can't crash the page.
+export const num = (v: unknown, lo: number, hi: number, d: number) =>
+  typeof v === 'number' && Number.isFinite(v) ? Math.min(hi, Math.max(lo, Math.round(v))) : d
+export function cleanProfiles(data: unknown): Profile[] {
+  if (!Array.isArray(data)) return []
+  return data
+    .filter((p): p is Record<string, unknown> => !!p && typeof p === 'object' && typeof (p as { name?: unknown }).name === 'string' && (p as { name: string }).name.trim() !== '')
+    .map(p => ({
+      name: String(p.name).trim().slice(0, 40),
+      mode: num(p.mode, 0, 255, 6),
+      r: num(p.r, 0, 255, 255), g: num(p.g, 0, 255, 255), b: num(p.b, 0, 255, 255),
+      brightness: num(p.brightness, 0, 4, 4),
+      speed: num(p.speed, 0, 4, 2),
+      direction: num(p.direction, 0, 3, 0) as Profile['direction'],
+      rainbow: p.rainbow === true,
+    }))
 }

@@ -18,7 +18,7 @@ import {
 } from './lib/protocol'
 import {
   useDevice, useSettings, useProfiles, useLightingState, useStatus, useActiveTab,
-  readLightingBlock, readKeymap,
+  readLightingBlock, readKeymap, exclusive, friendlyError,
 } from './lib/hooks'
 
 function describeLighting(p: Profile, modes: string[]): string {
@@ -76,7 +76,7 @@ function App() {
       if (errObj && errObj.name === 'NotFoundError') {
         info('Connection cancelled\nNothing was changed.')
       } else {
-        err('Couldn’t connect\n' + (errObj?.message || String(e)))
+        err('Couldn’t connect\n' + friendlyError(e))
       }
     }
   }, [device, settings.vid, settings.pid, settings.showAllDevices, ok, err, info])
@@ -86,7 +86,7 @@ function App() {
       await device.disconnect()
       info('Disconnected\nYour keyboard keeps its last settings. Connect again to pick it in the browser list.')
     } catch (e) {
-      err('Disconnect error: ' + (e as Error).message)
+      err('Disconnect error: ' + friendlyError(e))
     }
   }, [device, err, info])
 
@@ -134,19 +134,19 @@ function App() {
       const what = lighting.mode === MODE_STATIC ? 'Solid colour' : modeName(lighting.mode, settings.modes)
       ok(`${device.isConnected ? 'Applied to keyboard' : 'Recorded in demo mode'}\n${what} · ${rgbToHex(lighting.r, lighting.g, lighting.b).toUpperCase()} · brightness ${lighting.brightness}${lighting.mode === MODE_STATIC ? '' : ` · speed ${MAX_SPEED - lighting.speed + 1}`}${lighting.rainbow ? ' · random colours' : ''}`)
     } catch (e) {
-      err('Couldn’t apply\n' + (e as Error).message)
+      err('Couldn’t apply\n' + friendlyError(e))
     }
   }, [apply, device.isConnected, lighting, settings.modes, ok, err])
 
   // --- Per-key RGB: send a custom color map built by the KeyboardView ---
   const handleApplyPerKey = useCallback((colorPackets: Uint8Array[]) => {
     applyPerKey(colorPackets).then(() => ok(`${device.isConnected ? 'Per-key colours applied' : 'Per-key colours recorded (demo)'}\nThe board switched to Custom mode.`))
-                             .catch(e => err('Couldn’t apply per-key colours\n' + (e as Error).message))
+                             .catch(e => err('Couldn’t apply per-key colours\n' + friendlyError(e)))
   }, [applyPerKey, device.isConnected, ok, err])
 
   // --- Keyboard options (Win lock, WASD swap, polling rate): read, change, write back ---
   const readBlock = useCallback(
-    () => readLightingBlock(device.controller, settings.reportIdMode, family),
+    () => exclusive(() => readLightingBlock(device.controller, settings.reportIdMode, family)),
     [device.controller, settings.reportIdMode, family],
   )
   const handleReadOptions = useCallback(async () => {
@@ -161,17 +161,17 @@ function App() {
     const block = await readBlock()
     if (!block) { err('Connect the keyboard first\nOptions are read from it before anything is written.'); return }
     sendPackets(buildKeyboardOptionsPackets(block, opt)).then(() => setLeds({ win: opt.winLock })).then(() => ok(`Keyboard options saved\nWindows lock ${opt.winLock ? 'on' : 'off'} · WASD swap ${opt.wasdSwap ? 'on' : 'off'} · ${['1000', '500', '250', '125'][opt.pollingRate]} Hz`))
-                                                          .catch(e => err('Couldn’t save keyboard options\n' + (e as Error).message))
+                                                          .catch(e => err('Couldn’t save keyboard options\n' + friendlyError(e)))
   }, [readBlock, sendPackets, ok, err])
 
   // --- Key remap: send the keymap built by KeyRemapPanel ---
   const handleSendKeymap = useCallback((packets: Uint8Array[], what: string) => {
     return sendPackets(packets).then(() => ok(`${device.isConnected ? 'Sent to keyboard' : 'Recorded (demo)'}\n${what[0].toUpperCase()}${what.slice(1)}`))
-                              .catch(e => err('Couldn’t save the keymap\n' + (e as Error).message))
+                              .catch(e => err('Couldn’t save the keymap\n' + friendlyError(e)))
   }, [sendPackets, device.isConnected, ok, err])
 
   const handleReadKeymap = useCallback(
-    () => readKeymap(device.controller, settings.reportIdMode, family),
+    () => exclusive(() => readKeymap(device.controller, settings.reportIdMode, family)),
     [device.controller, settings.reportIdMode, family],
   )
 
@@ -194,7 +194,7 @@ function App() {
     // Pass `next` explicitly so the packet reflects the just-loaded state,
     // not the stale value captured by `apply`'s closure.
     apply(next).then(() => { setLastApplied(next); ok(`Profile loaded\n${describeLighting(profile, settings.modes)}`) })
-               .catch(e => err('Couldn’t load the profile\n' + (e as Error).message))
+               .catch(e => err('Couldn’t load the profile\n' + friendlyError(e)))
   }, [setLighting, apply, settings.modes, ok, err])
 
   const handleDeleteProfile = useCallback((name: string) => {
@@ -203,9 +203,8 @@ function App() {
   }, [removeProfile, setStatus])
 
   const handleImportProfiles = useCallback((data: unknown) => {
-    importProfiles(data)
-    const n = Array.isArray(data) ? data.length : 0
-    ok(`Profiles imported\n${n} profile${n === 1 ? '' : 's'} added.`)
+    const n = importProfiles(data)
+    ok(`Profiles imported\n${n} profile${n === 1 ? '' : 's'} added or updated.`)
   }, [importProfiles, ok])
 
   // --- Settings: VID/PID changes reconnect if needed ---

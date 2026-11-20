@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict'
 import {
   buildLightingPackets, buildKeymapPackets, buildCustomColorPackets, defaultKeymap, hexDump, LED_COUNT,
-  buildMacroPackets, textToMacro, buildReadPacket, buildKeyboardOptionsPackets, readKeyboardOptions,
+  buildMacroPackets, textToMacro, buildReadPacket, buildKeyboardOptionsPackets, readKeyboardOptions, cleanProfiles,
 } from '../src/lib/protocol.ts'
 import type { LightingState } from '../src/lib/types.ts'
 
@@ -73,5 +73,11 @@ assert.equal(hexDump(buildKeyboardOptionsPackets(BLOCK, { wasdSwap: false, winLo
 // A lighting write on top of a block with Win lock on keeps it on.
 const locked = BLOCK.slice(); locked[21] = 1
 assert.equal(buildLightingPackets(light({}), locked)[1][8 + 21], 1, 'lighting write must preserve Win lock')
+
+// Saved/imported profiles: junk dropped, values clamped, never a crash.
+assert.deepEqual(cleanProfiles('nope'), [])
+assert.deepEqual(cleanProfiles([null, 'x', {}, { name: '  ' }]), [])
+assert.deepEqual(cleanProfiles([{ name: ' A ', b: 300, brightness: 9, direction: 7, rainbow: 'yes' }]),
+  [{ name: 'A', mode: 6, r: 255, g: 255, b: 255, brightness: 4, speed: 2, direction: 3, rainbow: false }])
 
 console.log('protocol ok: lighting, keymap, per-key, macro and options match vendor captures')

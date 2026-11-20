@@ -75,7 +75,7 @@ export function setLeds(next: Partial<typeof ledState>) {
 const subscribeLeds = (f: () => void) => { ledSubs.add(f); return () => { ledSubs.delete(f) } }
 
 const SOUND_KEY = 'ak820.keySound'
-let soundOn = localStorage.getItem(SOUND_KEY) !== 'off'
+let soundOn = (() => { try { return localStorage.getItem(SOUND_KEY) !== 'off' } catch { return true } })()
 const press = () => { if (soundOn) thock() }
 
 // Shared on/off switch for the key sound, shown once above the board.
@@ -83,7 +83,7 @@ export function KeySoundToggle() {
   const [on, setOn] = useState(soundOn)
   const flip = () => {
     soundOn = !on
-    localStorage.setItem(SOUND_KEY, soundOn ? 'on' : 'off')
+    try { localStorage.setItem(SOUND_KEY, soundOn ? 'on' : 'off') } catch { /* storage blocked: keep it for this visit */ }
     if (soundOn) thock()
     setOn(soundOn)
   }
