@@ -769,11 +769,11 @@ button.cap:hover { transform: translateY(-.11cqi); z-index: 10; }
 .pitch__features b { display: block; font-weight: 600; }
 .pitch__features span { color: var(--ink-2); font-size: 13px; }
 .pitch__desk { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); box-shadow: var(--shadow); padding: 16px; display: grid; gap: 12px; }
-.pitch__desk > p { display: grid; grid-template-columns: 20px 1fr; gap: 10px; font-size: 14px; line-height: 1.45; margin: 0; }
+.pitch__desk > p:not(.pitch__note) { display: grid; grid-template-columns: 20px 1fr; gap: 10px; font-size: 14px; line-height: 1.45; margin: 0; }
 .pitch__desk > p svg { width: 18px; height: 18px; color: var(--mustard-ink); margin-top: 1px; }
 .pitch__actions { display: grid; gap: 8px; }
 .pitch__actions .btn, .pitch__demo { justify-content: center; height: 44px; font-size: 14px; }
-.pitch__note { font-size: 12px; color: var(--ink-2); text-align: center; min-height: 16px; margin: 0; word-break: break-all; }
+.pitch__note { display: block; font-size: 12px; color: var(--ink-2); text-align: center; min-height: 16px; margin: 0; overflow-wrap: anywhere; }
 
 @media (max-width: 760px) {
   /* before connecting, a phone needs the pitch, not a disabled nav */
