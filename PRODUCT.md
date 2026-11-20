@@ -38,7 +38,7 @@ Independent and unofficial. Names the AK820 for compatibility only; must not imi
 
 ## Evidence on Hand
 
-- Real product photo: `public/wired-keyboard.png`.
+- Brand mark: `public/favicon.svg` (also exported as `icon-512.png`, `apple-touch-icon.png`), link preview `public/og.png`.
 - Protocol spec and hardware-verification notes: `docs/protocol.md`.
 - No users, testimonials, download counts or press exist; don't invent any.
 
