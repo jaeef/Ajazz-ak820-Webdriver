@@ -6,6 +6,41 @@ All notable changes to this project are documented here. The format follows
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-11-20
+
+### Added
+
+- A first screen for phones and browsers without WebHID (Firefox, Safari): what the app
+  does, plus Send link to my computer, Copy link and a demo, instead of a dead Connect button.
+- Version number with a What's new link in the sidebar and in Settings.
+- Page links (`#perkey`, `#keys`, `#profiles`, `#settings`); a refresh keeps you on the same page.
+- C / W / OS indicator LEDs on the board: C follows Caps Lock, W follows the Windows-key lock.
+- A crash screen with Reload and Clear saved data, instead of a blank page.
+- AK820 icon as the favicon and sidebar image.
+- Reverse-engineering findings in `docs/`.
+
+### Changed
+
+- The board on Keys & macro is the same size as on every other page.
+- Cards on Keys & macro, Profiles and Settings size to their content instead of
+  stretching to the bottom of the window; Settings lines up with the other pages.
+- Larger, sharper keyboard image in the sidebar.
+- Phone layout: no disabled navigation before connecting, and the status bar fits one line.
+- Speed reads 1 (slow) to 5 (fast).
+- Keyboard writes run one at a time, and USB errors are explained in plain words.
+- Keys & macro panel is more compact.
+
+### Security
+
+- Devices without the AK820 lighting interface are refused before anything is sent, and the
+  device list shows only AK820 families by default.
+- Profile import is limited to 512 KB and 200 profiles; saved data is validated on load.
+- Content-Security-Policy and a stricter Permissions-Policy on Vercel.
+
+### Removed
+
+- `DESIGN.md`.
+
 ## [0.3.0] - 2026-11-19
 
 ### Added

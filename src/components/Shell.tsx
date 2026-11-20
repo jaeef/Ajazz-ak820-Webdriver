@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import {
   Lightbulb, Paintbrush, Keyboard, Layers, Settings, Cable, MousePointerClick,
-  Plug, Unplug, CircleCheck, CircleAlert, Info, ChevronDown, X, type LucideIcon,
+  Plug, Unplug, CircleCheck, CircleAlert, Info, ChevronDown, X, type LucideIcon, Laptop, Send, Copy, Play,
 } from 'lucide-react'
 import type { DeviceInfo, Settings as AppSettings, StatusMessage, TabId } from '../lib/types'
 import { BoardRender } from './BoardRender'
@@ -74,6 +74,9 @@ export function Sidebar({ active, onNavigate, info, isConnected, exploring, webH
             <span>jaeef</span>
           </a>
         </div>
+        <p className="sidebar__disclaimer">
+          v{__APP_VERSION__} · <a className="sidebar__whatsnew" href="https://github.com/jaeef/Ajazz-ak820-Webdriver/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">What’s new</a>
+        </p>
         <p className="sidebar__disclaimer">Not affiliated with AJAZZ</p>
       </div>
     </aside>
@@ -87,20 +90,55 @@ interface ConnectProps {
   onExplore: () => void
 }
 
+// Shown where USB can't work: phones (no WebHID) and Firefox/Safari. Instead of a
+// dead Connect button it says what the app does and hands the link to a computer.
+function OpenOnComputer({ onExplore }: { onExplore: () => void }) {
+  const [note, setNote] = useState('')
+  const url = location.origin + '/'
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(url); setNote('Link copied. Open it on your computer in Chrome or Edge.') }
+    catch { setNote(url) }
+  }
+  const share = async () => {
+    if (!navigator.share) return copy()
+    try { await navigator.share({ title: 'AK820 Web Driver', url }) } catch { /* closed the sheet */ }
+  }
+  return (
+    <div className="pitch">
+      <BoardRender ariaLabel="AJAZZ AK820" glow="#e3b419" motion="wave" speed={1} level={4} wake />
+      <h1>Set up your AK820 right in the browser</h1>
+      <p className="pitch__lede">No install, no account. Works on Windows, macOS and Linux, where the official app doesn’t.</p>
+      <ul className="pitch__features">
+        <li><Lightbulb aria-hidden /><div><b>Lighting</b><span>18 effects, colour, brightness and speed</span></div></li>
+        <li><Paintbrush aria-hidden /><div><b>Per-key colour</b><span>Paint each key its own colour</span></div></li>
+        <li><Keyboard aria-hidden /><div><b>Remap and macro</b><span>Move keys around, type text with one key</span></div></li>
+        <li><Layers aria-hidden /><div><b>Profiles</b><span>Save setups and switch in one click</span></div></li>
+      </ul>
+      <section className="pitch__desk" aria-label="Open on a computer">
+        <p><Laptop aria-hidden /><span>The keyboard connects over USB, which this browser can’t do. Open this page on a computer in <b>Chrome</b> or <b>Edge</b>.</span></p>
+        <div className="pitch__actions">
+          <button className="btn btn--primary" onClick={share}><Send aria-hidden /> Send link to my computer</button>
+          <button className="btn btn--outline" onClick={copy}><Copy aria-hidden /> Copy link</button>
+        </div>
+        <p className="pitch__note" aria-live="polite">{note}</p>
+      </section>
+      <button className="btn btn--ghost pitch__demo" onClick={onExplore}><Play aria-hidden /> Look around in demo mode</button>
+    </div>
+  )
+}
+
 export function ConnectScreen({ webHIDSupported, settings, onConnect, onExplore }: ConnectProps) {
+  if (!webHIDSupported) return <OpenOnComputer onExplore={onExplore} />
   return (
     <div className="connect">
       <BoardRender ariaLabel="AK820, not connected" dim />
       <h1>Connect your AK820</h1>
-      {!webHIDSupported && (
-        <p className="notice notice--error"><CircleAlert aria-hidden /> This browser can’t talk to USB keyboards. Open this page in Chrome or Edge.</p>
-      )}
       <ol className="connect__steps">
         <li><Cable aria-hidden /> Plug it in with USB-C, switch on the back set to wired.</li>
         <li><MousePointerClick aria-hidden /> Click Connect and pick the AK820 in the browser’s list.</li>
       </ol>
       <div className="connect__actions">
-        <button className="btn btn--primary btn--lg" onClick={onConnect} disabled={!webHIDSupported}><Plug aria-hidden /> Connect keyboard</button>
+        <button className="btn btn--primary btn--lg" onClick={onConnect}><Plug aria-hidden /> Connect keyboard</button>
         <button className="btn btn--outline btn--lg" onClick={onExplore}>Explore without a keyboard</button>
       </div>
       <details className="trouble">

@@ -294,8 +294,23 @@ export function useStatus() {
 // =====================================================================
 // useActiveTab — selected tab id
 // =====================================================================
+// Kept in the URL hash (#perkey, #keys …) so a refresh or a shared link opens the same page.
+const TABS: readonly TabId[] = ['lighting', 'perkey', 'keys', 'profiles', 'settings']
+const tabFromHash = (fallback: TabId): TabId => {
+  const h = location.hash.slice(1) as TabId
+  return TABS.includes(h) ? h : fallback
+}
 export function useActiveTab(initial: TabId = 'lighting') {
-  const [tab, setTab] = useState<TabId>(initial)
+  const [tab, setTabState] = useState<TabId>(() => tabFromHash(initial))
+  useEffect(() => {
+    const onHash = () => setTabState(tabFromHash(initial))
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [initial])
+  const setTab = useCallback((t: TabId) => {
+    setTabState(t)
+    history.replaceState(null, '', t === initial ? location.pathname + location.search : '#' + t)
+  }, [initial])
   return [tab, setTab] as const
 }
 

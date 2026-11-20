@@ -31,7 +31,14 @@ export function SettingsPanel({ settings, onChange, onReset }: Props) {
         </div>
         <button className="btn btn--danger" onClick={onReset}><Trash2 aria-hidden /> Clear all</button>
       </div>
-      <p className="muted">v0.3 · Runs entirely in your browser: no install, no account, no network.</p>
+      <h3 className="section-label">About</h3>
+      <div className="setting">
+        <div className="setting__text">
+          <strong>AK820 Web Driver {__APP_VERSION__}</strong>
+          <span className="muted">Runs entirely in your browser: no install, no account, no network.</span>
+        </div>
+        <a className="btn btn--outline" href="https://github.com/jaeef/Ajazz-ak820-Webdriver/blob/main/CHANGELOG.md" target="_blank" rel="noopener noreferrer">What’s new</a>
+      </div>
     </div>
   )
 }
