@@ -69,7 +69,7 @@ export function defaultSettings(): Settings {
     reportIdMode: 'auto',
     protocolFamily: 'auto',
     modes: [...DEFAULT_MODES],
-    showAllDevices: true,
+    showAllDevices: false,
   }
 }
 

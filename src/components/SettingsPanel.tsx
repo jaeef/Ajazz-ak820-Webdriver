@@ -15,7 +15,7 @@ export function SettingsPanel({ settings, onChange, onReset }: Props) {
       <div className="setting">
         <div className="setting__text">
           <strong>Show all HID devices</strong>
-          <span className="muted">Lists every USB device when you connect. Leave on if your AK820 doesn’t show up; turn off for a shorter list.</span>
+          <span className="muted">Lists every USB device when you connect, not just AK820 keyboards. Turn on only if your AK820 doesn’t show up; other devices are refused.</span>
         </div>
         <label className="toggle">
           <input type="checkbox" checked={settings.showAllDevices} onChange={e => onChange({ ...settings, showAllDevices: e.target.checked })} />

@@ -66,11 +66,7 @@ function App() {
     try {
       const di = await device.connect(settings.vid, settings.pid, settings.showAllDevices)
       setExploring(false)
-      if (di.matchedVendorInterface) {
-        ok(`Connected to ${di.productName || 'AK820'}\nPick an effect, then press Apply.`)
-      } else {
-        err(`This entry can’t take lighting commands\nReconnect and pick the AK820 (wired), or turn on “Show all HID devices” in Settings and try another entry.`)
-      }
+      ok(`Connected to ${di.productName || 'AK820'}\nPick an effect, then press Apply.`)
     } catch (e) {
       const errObj = e as DOMException
       if (errObj && errObj.name === 'NotFoundError') {

@@ -38,6 +38,11 @@ export function ProfilesPanel({ profiles, modes, currentLighting, onSave, onDele
   const handleFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0]
     if (!f) return
+    if (f.size > 512 * 1024) {
+      setImportError('That file is too large for a profiles file (512 KB at most).')
+      e.target.value = ''
+      return
+    }
     const reader = new FileReader()
     reader.onload = () => {
       try { onImport(JSON.parse(String(reader.result))); setImportError(null) }
