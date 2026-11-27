@@ -6,8 +6,10 @@
 
 **Configure the AJAZZ AK820 mechanical keyboard directly in your browser with zero installs.**
 
-<a href="LICENSE"><img alt="license: MIT" src="https://img.shields.io/badge/license-MIT-e3b419"></a>
-<a href="package.json"><img alt="version 0.3.0" src="https://img.shields.io/badge/version-0.3.0-5c5f63"></a>
+### [▶ Open the live app: ak820-web.vercel.app](https://ak820-web.vercel.app)
+
+<a href="LICENSE"><img alt="license: AGPL v3" src="https://img.shields.io/badge/license-AGPL--3.0-e3b419"></a>
+<a href="package.json"><img alt="version 0.4.4" src="https://img.shields.io/badge/version-0.4.4-5c5f63"></a>
 <a href="https://developer.mozilla.org/docs/Web/API/WebHID_API"><img alt="WebHID API" src="https://img.shields.io/badge/WebHID-API-10b981?logo=googlechrome&logoColor=white"></a>
 <a href="https://react.dev"><img alt="React 18" src="https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=black"></a>
 <a href="https://www.typescriptlang.org"><img alt="TypeScript 5.6" src="https://img.shields.io/badge/TypeScript-5.6-3178C6?logo=typescript&logoColor=white"></a>
@@ -81,12 +83,6 @@ npm run check     # protocol self-check against vendor captures
 `npm run check` uses Node's built-in TypeScript type stripping, so it needs Node 22.6+ (or 23+).
 
 Release notes live in [`CHANGELOG.md`](CHANGELOG.md).
-
-## Deploying to Vercel
-
-Import the repository in Vercel. [`vercel.json`](vercel.json) sets the Vite build (`npm run build` into `dist/`) and the security headers, including `Permissions-Policy: hid=(self)`. Vercel serves over HTTPS, which WebHID needs.
-
-Any other static host works too: serve `dist/` over HTTPS with the same headers.
 
 ## Project structure
 
@@ -170,4 +166,4 @@ Portfolio: [jaeef-portfolio.vercel.app](https://jaeef-portfolio.vercel.app/)
 
 ## License
 
-[MIT](LICENSE) © Abu Saleh Mohammad Jaeef
+[AGPL-3.0](LICENSE) © Abu Saleh Mohammad Jaeef
